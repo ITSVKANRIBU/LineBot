@@ -17,7 +17,7 @@ This is tempalte file for configuration.
 Please copy as `application.yml` and change your value.
 
 line.bot:
-  channel-token: '1622643916'
+  channel-token: '37dNwU57zDF7i90+THScmGOdG28NmMS9YMZ0qeOFytzfNdwQme08BTrXkVqokk10hZmTL5hrnwI83ptGv6uusow9dtMce4CmRdemwyaHAiDzAo5Camsxe2XPrcD1DwHyIqbC+VYnDiX9zoTJP55tEgdB04t89/1O/w1cDnyilFU='
   channel-secret: '9cd363e9aec6f4d7d4cfd59f9c13ed96'
   handler.path: /callback
 
