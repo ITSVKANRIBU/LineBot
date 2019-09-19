@@ -1,8 +1,7 @@
 package com.example.bot.spring.entity;
 
-import java.io.Serializable;
+public class InsiderRole {
 
-public class InsiderRole implements Serializable{
 
 	private String role;
 	private String userId;

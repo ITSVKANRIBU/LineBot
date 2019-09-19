@@ -2,10 +2,9 @@ package com.example.bot.spring.entity;
 
 import static com.example.bot.staticdata.Message.*;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Village implements Serializable {
+public class Village {
 
 	private int villageNum;
 	private String ownerId;
