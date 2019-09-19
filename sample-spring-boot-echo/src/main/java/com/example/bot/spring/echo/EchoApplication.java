@@ -72,7 +72,7 @@ public class EchoApplication {
       } else {
 
         // 人数が0のものを探す
-        for (int i = VillageList.villageList.size() - 1; i >= 0; i--) {
+        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (0 == VillageList.get(i).getVillageSize()
               && userId.contentEquals(VillageList.get(i).getOwnerId())) {
             VillageList.get(i).setVillageSize(number);
@@ -99,7 +99,7 @@ public class EchoApplication {
         message = villageNum + "村 を新しく作成しました。\n" + MessageConst.OWNER_ODAIMESSAGE;
 
       } else {
-        for (int i = VillageList.villageList.size() - 1; i >= 0; i--) {
+        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (null == VillageList.get(i).getOdai()
               && userId.contentEquals(VillageList.get(i).getOwnerId())) {
             VillageList.get(i).setOdai(message);
