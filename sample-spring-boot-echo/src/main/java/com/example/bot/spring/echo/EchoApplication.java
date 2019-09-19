@@ -125,6 +125,7 @@ public class EchoApplication {
     if (userId.equals(village.getOwnerId())) {
       // オーナーの場合
       message = village.getMessageOwner();
+
     } else {
 
       // 参加書の場合
@@ -133,7 +134,10 @@ public class EchoApplication {
 
         // 配役の設定
         village.addRoleList(
-            village.getInsiderNum() == village.getRoleList().size() - 1 ? "インサイダー" : "村", userId);
+            village.getInsiderNum() == village.getRoleList().size() + 1
+                ? MessageConst.INSIDER_ROLE
+                : MessageConst.VILLAGE_ROLE,
+            userId);
 
         message = village.getRoleMessage(userId);
 
