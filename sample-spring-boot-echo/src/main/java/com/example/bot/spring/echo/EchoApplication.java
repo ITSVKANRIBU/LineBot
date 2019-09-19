@@ -134,8 +134,10 @@ public class EchoApplication {
 
         // 配役の設定
         village.addRoleList(
-            village.getInsiderNum() == village.getRoleList().size() + 1 ?
-                MessageConst.INSIDER_ROLE : MessageConst.INSIDER_ROLE, userId);
+            village.getInsiderNum() == village.getRoleList().size() + 1
+                ? MessageConst.INSIDER_ROLE
+                : MessageConst.VILLAGE_ROLE,
+            userId);
 
         message = village.getRoleMessage(userId);
 
