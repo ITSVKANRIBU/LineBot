@@ -66,7 +66,7 @@ public class EchoApplication {
     try {
       int number = Integer.parseInt(userMessage.trim());
 
-      if (number > 30) {
+      if (number > 100) {
         // 村番号の場合
         return getMessageVillageNum(userId, number);
       } else {
