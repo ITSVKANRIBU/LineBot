@@ -16,18 +16,6 @@
 
 apply plugin: 'org.springframework.boot'
 
-spotbugs {
-    ignoreFailures true
-}
-
-findbugs {
-    ignoreFailures true
-}
-
-checkstyle {
-    ignoreFailures true
-}
-
 dependencies {
     compile project(':line-bot-spring-boot')
 }
