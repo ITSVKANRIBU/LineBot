@@ -25,9 +25,20 @@ public class VillageList {
   static final int MAX_VILLAGE_NUM = 50;
   private static ArrayList<Village> villageList = new ArrayList<Village>();
 
-
-  public static  ArrayList<Village> getVillageList(){
+  public static ArrayList<Village> getVillageList() {
     return villageList;
+  }
+
+  public static ArrayList<Village> getVillageList(String userId) {
+    ArrayList<Village> rtnList = new ArrayList<Village>();
+
+    for (Village village : villageList) {
+      if (userId.equals(village.getOwnerId())) {
+        rtnList.add(village);
+      }
+    }
+
+    return rtnList;
   }
 
   public static void addVillage(Village village) {
@@ -45,18 +56,6 @@ public class VillageList {
 
   public static Village get(int i) {
     return villageList.get(i);
-  }
-
-  public static ArrayList<Village> getVillageList(String userId) {
-    ArrayList<Village> rtnList = new ArrayList<Village>();
-
-    for (Village village : villageList) {
-      if (userId.equals(village.getOwnerId())) {
-        rtnList.add(village);
-      }
-    }
-
-    return rtnList;
   }
 
 }
