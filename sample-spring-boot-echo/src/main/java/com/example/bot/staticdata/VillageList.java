@@ -23,7 +23,7 @@ import com.example.bot.spring.entity.Village;
 public class VillageList {
 
   static final int MAX_VILLAGE_NUM = 50;
-  public static ArrayList<Village> villageList = new ArrayList<Village>();
+  public static final ArrayList<Village> villageList = new ArrayList<Village>();
 
   public static void addVillage(Village village) {
     villageList.add(village);
