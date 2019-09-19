@@ -66,7 +66,7 @@ public class EchoApplication {
     try {
       int number = Integer.parseInt(userMessage.trim());
 
-      if (number < 100) {
+      if (number > 100) {
         // 村番号の場合
         return getMessageVillageNum(userId, number);
       } else {
@@ -74,7 +74,7 @@ public class EchoApplication {
         // 人数が0のものを探す
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (0 == VillageList.get(i).getVillageSize()
-              && userId.contentEquals(VillageList.get(i).getOwnerId())) {
+              && userId.equals(VillageList.get(i).getOwnerId())) {
             VillageList.get(i).setVillageSize(number);
             int insiderNum = random.nextInt(number) + 1;
 
@@ -102,8 +102,8 @@ public class EchoApplication {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (null == VillageList.get(i).getOdai()
               && userId.contentEquals(VillageList.get(i).getOwnerId())) {
-            VillageList.get(i).setOdai(message);
-            message = VillageList.get(i).getVillageNum() + "村 のお題を『" + message + "』に設定しました。\n"
+            VillageList.get(i).setOdai(userMessage);
+            message = VillageList.get(i).getVillageNum() + "村 のお題を『" + userMessage + "』に設定しました。\n"
                 + MessageConst.OWNER_NUMSETMESSAGE;
             break;
           }
