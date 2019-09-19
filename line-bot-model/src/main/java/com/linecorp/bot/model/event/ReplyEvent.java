@@ -28,7 +28,6 @@ public interface ReplyEvent {
      * Token for replying to this event.
      *
      * @see ReplyMessage
-     * @see <a href="https://developers.line.me/en/reference/messaging-api/#send-reply-message">//developers.line.me/en/reference/messaging-api/#send-reply-message</a> &gt; Request Body
      */
     String getReplyToken();
 }
