@@ -36,115 +36,112 @@ import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 @SpringBootApplication
 @LineMessageHandler
 public class EchoApplication {
-	public static void main(String[] args) {
-		SpringApplication.run(EchoApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(EchoApplication.class, args);
+  }
 
-	@EventMapping
-	public Message handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
-		System.out.println("event: " + event);
+  @EventMapping
+  public Message handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
+    System.out.println("event: " + event);
 
-		String userId = event.getSource().getUserId();
-		String userMessage = event.getMessage().getText();
+    String userId = event.getSource().getUserId();
+    String userMessage = event.getMessage().getText();
 
-		// messageの取得
-		String message = getMessage(userId, userMessage);
+    // messageの取得
+    String message = getMessage(userId, userMessage);
 
-		return new TextMessage(message);
-	}
+    return new TextMessage(message);
+  }
 
-	@EventMapping
-	public void handleDefaultMessageEvent(Event event) {
-		System.out.println("event: " + event);
-	}
+  @EventMapping
+  public void handleDefaultMessageEvent(Event event) {
+    System.out.println("event: " + event);
+  }
 
-	private String getMessage(String userId, String userMessage) {
-		String message = DEFAILT_MESSAGE;
+  private String getMessage(String userId, String userMessage) {
+    String message = DEFAILT_MESSAGE;
 
-		Random random = new Random();
+    Random random = new Random();
 
-		try {
-			int number = Integer.parseInt(userMessage.trim());
+    try {
+      int number = Integer.parseInt(userMessage.trim());
 
-			if (number < 100) {
-				// 村番号の場合
-				return getMessageVillageNum(userId, number);
-			} else {
+      if (number < 100) {
+        // 村番号の場合
+        return getMessageVillageNum(userId, number);
+      } else {
 
-				// 人数が0のものを探す
-				for (int i = VillageList.villageList.size() - 1; i >= 0; i--) {
-					if (0 == VillageList.get(i).getVillageSize()
-							&& userId.contentEquals(VillageList.get(i).getOwnerId())) {
-						VillageList.get(i).setVillageSize(number);
-						int insiderNum = random.nextInt(number) + 1;
+        // 人数が0のものを探す
+        for (int i = VillageList.villageList.size() - 1; i >= 0; i--) {
+          if (0 == VillageList.get(i).getVillageSize()
+              && userId.contentEquals(VillageList.get(i).getOwnerId())) {
+            VillageList.get(i).setVillageSize(number);
+            int insiderNum = random.nextInt(number) + 1;
 
-						VillageList.get(i).setInsiderNum(insiderNum);
-						message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number + "人』に設定しました。皆さんに村番号を伝えてください。";
-						break;
-					}
-				}
-			}
+            VillageList.get(i).setInsiderNum(insiderNum);
+            message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number
+                + "人』に設定しました。皆さんに村番号を伝えてください。";
+            break;
+          }
+        }
+      }
 
-		} catch (Exception e) {
+    } catch (Exception e) {
+      if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())) {
+        int villageNum = random.nextInt(8999) + 1000;
 
-			if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())) {
+        Village newVillage = new Village();
+        newVillage.setOwnerId(userId);
+        newVillage.setVillageNum(villageNum);
 
-				int villageNum = random.nextInt(8999) + 1000;
+        VillageList.addVillage(newVillage);
 
-				Village newVillage= new Village();
-				newVillage.setOwnerId(userId);
-				newVillage.setVillageNum(villageNum);
+        message = villageNum + "村 を新しく作成しました。\n" + OWNER_ODAIMESSAGE;
 
+      } else {
+        for (int i = VillageList.villageList.size() - 1; i >= 0; i--) {
+          if (null == VillageList.get(i).getOdai()
+              && userId.contentEquals(VillageList.get(i).getOwnerId())) {
+            VillageList.get(i).setOdai(message);
+            message = VillageList.get(i).getVillageNum() + "村 のお題を『" + message + "』に設定しました。\n"
+                + OWNER_NUMSETMESSAGE;
+            break;
+          }
+        }
+      }
 
-				VillageList.addVillage(newVillage);
+    }
 
-				message = villageNum + "村 を新しく作成しました。\n" + OWNER_ODAIMESSAGE;
+    return message;
+  }
 
-			}else {
+  private String getMessageVillageNum(String userId, int number) {
+    String message = DEFAILT_MESSAGE;
 
-				for (int i = VillageList.villageList.size() - 1; i >= 0; i--) {
-					if (null == VillageList.get(i).getOdai()
-							&& userId.contentEquals(VillageList.get(i).getOwnerId())) {
-						VillageList.get(i).setOdai(message);
-						message = VillageList.get(i).getVillageNum() + "村 のお題を『" + message + "』に設定しました。\n"+ OWNER_NUMSETMESSAGE;
-						break;
-					}
-				}
+    Village village = VillageList.getVillage(number);
 
-			}
+    if (userId.equals(village.getOwnerId())) {
+      // オーナーの場合
+      message = village.getMessageOwner();
+    } else {
 
-		}
+      // 参加書の場合
+      String memberRole = village.getMemberRole(userId);
+      if (memberRole == null) {
 
-		return message;
-	}
+        // 配役の設定
+        village.addRoleList(
+            village.getInsiderNum() == village.getRoleList().size() - 1 ? "インサイダー" : "村", userId);
 
-	private String getMessageVillageNum(String userId, int number) {
-		String message = DEFAILT_MESSAGE;
+        message = village.getRoleMessage(userId);
 
-		Village village = VillageList.getVillage(number);
+      } else {
+        message = village.getRoleMessage(userId);
+      }
 
-		if (userId.equals(village.getOwnerId())) {
-			// オーナーの場合
-			message = village.getMessageOwner();
-		} else {
+    }
 
-			// 参加書の場合
-			String memberRole = village.getMemberRole(userId);
-			if (memberRole == null) {
-
-				// 配役の設定
-				village.addRoleList(village.getInsiderNum() == village.getRoleList().size() - 1 ? "インサイダー" : "村",
-						userId);
-
-				message = village.getRoleMessage(userId);
-
-			} else {
-				message = village.getRoleMessage(userId);
-			}
-
-		}
-
-		return message;
-	}
+    return message;
+  }
 
 }
