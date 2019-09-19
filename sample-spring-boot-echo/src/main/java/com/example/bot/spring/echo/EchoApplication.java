@@ -132,6 +132,10 @@ public class EchoApplication {
       String memberRole = village.getMemberRole(userId);
       if (memberRole == null) {
 
+        if(village.getRoleList().size() >= village.getVillageSize()) {
+          message = "村がいっぱいです。";
+          return message;
+        }
         // 配役の設定
         village.addRoleList(
             village.getInsiderNum() == village.getRoleList().size() + 1
