@@ -16,9 +16,9 @@
 
 package com.example.bot.staticdata;
 
-import com.example.bot.spring.entity.Village;
-
 import java.util.ArrayList;
+
+import com.example.bot.spring.entity.Village;
 
 public class VillageList {
 

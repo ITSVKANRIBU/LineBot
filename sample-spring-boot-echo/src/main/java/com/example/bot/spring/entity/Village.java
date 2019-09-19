@@ -16,9 +16,9 @@
 
 package com.example.bot.spring.entity;
 
-import com.example.bot.staticdata.MessageConst;
-
 import java.util.ArrayList;
+
+import com.example.bot.staticdata.MessageConst;
 
 public class Village {
 
@@ -93,7 +93,8 @@ public class Village {
   // 持ってなかったらnullを返却
   public String getMemberRole(String userId) {
     return roleList.stream()
-        .filter(dao -> userId.equals(dao.getUserId())).findFirst().orElse(new InsiderRole()).getRole();
+        .filter(dao -> userId.equals(dao.getUserId())).findFirst().orElse(new InsiderRole())
+        .getRole();
   }
 
   public String getMessageOwner() {
