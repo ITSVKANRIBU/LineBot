@@ -80,7 +80,9 @@ public class EchoApplication {
 
             VillageList.get(i).setInsiderNum(insiderNum);
             message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number
-                + "人』に設定しました。皆さんに村番号を伝えてください。";
+                + "人』に設定しました。"
+                + "\n皆さんに村番号を伝えてください。"
+                + "\n配布状況を確認したい場合は村番号を入力してください。";
             break;
           }
         }
