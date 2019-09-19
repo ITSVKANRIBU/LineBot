@@ -19,6 +19,7 @@ package com.example.bot.spring.echo;
 import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
+
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
@@ -28,6 +29,7 @@ import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 
 import java.util.Random;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 White
+ * Copyright 2016 LINE Corporation
  *
  * LINE Corporation licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -17,6 +17,7 @@
 package com.example.bot.spring.entity;
 
 import com.example.bot.staticdata.MessageConst;
+
 import java.util.ArrayList;
 
 public class Village {
@@ -97,8 +98,8 @@ public class Village {
 
   public String getMessageOwner() {
 
-    return villageNum + "村　：" +
-        roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
+    return villageNum + "村　："
+        + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
 
   }
 
