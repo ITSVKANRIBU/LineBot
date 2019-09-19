@@ -16,14 +16,8 @@
 
 package com.example.bot.spring.echo;
 
-import static com.example.bot.staticdata.Message.*;
-
-import java.util.Random;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
 import com.example.bot.spring.entity.Village;
+import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
@@ -32,6 +26,10 @@ import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+
+import java.util.Random;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @LineMessageHandler
@@ -59,7 +57,7 @@ public class EchoApplication {
   }
 
   private String getMessage(String userId, String userMessage) {
-    String message = DEFAILT_MESSAGE;
+    String message = MessageConst.DEFAILT_MESSAGE;
 
     Random random = new Random();
 
@@ -96,7 +94,7 @@ public class EchoApplication {
 
         VillageList.addVillage(newVillage);
 
-        message = villageNum + "村 を新しく作成しました。\n" + OWNER_ODAIMESSAGE;
+        message = villageNum + "村 を新しく作成しました。\n" + MessageConst.OWNER_ODAIMESSAGE;
 
       } else {
         for (int i = VillageList.villageList.size() - 1; i >= 0; i--) {
@@ -104,7 +102,7 @@ public class EchoApplication {
               && userId.contentEquals(VillageList.get(i).getOwnerId())) {
             VillageList.get(i).setOdai(message);
             message = VillageList.get(i).getVillageNum() + "村 のお題を『" + message + "』に設定しました。\n"
-                + OWNER_NUMSETMESSAGE;
+                + MessageConst.OWNER_NUMSETMESSAGE;
             break;
           }
         }
@@ -116,7 +114,7 @@ public class EchoApplication {
   }
 
   private String getMessageVillageNum(String userId, int number) {
-    String message = DEFAILT_MESSAGE;
+    String message = MessageConst.DEFAILT_MESSAGE;
 
     Village village = VillageList.getVillage(number);
 

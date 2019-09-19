@@ -1,7 +1,22 @@
+/*
+ * Copyright 2019 White
+ *
+ * LINE Corporation licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
 package com.example.bot.spring.entity;
 
-import static com.example.bot.staticdata.Message.*;
-
+import com.example.bot.staticdata.MessageConst;
 import java.util.ArrayList;
 
 public class Village {
@@ -76,13 +91,14 @@ public class Village {
 
   // 持ってなかったらnullを返却
   public String getMemberRole(String userId) {
-    return roleList.stream().filter(dao -> userId.equals(dao.getUserId())).findFirst().orElse(new InsiderRole())
-        .getRole();
+    return roleList.stream()
+        .filter(dao -> userId.equals(dao.getUserId())).findFirst().orElse(new InsiderRole()).getRole();
   }
 
   public String getMessageOwner() {
 
-    return villageNum + "村　：" + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
+    return villageNum + "村　：" +
+        roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
 
   }
 
@@ -91,12 +107,12 @@ public class Village {
     InsiderRole role = roleList.stream().filter(dao -> userId.equals(dao.getUserId())).findFirst()
         .orElse(new InsiderRole());
 
-    String message = DEFAILT_MESSAGE;
+    String message = MessageConst.DEFAILT_MESSAGE;
 
-    if (INSIDER_ROLE.equals(role.getRole())) {
-      message = "あなたの役職は" + INSIDER_ROLE + "です。お題は『" + odai + "』です。";
-    } else if (VILLAGE_ROLE.equals(role.getRole())) {
-      message = "あなたの役職は" + VILLAGE_ROLE + "です。";
+    if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
+      message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
+    } else if (MessageConst.VILLAGE_ROLE.equals(role.getRole())) {
+      message = "あなたの役職は" + MessageConst.VILLAGE_ROLE + "です。";
     }
 
     return message;
