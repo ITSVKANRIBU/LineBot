@@ -1,5 +1,6 @@
 <FindBugsFilter>
   <Match>
+    <Class name="com.foobar.MyClass" />
     <Bug pattern="OBL_UNSATISFIED_OBLIGATION" />
   </Match>
 </FindBugsFilter>
