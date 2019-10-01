@@ -28,5 +28,6 @@ public class MessageConst {
       + "村番号を入力してください。";
   public static final String INSIDER_ROLE = "インサイダー";
   public static final String VILLAGE_ROLE = "村人";
+  public static final String GAMEMASTER_ROLE = "ＧＭ";
 
 }

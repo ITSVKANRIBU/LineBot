@@ -92,6 +92,21 @@ public class EchoApplication {
       if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())) {
         int villageNum = random.nextInt(8999) + 1000;
 
+        // 重複しない番号取得（防止のため、100回まで）
+        for (int i = 0; i < 100; i++) {
+          boolean breakFlg = true;
+          for (Village dao : VillageList.getVillageList()) {
+            if (villageNum == dao.getVillageNum()) {
+              villageNum = random.nextInt(8999) + 1000;
+              breakFlg = false;
+              break;
+            }
+          }
+          if (breakFlg) {
+            break;
+          }
+        }
+
         Village newVillage = new Village();
         newVillage.setOwnerId(userId);
         newVillage.setVillageNum(villageNum);
@@ -103,7 +118,7 @@ public class EchoApplication {
       } else {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (null == VillageList.get(i).getOdai()
-              && userId.contentEquals(VillageList.get(i).getOwnerId())) {
+              && userId.equals(VillageList.get(i).getOwnerId())) {
             VillageList.get(i).setOdai(userMessage);
             message = VillageList.get(i).getVillageNum() + "村 のお題を『" + userMessage + "』に設定しました。\n"
                 + MessageConst.OWNER_NUMSETMESSAGE;
@@ -132,7 +147,7 @@ public class EchoApplication {
       String memberRole = village.getMemberRole(userId);
       if (memberRole == null) {
 
-        if(village.getRoleList().size() >= village.getVillageSize()) {
+        if (village.getRoleList().size() >= village.getVillageSize()) {
           message = "村がいっぱいです。";
           return message;
         }
