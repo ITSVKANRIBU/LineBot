@@ -28,6 +28,7 @@ public class Village {
   private ArrayList<InsiderRole> roleList;
 
   private int insiderNum;
+  private int gmNum;
   private int villageSize;
 
   public Village() {
@@ -82,6 +83,14 @@ public class Village {
     this.insiderNum = insiderNum;
   }
 
+  public int getGmNum() {
+    return gmNum;
+  }
+
+  public void setGmNum(int gmNum) {
+    this.gmNum = gmNum;
+  }
+
   public int getVillageSize() {
     return villageSize;
   }
@@ -115,6 +124,9 @@ public class Village {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
     } else if (MessageConst.VILLAGE_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.VILLAGE_ROLE + "です。";
+    } else if (MessageConst.GAMEMASTER_ROLE.equals(role.getRole())) {
+      message = "あなたの役職は" + MessageConst.GAMEMASTER_ROLE + "です。\n"
+          + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
     }
 
     return message;

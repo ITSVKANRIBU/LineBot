@@ -75,21 +75,38 @@ public class EchoApplication {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (0 == VillageList.get(i).getVillageSize()
               && userId.equals(VillageList.get(i).getOwnerId())) {
-            VillageList.get(i).setVillageSize(number);
-            int insiderNum = random.nextInt(number) + 1;
+            if (number <= 1) {
+              message = MessageConst.ERR_NUMSETMESSAGE;
+              break;
+            }
 
+            // 村人数設定
+            VillageList.get(i).setVillageSize(number);
+
+            // インサイダー位置設定
+            int insiderNum = random.nextInt(number) + 1;
             VillageList.get(i).setInsiderNum(insiderNum);
+            if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
+              int gmNum = random.nextInt(number) + 1;
+              while (gmNum == insiderNum) {
+                gmNum = random.nextInt(number) + 1;
+              }
+              VillageList.get(i).setGmNum(gmNum);
+            }
+
             message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number
                 + "人』に設定しました。"
                 + "\n皆さんに村番号を伝えてください。"
                 + "\n配布状況を確認したい場合は村番号を入力してください。";
+
             break;
           }
         }
       }
 
     } catch (Exception e) {
-      if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())) {
+      if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())
+          || "神".equals(userMessage.trim())) {
         int villageNum = random.nextInt(8999) + 1000;
 
         // 重複しない番号取得（防止のため、100回まで）
@@ -111,6 +128,10 @@ public class EchoApplication {
         newVillage.setOwnerId(userId);
         newVillage.setVillageNum(villageNum);
 
+        if ("神".equals(userMessage.trim())) {
+          newVillage.setGmNum(MessageConst.DEFAULT_GMNUM);
+        }
+
         VillageList.addVillage(newVillage);
 
         message = villageNum + "村 を新しく作成しました。\n" + MessageConst.OWNER_ODAIMESSAGE;
@@ -120,8 +141,12 @@ public class EchoApplication {
           if (null == VillageList.get(i).getOdai()
               && userId.equals(VillageList.get(i).getOwnerId())) {
             VillageList.get(i).setOdai(userMessage);
-            message = VillageList.get(i).getVillageNum() + "村 のお題を『" + userMessage + "』に設定しました。\n"
-                + MessageConst.OWNER_NUMSETMESSAGE;
+            message = VillageList.get(i).getVillageNum() + "村 のお題を『" + userMessage + "』に設定しました。\n";
+            if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
+              message = message + MessageConst.GOD_NUMSETMESSAGE;
+            } else {
+              message = message + MessageConst.OWNER_NUMSETMESSAGE;
+            }
             break;
           }
         }
@@ -155,7 +180,9 @@ public class EchoApplication {
         village.addRoleList(
             village.getInsiderNum() == village.getRoleList().size() + 1
                 ? MessageConst.INSIDER_ROLE
-                : MessageConst.VILLAGE_ROLE,
+                : village.getGmNum() == village.getRoleList().size() + 1
+                    ? MessageConst.GAMEMASTER_ROLE
+                    : MessageConst.VILLAGE_ROLE,
             userId);
 
         message = village.getRoleMessage(userId);
