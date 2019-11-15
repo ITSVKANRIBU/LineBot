@@ -16,8 +16,12 @@
 
 package com.example.bot.spring.echo;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -25,23 +29,33 @@ import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
 
+import com.linecorp.bot.client.LineMessagingClient;
+import com.linecorp.bot.model.ReplyMessage;
+import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
 import com.linecorp.bot.model.message.Message;
+import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+
+import lombok.NonNull;
 
 @SpringBootApplication
 @LineMessageHandler
 public class EchoApplication {
+  @Autowired
+  private LineMessagingClient lineMessagingClient;
+
   public static void main(String[] args) {
     SpringApplication.run(EchoApplication.class, args);
   }
 
   @EventMapping
-  public Message handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
+  public void handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
     System.out.println("event: " + event);
 
     String userId = event.getSource().getUserId();
@@ -50,12 +64,42 @@ public class EchoApplication {
     // messageの取得
     String message = getMessage(userId, userMessage);
 
-    return new TextMessage(message);
+    if (MessageConst.DEFAILT_MESSAGE.equals(message)) {
+      replyDefoltMessage(event.getReplyToken());
+    } else {
+      reply(event.getReplyToken(), Collections.singletonList(new TextMessage(message)));
+    }
   }
 
   @EventMapping
   public void handleDefaultMessageEvent(Event event) {
     System.out.println("event: " + event);
+  }
+
+  private void replyDefoltMessage(@NonNull String replyToken) {
+    ConfirmTemplate confirmTemplate = new ConfirmTemplate("村の作成をしますか？",
+        new MessageAction("GM", "お題"),
+        new MessageAction("神", "神"));
+
+    try {
+      lineMessagingClient
+          .replyMessage(new ReplyMessage(replyToken,
+              new TemplateMessage("インサイダーゲーム応答メッセージ！", confirmTemplate)))
+          .get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  private void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
+    try {
+      lineMessagingClient
+          .replyMessage(new ReplyMessage(replyToken, messages))
+          .get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
   }
 
   private String getMessage(String userId, String userMessage) {
