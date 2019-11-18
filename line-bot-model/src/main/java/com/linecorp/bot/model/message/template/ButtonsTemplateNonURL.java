@@ -78,13 +78,6 @@ public class ButtonsTemplateNonURL implements Template {
   private final String imageBackgroundColor;
 
   /**
-   * Title.
-   *
-   * <p>Max 40 characters.
-   */
-  private final String title;
-
-  /**
    * Message text.
    *
    * <ul>
@@ -113,10 +106,8 @@ public class ButtonsTemplateNonURL implements Template {
    */
   @JsonCreator
   public ButtonsTemplateNonURL(
-      @JsonProperty("title") String title,
       @JsonProperty("text") String text,
       @JsonProperty("actions") List<Action> actions) {
-    this.title = title;
     this.text = text;
     this.defaultAction = null;
     this.actions = actions != null ? actions : Collections.emptyList();
