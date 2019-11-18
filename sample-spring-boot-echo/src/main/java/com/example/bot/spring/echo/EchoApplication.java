@@ -38,6 +38,7 @@ import com.linecorp.bot.model.event.message.TextMessageContent;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.template.ButtonsTemplate;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
@@ -125,26 +126,35 @@ public class EchoApplication {
 
             // インサイダー位置設定
             int insiderNum = random.nextInt(number) + 1;
+            String roleUrl = MessageConst.GM_URL;
             VillageList.get(i).setInsiderNum(insiderNum);
             if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
+              roleUrl = MessageConst.GOD_URL;
               int gmNum = random.nextInt(number) + 1;
               while (gmNum == insiderNum) {
                 gmNum = random.nextInt(number) + 1;
               }
               VillageList.get(i).setGmNum(gmNum);
             }
-
+            String villageNumStr = String.valueOf(VillageList.get(i).getVillageNum());
             String message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number
                 + "人』に設定しました。"
-                + "\n皆さんに村番号を伝えてください。"
-                + "\n配布状況を確認したい場合は村番号を入力してください。";
-            messages = Collections.singletonList(new TextMessage(message));
+                + "\n皆さんに村番号を伝えてください。";
+
+            ButtonsTemplate buttons = new ButtonsTemplate(
+                roleUrl,
+                villageNumStr + "村", message, Collections.singletonList(
+                    new MessageAction("確認", villageNumStr)));
+
+            messages = Collections.singletonList(
+                new TemplateMessage(message + "配布状況の確認は村番号を入力してください。", buttons));
+
             break;
           }
         }
       }
 
-    } catch (Exception e) {
+    } catch (Throwable e) {
       if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())
           || "神".equals(userMessage.trim())) {
         int villageNum = random.nextInt(8999) + 1000;
