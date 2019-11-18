@@ -35,4 +35,14 @@ public class MessageConst {
   public static final String GAMEMASTER_ROLE = "ＧＭ";
   public static final int DEFAULT_GMNUM = 999;
 
+  //URL
+  public static final String GOD_URL = "https://raw.githubusercontent.com/"
+      + "ITSVKANRIBU/LineBot/3.0/Image/GOD.png";
+  public static final String GM_URL = "https://raw.githubusercontent.com/"
+      + "ITSVKANRIBU/LineBot/3.0/Image/GM.png";
+  public static final String INSIDER_URL = "https://raw.githubusercontent.com/"
+      + "ITSVKANRIBU/LineBot/3.0/Image/INSIDER.png";
+  public static final String VILLAGERS_URL = "https://raw.githubusercontent.com/"
+      + "ITSVKANRIBU/LineBot/3.0/Image/VILLAGERS.png";
+
 }

@@ -37,7 +37,7 @@ import lombok.Value;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @JsonTypeName("buttons")
-public class ButtonsTemplate implements Template {
+public class ButtonsTemplateNonURL implements Template {
   /**
    * Image URL.
    *
@@ -50,20 +50,7 @@ public class ButtonsTemplate implements Template {
    * <li>Max: 1 MB</li>
    * </ul>
    */
-  private final String thumbnailImageUrl;
 
-  /**
-   * Aspect ratio of the image.
-   *
-   * <p>Specify one of the following values:</p>
-   *
-   * <ul>
-   * <li>rectangle: 1.51:1</li>
-   * <li>square: 1:1</li>
-   * </ul>
-   *
-   * <p>The default value is {@code rectangle}.
-   */
   private final String imageAspectRatio;
 
   /**
@@ -125,12 +112,10 @@ public class ButtonsTemplate implements Template {
    * @see #builder()
    */
   @JsonCreator
-  public ButtonsTemplate(
-      @JsonProperty("thumbnailImageUrl") String thumbnailImageUrl,
+  public ButtonsTemplateNonURL(
       @JsonProperty("title") String title,
       @JsonProperty("text") String text,
       @JsonProperty("actions") List<Action> actions) {
-    this.thumbnailImageUrl = thumbnailImageUrl;
     this.title = title;
     this.text = text;
     this.defaultAction = null;
