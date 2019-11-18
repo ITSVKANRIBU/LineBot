@@ -137,7 +137,7 @@ public class EchoApplication {
               VillageList.get(i).setGmNum(gmNum);
             }
             String villageNumStr = String.valueOf(VillageList.get(i).getVillageNum());
-            String message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number
+            String message = "人数を『" + number
                 + "人』に設定しました。"
                 + "\n皆さんに村番号を伝えてください。";
 

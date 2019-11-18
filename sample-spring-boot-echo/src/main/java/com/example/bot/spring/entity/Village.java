@@ -22,8 +22,11 @@ import java.util.List;
 
 import com.example.bot.staticdata.MessageConst;
 
+import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.message.Message;
+import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 
 public class Village {
 
@@ -116,7 +119,11 @@ public class Village {
     String message = villageNum + "村："
         + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
 
-    return Collections.singletonList(new TextMessage(message));
+    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+        message, Collections.singletonList(
+            new MessageAction("再確認", String.valueOf(villageNum))));
+
+    return Collections.singletonList(new TemplateMessage(message, buttons));
 
   }
 
@@ -125,21 +132,31 @@ public class Village {
     InsiderRole role = roleList.stream().filter(dao -> userId.equals(dao.getUserId())).findFirst()
         .orElse(new InsiderRole());
 
+    List<Message> messages = null;
     String message = null;
 
     if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
+      messages = Collections.singletonList(new TextMessage(message));
 
     } else if (MessageConst.VILLAGE_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.VILLAGE_ROLE + "です。";
+      messages = Collections.singletonList(new TextMessage(message));
+
     } else if (MessageConst.GAMEMASTER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.GAMEMASTER_ROLE + "です。\n"
           + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
+
+      ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+          message, Collections.singletonList(
+              new MessageAction("再確認", String.valueOf(villageNum))));
+      messages = Collections.singletonList(new TemplateMessage(message, buttons));
     } else {
       message = MessageConst.DEFAILT_MESSAGE;
+      messages = Collections.singletonList(new TextMessage(message));
     }
 
-    return Collections.singletonList(new TextMessage(message));
+    return messages;
   }
 
 }
