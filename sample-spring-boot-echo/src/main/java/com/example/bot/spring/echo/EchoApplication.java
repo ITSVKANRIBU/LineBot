@@ -61,14 +61,8 @@ public class EchoApplication {
     String userId = event.getSource().getUserId();
     String userMessage = event.getMessage().getText();
 
-    // messageの取得
-    String message = getMessage(userId, userMessage);
-
-    if (MessageConst.DEFAILT_MESSAGE.equals(message)) {
-      replyDefoltMessage(event.getReplyToken());
-    } else {
-      reply(event.getReplyToken(), Collections.singletonList(new TextMessage(message)));
-    }
+    // messageの送信
+    replyMessage(event.getReplyToken(), userId, userMessage);
   }
 
   @EventMapping
@@ -84,7 +78,7 @@ public class EchoApplication {
     try {
       lineMessagingClient
           .replyMessage(new ReplyMessage(replyToken,
-              new TemplateMessage("インサイダーゲーム応答メッセージ！", confirmTemplate)))
+              new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)))
           .get();
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
@@ -102,8 +96,9 @@ public class EchoApplication {
     }
   }
 
-  private String getMessage(String userId, String userMessage) {
-    String message = MessageConst.DEFAILT_MESSAGE;
+  private void replyMessage(String replyToken, String userId, String userMessage) {
+
+    List<Message> messages = null;
 
     Random random = new Random();
 
@@ -112,15 +107,16 @@ public class EchoApplication {
 
       if (number > 100) {
         // 村番号の場合
-        return getMessageVillageNum(userId, number);
-      } else {
+        replyMessageVillageNum(replyToken, userId, number);
+        return;
 
+      } else {
         // 人数が0のものを探す
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (0 == VillageList.get(i).getVillageSize()
               && userId.equals(VillageList.get(i).getOwnerId())) {
             if (number <= 1) {
-              message = MessageConst.ERR_NUMSETMESSAGE;
+              messages = Collections.singletonList(new TextMessage(MessageConst.ERR_NUMSETMESSAGE));
               break;
             }
 
@@ -138,11 +134,11 @@ public class EchoApplication {
               VillageList.get(i).setGmNum(gmNum);
             }
 
-            message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number
+            String message = VillageList.get(i).getVillageNum() + "村 の人数を『" + number
                 + "人』に設定しました。"
                 + "\n皆さんに村番号を伝えてください。"
                 + "\n配布状況を確認したい場合は村番号を入力してください。";
-
+            messages = Collections.singletonList(new TextMessage(message));
             break;
           }
         }
@@ -178,37 +174,43 @@ public class EchoApplication {
 
         VillageList.addVillage(newVillage);
 
-        message = villageNum + "村 を新しく作成しました。\n" + MessageConst.OWNER_ODAIMESSAGE;
+        String message = villageNum + "村 を新しく作成しました。\n" + MessageConst.OWNER_ODAIMESSAGE;
+        messages = Collections.singletonList(new TextMessage(message));
 
       } else {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (null == VillageList.get(i).getOdai()
               && userId.equals(VillageList.get(i).getOwnerId())) {
             VillageList.get(i).setOdai(userMessage);
-            message = VillageList.get(i).getVillageNum() + "村 のお題を『" + userMessage + "』に設定しました。\n";
+            String message = VillageList.get(i).getVillageNum() + "村 のお題を『" + userMessage + "』に設定しました。\n";
             if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
               message = message + MessageConst.GOD_NUMSETMESSAGE;
             } else {
               message = message + MessageConst.OWNER_NUMSETMESSAGE;
             }
+            messages = Collections.singletonList(new TextMessage(message));
             break;
           }
         }
       }
 
     }
-
-    return message;
+    // メッセージの設定がない場合
+    if (null == messages) {
+      replyDefoltMessage(replyToken);
+    } else {
+      reply(replyToken, messages);
+    }
   }
 
-  private String getMessageVillageNum(String userId, int number) {
-    String message = MessageConst.DEFAILT_MESSAGE;
+  private void replyMessageVillageNum(String replyToken, String userId, int number) {
+    List<Message> messages = null;
 
     Village village = VillageList.getVillage(number);
 
     if (userId.equals(village.getOwnerId())) {
       // オーナーの場合
-      message = village.getMessageOwner();
+      messages = village.getMessageOwner();
 
     } else {
 
@@ -217,27 +219,26 @@ public class EchoApplication {
       if (memberRole == null) {
 
         if (village.getRoleList().size() >= village.getVillageSize()) {
-          message = "村がいっぱいです。";
-          return message;
+          messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
+        } else {
+          // 配役の設定
+          village.addRoleList(
+              village.getInsiderNum() == village.getRoleList().size() + 1
+                  ? MessageConst.INSIDER_ROLE
+                  : village.getGmNum() == village.getRoleList().size() + 1
+                      ? MessageConst.GAMEMASTER_ROLE
+                      : MessageConst.VILLAGE_ROLE,
+              userId);
+
+          messages = village.getRoleMessage(userId);
+
         }
-        // 配役の設定
-        village.addRoleList(
-            village.getInsiderNum() == village.getRoleList().size() + 1
-                ? MessageConst.INSIDER_ROLE
-                : village.getGmNum() == village.getRoleList().size() + 1
-                    ? MessageConst.GAMEMASTER_ROLE
-                    : MessageConst.VILLAGE_ROLE,
-            userId);
-
-        message = village.getRoleMessage(userId);
-
       } else {
-        message = village.getRoleMessage(userId);
+        messages = village.getRoleMessage(userId);
       }
 
     }
-
-    return message;
+    reply(replyToken, messages);
   }
 
 }

@@ -17,8 +17,13 @@
 package com.example.bot.spring.entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.example.bot.staticdata.MessageConst;
+
+import com.linecorp.bot.model.message.Message;
+import com.linecorp.bot.model.message.TextMessage;
 
 public class Village {
 
@@ -106,30 +111,35 @@ public class Village {
         .getRole();
   }
 
-  public String getMessageOwner() {
+  public List<Message> getMessageOwner() {
 
-    return villageNum + "村　："
+    String message = villageNum + "村："
         + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
+
+    return Collections.singletonList(new TextMessage(message));
 
   }
 
-  public String getRoleMessage(String userId) {
+  public List<Message> getRoleMessage(String userId) {
 
     InsiderRole role = roleList.stream().filter(dao -> userId.equals(dao.getUserId())).findFirst()
         .orElse(new InsiderRole());
 
-    String message = MessageConst.DEFAILT_MESSAGE;
+    String message = null;
 
     if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
+
     } else if (MessageConst.VILLAGE_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.VILLAGE_ROLE + "です。";
     } else if (MessageConst.GAMEMASTER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.GAMEMASTER_ROLE + "です。\n"
           + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
+    } else {
+      message = MessageConst.DEFAILT_MESSAGE;
     }
 
-    return message;
+    return Collections.singletonList(new TextMessage(message));
   }
 
 }

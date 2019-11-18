@@ -3,14 +3,11 @@ target/
 build/
 out/
 
-# gradle
-/.gradle/
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.ear
 
@@ -20,6 +17,7 @@ hs_err_pid*
 # IntelliJ
 .idea
 *.iml
+*.class
 *.iws
 *.ipr
 *.ids
@@ -52,4 +50,13 @@ local.properties
 .cproject
 
 # PDT-specific
+
 .buildpath
+.gitignore
+*.json
+*.class
+*.kt
+*.bin
+*.script
+*.yaml
+*.prefs
