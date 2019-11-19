@@ -68,7 +68,7 @@ public class EchoApplication {
   }
 
   @EventMapping
-  protected void handlePostbackEvent(PostbackEvent event) {
+  public void handlePostbackEvent(PostbackEvent event) {
     System.out.println("event: " + event);
 
     String userId = event.getSource().getUserId();
