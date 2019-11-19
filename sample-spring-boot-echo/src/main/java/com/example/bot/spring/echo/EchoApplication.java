@@ -34,6 +34,7 @@ import com.linecorp.bot.model.ReplyMessage;
 import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
+import com.linecorp.bot.model.event.PostbackEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
@@ -64,6 +65,17 @@ public class EchoApplication {
 
     // messageの送信
     replyMessage(event.getReplyToken(), userId, userMessage);
+  }
+
+  @EventMapping
+  protected void handlePostbackEvent(PostbackEvent event) {
+    System.out.println("event: " + event);
+
+    String userId = event.getSource().getUserId();
+    String data = event.getPostbackContent().getData();
+    Village village = VillageList.getVillage(Integer.parseInt(data));
+
+    reply(event.getReplyToken(), village.getStatusMessage(userId));
   }
 
   @EventMapping

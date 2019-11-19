@@ -23,9 +23,11 @@ import java.util.List;
 import com.example.bot.staticdata.MessageConst;
 
 import com.linecorp.bot.model.action.MessageAction;
+import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.template.ButtonsTemplateNonTitle;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 
 public class Village {
@@ -116,14 +118,22 @@ public class Village {
 
   public List<Message> getMessageOwner() {
 
+    List<Message> messages = null;
+
     String message = villageNum + "村："
         + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
 
-    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-        message, Collections.singletonList(
-            new MessageAction("再確認", String.valueOf(villageNum))));
+    if (message.length() <= 160) {
+      ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+          message, Collections.singletonList(
+              new MessageAction("再確認", String.valueOf(villageNum))));
 
-    return Collections.singletonList(new TemplateMessage(message, buttons));
+      messages = Collections.singletonList(new TemplateMessage(message, buttons));
+    } else {
+      messages = Collections.singletonList(new TextMessage(message));
+
+    }
+    return messages;
 
   }
 
@@ -137,26 +147,64 @@ public class Village {
 
     if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
-      messages = Collections.singletonList(new TextMessage(message));
+      if (message.length() > 60) {
+        messages = Collections.singletonList(new TextMessage(message));
+        messages.add(getStatusMessage(userId).get(0));
+      } else {
+        ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
+            MessageConst.INSIDER_URL,
+            message, Collections.singletonList(
+                new PostbackAction("入室状況確認", String.valueOf(villageNum))));
+        messages = Collections.singletonList(new TemplateMessage(message, buttons));
+      }
 
     } else if (MessageConst.VILLAGE_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.VILLAGE_ROLE + "です。";
-      messages = Collections.singletonList(new TextMessage(message));
+      ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
+          MessageConst.VILLAGERS_URL,
+          message, Collections.singletonList(
+              new PostbackAction("入室状況確認", String.valueOf(villageNum))));
+      messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
     } else if (MessageConst.GAMEMASTER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.GAMEMASTER_ROLE + "です。\n"
           + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
 
-      ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-          message, Collections.singletonList(
-              new MessageAction("再確認", String.valueOf(villageNum))));
-      messages = Collections.singletonList(new TemplateMessage(message, buttons));
+      if (message.length() <= 60) {
+        ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
+            MessageConst.GM_URL,
+            message, Collections.singletonList(
+                new PostbackAction("入室状況確認", String.valueOf(villageNum))));
+        messages = Collections.singletonList(new TemplateMessage(message, buttons));
+
+      } else if (message.length() <= 160) {
+        ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+            message, Collections.singletonList(
+                new PostbackAction("入室状況確認", String.valueOf(villageNum))));
+        messages = Collections.singletonList(new TemplateMessage(message, buttons));
+      } else {
+        //文字数が長い場合
+        messages = Collections.singletonList(new TextMessage(message));
+        messages.add(getStatusMessage(userId).get(0));
+      }
     } else {
-      message = MessageConst.DEFAILT_MESSAGE;
-      messages = Collections.singletonList(new TextMessage(message));
+      messages = Collections.singletonList(new TextMessage(MessageConst.DEFAILT_MESSAGE));
     }
 
     return messages;
+  }
+
+  public List<Message> getStatusMessage(String userId) {
+    int inNum = 0;
+    for (int i = 0; i < roleList.size(); i++) {
+      if (userId.equals(roleList.get(i).getUserId())) {
+        inNum = i + 1;
+      }
+    }
+    String message = "あなたは" + inNum + "番目の参加者です。"
+        + "\n　入室状況：" + roleList.size() + "/" + villageSize + "人";
+
+    return Collections.singletonList(new TextMessage(message));
   }
 
 }
