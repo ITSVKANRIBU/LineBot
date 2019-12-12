@@ -34,7 +34,7 @@ public class LineSignatureValidatorTest {
         String httpRequestBody = "{}";
         assertThat(lineSignatureValidator
                            .validateSignature(httpRequestBody.getBytes(StandardCharsets.UTF_8),
-                                              "3q8QXTAGaey18yL8FWTqdVlbMr6hcuNvM4tefa0o9nA="))
+                                             "3q8QXTAGaey18yL8FWTqdVlbMr6hcuNvM4tefa0o9nA="))
                 .isTrue();
         assertThat(lineSignatureValidator
                            .validateSignature(httpRequestBody.getBytes(StandardCharsets.UTF_8),

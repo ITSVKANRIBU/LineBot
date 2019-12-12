@@ -3,4 +3,8 @@
     <Class name="com.foobar.MyClass" />
     <Bug pattern="OBL_UNSATISFIED_OBLIGATION" />
   </Match>
+  <Match>
+    <Class name="com.linecorp.bot.spring.boot.dao.ConnectionManager" />
+    <Bug pattern="DMI_CONSTANT_DB_PASSWORD" />
+  </Match>
 </FindBugsFilter>
