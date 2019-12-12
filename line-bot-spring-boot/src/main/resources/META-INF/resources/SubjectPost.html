@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<!-- Original CSS -->
+		<link href="./contents/css/ress.css" rel="stylesheet" type="text/css">
+		<!-- リセット用、スタイルが崩れないようにするため -->
+		<link href="./contents/css/main.css" rel="stylesheet" type="text/css">
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" type="text/css" href="./bootstrap4/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<!-- Optional JavaScript -->
+		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+		<script type="text/javascript" src="./bootstrap4/js/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+		<script type="text/javascript" src="./bootstrap4/js/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+		<script type="text/javascript" src="./bootstrap4/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+		<!-- Orignal JavaScript UOC部分 -->
+		<script src="./contents/js/main.js"></script>
+		<title>ログイン画面</title>
+	</head>
+	<body>
+		<div id="form-main">
+			<div id="form-div">
+			<form class="form" id="form1" action="/test">
+				<p class="subject">
+					<input name="subject" type="text" class="feedback-input" id="subject" placeholder="お題（必須）" required maxlength="30" autocomplete="off"/>
+				</p>
+				<p class="name">
+					<input name="name" type="text" class="feedback-input" placeholder="投稿者（任意）" id="name" maxlength="20" />
+				</p>
+				<p class="difficulty">
+					<select name="difficulty" id="difficulty" class="feedback-input" >
+						<option value="" disabled selected class="placeholder">難易度（任意）</option>
+						<option value="1">簡単</option>
+						<option value="5">普通</option>
+						<option value="10">難しい</option>
+					</select>
+				</p>
+				<p class="text">
+					<textarea name="comment" class="feedback-input" id="comment" placeholder="コメント（任意）" maxlength="200" autocomplete="off"></textarea>
+				</p>
+				<div class="submit">
+					<input type="submit" value="登録" id="button-blue"/>
+				<div class="ease">
+				</div>
+				</div>
+			</form>
+			</div>
+		</div>
+	</body>
+</html>

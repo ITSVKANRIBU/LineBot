@@ -23,30 +23,37 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 
 import com.linecorp.bot.spring.boot.interceptor.LineBotServerInterceptor;
 import com.linecorp.bot.spring.boot.support.LineBotServerArgumentProcessor;
 
 @SuppressWarnings("deprecation"
-        /* WebMvcConfigurerAdapter is deprecated in 5.x. TODO: Migrate to WebMvcConfigurer */)
+/* WebMvcConfigurerAdapter is deprecated in 5.x. TODO: Migrate to WebMvcConfigurer */)
 @Configuration
 @Import(LineBotWebMvcBeans.class)
 @ConditionalOnWebApplication
 public class LineBotWebMvcConfigurer
-        extends org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter {
-    @Autowired
-    private LineBotServerInterceptor lineBotServerInterceptor;
-    @Autowired
-    private LineBotServerArgumentProcessor lineBotServerArgumentProcessor;
+    extends org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter {
+  @Autowired
+  private LineBotServerInterceptor lineBotServerInterceptor;
+  @Autowired
+  private LineBotServerArgumentProcessor lineBotServerArgumentProcessor;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(lineBotServerInterceptor);
-    }
+  @Override
+  public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(lineBotServerInterceptor);
+  }
 
-    @Override
-    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-        argumentResolvers.add(lineBotServerArgumentProcessor);
-    }
+  @Override
+  public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+    argumentResolvers.add(lineBotServerArgumentProcessor);
+  }
+
+  //修正箇所
+  @Override
+  public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
+    configurer.enable();
+  }
 }

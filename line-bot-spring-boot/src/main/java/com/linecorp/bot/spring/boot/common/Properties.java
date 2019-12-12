@@ -13,14 +13,12 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
+package com.linecorp.bot.spring.boot.common;
 
-dependencies {
-    compile project(':line-bot-api-client')
-    compile project(':line-bot-model')
-    compile project(':line-bot-servlet')
-    compile 'org.springframework.boot:spring-boot-autoconfigure'
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
+public class Properties {
 
-    optional 'javax.validation:validation-api'
+  public static final String DB_URL = "jdbc:postgresql://localhost:5432/postgres";
+  public static final String DB_USER = "postgres";
+  public static final String DB_PASS = "root";
+
 }
