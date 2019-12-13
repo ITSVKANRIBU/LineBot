@@ -188,7 +188,7 @@ table {
   margin: 0 auto;
   padding: 0;
   width: 650px;
-  table-layout: fixed;
+  table-layout: auto;
   color: #000;
 }
 
@@ -208,6 +208,7 @@ table td {
   padding: 1em 10px 1em 1em;
   border-right: 1px solid #bbb;
 }
+
 table th:last-child,
 table td:last-child{
     border: none;
@@ -226,7 +227,7 @@ tbody th {
 @media screen and (max-width: 600px) {
   table {
     border: 0;
-    width:70%
+    width:80%
   }
   table th{
     display: block;
@@ -260,6 +261,9 @@ tbody th {
     position: relative;
     padding: .625em .625em .625em 4em;
     border-right: none;
+  }
+   table td.non {
+    display: none;
   }
   
   table td::before {
