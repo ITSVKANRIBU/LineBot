@@ -64,6 +64,28 @@ public class ProblemDao {
   }
 
   /**
+   * 更新.
+   */
+  public int updateProblem(Problem problem) throws SQLException {
+
+    // 戻り値 自動採番されたコード
+    int count = 0;
+
+    String sql = "UPDATE PROBLEM SET THEME = ?, NAME = ?, DIFFICULTY = ? ,OTHER = ? WHERE ID = ?";
+
+    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+      stmt.setString(1, problem.getTheme());
+      stmt.setString(2, problem.getName());
+      stmt.setInt(3, problem.getDifficulty());
+      stmt.setString(4, problem.getOther());
+      stmt.setInt(5, problem.getId());
+      count = stmt.executeUpdate();
+    }
+    return count;
+
+  }
+
+  /**
    * ID検索 THEME検索 NAME検索.
    */
   public ArrayList<Problem> selectProblem(Problem problem) throws SQLException {
@@ -96,7 +118,6 @@ public class ProblemDao {
       }
     }
     return resultList;
-
   }
 
 }

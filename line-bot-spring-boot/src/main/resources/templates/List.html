@@ -20,7 +20,7 @@
 		<!--ソートテーブル -->
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.0/js/jquery.tablesorter.min.js"></script>
 
-		<title>インサイダーゲーム管理フォーム</title>
+		<title>インサイダーゲームお題一覧</title>
 	</head>
 	<body onload="$('#myTable').tablesorter();">
 		<div id="form-main">
@@ -32,14 +32,16 @@
 							<th>お題</th>
 							<th>作成者</th>
 							<th>難易度</th>
+							<th>コメント</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr th:each="problem : ${problemList}" >
-							<td th:text="${problem.id}"></td>
+						<tr th:each="problem : ${problemList}" th:attr="data-href=@{'/Insider?button=view&id=' + ${problem.id}}">
+							<td class="non" th:text="${problem.id}"></td>
 							<th th:text="${problem.theme}"></th>
 							<td data-label="作成者" th:text="${problem.name}"></td>
 							<td data-label="難易度" th:text="${problem.difficulty}"></td>
+							<td data-label="コメント" th:text="${problem.other}"></td>
 						</tr>
 					</tbody>
 				</table>

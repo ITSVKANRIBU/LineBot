@@ -55,14 +55,49 @@ public class InsertLogic {
   }
 
   /**
-   * 取得.
+   * 名前による取得.
    */
-  public ArrayList<Problem> getProblemList() throws SQLException {
+  public ArrayList<Problem> getProblemList(String name) throws SQLException {
     ArrayList<Problem> resultList = null;
     try (Connection con = ConnectionManager.getConnection()) {
       ProblemDao dao = new ProblemDao(con);
-      resultList = dao.selectProblem(new Problem());
+      Problem checkProblem = new Problem();
+      checkProblem.setName(name);
+      System.out.println("name =" + name);
+      resultList = dao.selectProblem(checkProblem);
     }
     return resultList;
+  }
+
+  /**
+   * 更新.
+   */
+  public void updateProblem(Problem problem) throws SQLException {
+    try (Connection con = ConnectionManager.getConnection()) {
+
+      ProblemDao dao = new ProblemDao(con);
+      dao.updateProblem(problem);
+    }
+    return;
+  }
+
+  /**
+   * 名前による取得.
+   */
+  public Problem getProblem(int id, String theme) throws SQLException {
+    Problem result = null;
+    try (Connection con = ConnectionManager.getConnection()) {
+      ProblemDao dao = new ProblemDao(con);
+      Problem checkProblem = new Problem();
+      checkProblem.setId(id);
+      checkProblem.setTheme(theme);
+
+      ArrayList<Problem> list = dao.selectProblem(checkProblem);
+
+      if (list.size() > 0) {
+        result = list.get(0);
+      }
+    }
+    return result;
   }
 }
