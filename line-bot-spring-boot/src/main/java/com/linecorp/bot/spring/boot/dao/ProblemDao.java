@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import com.linecorp.bot.spring.boot.entity.Problem;
 
@@ -30,18 +31,12 @@ public class ProblemDao {
   }
 
   /**
-   * 問題登録.
+   * 登録.
    */
   public int insertProblem(Problem problem) throws SQLException {
 
-    // 戻り値 自動採番されたメンバーコード
+    // 戻り値 自動採番されたコード
     int id = 0;
-
-    // nextvalmc はメンバーコードの自動採番を行う関数。role を引数に取る。
-
-    // 同時に nextvalmc が実行された場合、後から実行された nextvalmc は
-    // トランザクションがcommitされるまで待機するので、
-    // トランザクションが異なる場合は、同じ値がinsertされることはない。
 
     String sql = "INSERT INTO PROBLEM(THEME,NAME,DIFFICULTY,OTHER) VALUES (?,?,?,?)";
 
@@ -57,7 +52,7 @@ public class ProblemDao {
 
     try (PreparedStatement stmt = con.prepareStatement(sql2)) {
 
-      try (ResultSet res = stmt.executeQuery();) {
+      try (ResultSet res = stmt.executeQuery()) {
 
         res.next();
         id = res.getInt(1);
@@ -65,6 +60,42 @@ public class ProblemDao {
     }
 
     return id;
+
+  }
+
+  /**
+   * ID検索 THEME検索 NAME検索.
+   */
+  public ArrayList<Problem> selectProblem(Problem problem) throws SQLException {
+
+    String sql = "SELECT ID,THEME,NAME,DIFFICULTY,OTHER FROM PROBLEM WHERE"
+        + "(CASE WHEN ? = 0 THEN TRUE ELSE ID=? END) AND"
+        + "(CASE WHEN ? is null or ? = '' THEN TRUE ELSE THEME=? END) AND"
+        + "(CASE WHEN ? is null or ? = '' THEN TRUE ELSE NAME=? END)";
+
+    ArrayList<Problem> resultList = new ArrayList<Problem>();
+    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+      stmt.setInt(1, problem.getId());
+      stmt.setInt(2, problem.getId());
+      stmt.setString(3, problem.getTheme());
+      stmt.setString(4, problem.getTheme());
+      stmt.setString(5, problem.getTheme());
+      stmt.setString(6, problem.getName());
+      stmt.setString(7, problem.getName());
+      stmt.setString(8, problem.getName());
+      try (ResultSet res = stmt.executeQuery()) {
+        while (res.next()) {
+          Problem result = new Problem();
+          result.setId(res.getInt("ID"));
+          result.setTheme(res.getString("THEME"));
+          result.setName(res.getString("NAME"));
+          result.setDifficulty(res.getInt("DIFFICULTY"));
+          result.setOther(res.getString("OTHER"));
+          resultList.add(result);
+        }
+      }
+    }
+    return resultList;
 
   }
 

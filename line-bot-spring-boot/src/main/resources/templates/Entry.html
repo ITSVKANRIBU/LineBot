@@ -17,12 +17,14 @@
 		<script type="text/javascript" src="./bootstrap4/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 		<!-- Orignal JavaScript UOC部分 -->
 		<script src="./contents/js/main.js"></script>
-		<title>ログイン画面</title>
+		<title>インサイダーゲーム登録フォーム</title>
 	</head>
-	<body>
+	<body onload="select_checked('difficulty')">
 		<div id="form-main">
 			<div id="form-div">
-			<form class="form" id="form1">
+			<div class="alert alert-info" role="alert" th:if="${message != null}" th:text="${message}"></div>
+			<div class="alert alert-danger" role="alert" th:if="${errMessage != null}" th:text="${errMessage}"></div>
+			<form class="form" id="form1" action="/Insider" method="post">
 				<p class="subject">
 					<input name="subject" type="text" class="feedback-input" id="subject" placeholder="お題（必須）" required maxlength="30" autocomplete="off" th:value="${subject}"/>
 				</p>
@@ -30,7 +32,7 @@
 					<input name="name" type="text" class="feedback-input" placeholder="投稿者（任意）" id="name" maxlength="20" th:value="${name}" />
 				</p>
 				<p class="difficulty">
-					<select name="difficulty" id="difficulty" class="feedback-input" th:value="${difficulty}">
+					<select name="difficulty" id="difficulty" class="feedback-input" th:attr="data=${difficulty}">
 						<option value="" disabled class="placeholder">難易度（任意）</option>
 						<option value="1">簡単</option>
 						<option value="5">普通</option>
@@ -40,11 +42,13 @@
 				<p class="text">
 					<textarea name="comment" class="feedback-input" id="comment" placeholder="コメント（任意）" maxlength="200" autocomplete="off" th:text="${comment}"></textarea>
 				</p>
+				<input type="hidden" name="id" th:value="${id}">
+				<input type="hidden" name="button" value="entry">
 				<div class="submit">
-				<input type="submit" value="登録" id="button-blue"/>
-				<div class="ease">
-				</div>
-				</div>
+				    <input type="submit" value="登録" class="button-blue"/>
+				    <div class="ease">
+                    </div>
+                </div>
 			</form>
 			</div>
 		</div>

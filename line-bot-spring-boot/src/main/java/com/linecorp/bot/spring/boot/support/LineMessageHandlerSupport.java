@@ -110,10 +110,10 @@ public class LineMessageHandlerSupport {
    * @param model モデル
    * @return
    */
-  @RequestMapping("/test")
+  @RequestMapping("/Insider")
   public ModelAndView test(Model model) {
 
-    String nextUrl = "SubjectPost";
+    String nextUrl = "Entry";
     // データ取得
     try {
       ServletRequestAttributes servlet = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();

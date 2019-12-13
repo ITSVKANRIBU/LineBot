@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
 	<head>
 		<!-- Required meta tags -->
 		<meta charset="utf-8">
@@ -17,35 +17,32 @@
 		<script type="text/javascript" src="./bootstrap4/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 		<!-- Orignal JavaScript UOC部分 -->
 		<script src="./contents/js/main.js"></script>
-		<title>ログイン画面</title>
+		<!--ソートテーブル -->
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.0/js/jquery.tablesorter.min.js"></script>
+
+		<title>インサイダーゲーム管理フォーム</title>
 	</head>
-	<body>
+	<body onload="$('#myTable').tablesorter();">
 		<div id="form-main">
-			<div id="form-div">
-			<form class="form" id="form1" action="/test">
-				<p class="subject">
-					<input name="subject" type="text" class="feedback-input" id="subject" placeholder="お題（必須）" required maxlength="30" autocomplete="off"/>
-				</p>
-				<p class="name">
-					<input name="name" type="text" class="feedback-input" placeholder="投稿者（任意）" id="name" maxlength="20" />
-				</p>
-				<p class="difficulty">
-					<select name="difficulty" id="difficulty" class="feedback-input" >
-						<option value="" disabled selected class="placeholder">難易度（任意）</option>
-						<option value="1">簡単</option>
-						<option value="5">普通</option>
-						<option value="10">難しい</option>
-					</select>
-				</p>
-				<p class="text">
-					<textarea name="comment" class="feedback-input" id="comment" placeholder="コメント（任意）" maxlength="200" autocomplete="off"></textarea>
-				</p>
-				<div class="submit">
-					<input type="submit" value="登録" id="button-blue"/>
-				<div class="ease">
-				</div>
-				</div>
-			</form>
+			<div id="list-div">
+				<table id="myTable" class="tablesorter">
+					<thead>
+						<tr>
+							<th>id</th>
+							<th>お題</th>
+							<th>作成者</th>
+							<th>難易度</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="problem : ${problemList}" >
+							<td th:text="${problem.id}"></td>
+							<th th:text="${problem.theme}"></th>
+							<td data-label="作成者" th:text="${problem.name}"></td>
+							<td data-label="難易度" th:text="${problem.difficulty}"></td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</body>
