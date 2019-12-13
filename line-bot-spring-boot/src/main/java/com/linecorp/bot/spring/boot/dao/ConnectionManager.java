@@ -37,7 +37,6 @@ public class ConnectionManager {
     con = DriverManager.getConnection(Properties.DB_URL, Properties.DB_USER, Properties.DB_PASS);
 
     return con;
-
   }
 
 }

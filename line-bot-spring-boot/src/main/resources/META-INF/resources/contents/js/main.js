@@ -10,3 +10,16 @@ function includeHtml(url) {
 		}
 	});
 }
+
+//チェック機能
+function select_checked(id) {
+	select = document.getElementById(id).options;
+	data = $('#' + id).attr("data");
+	select[0].selected = true;
+	for (let i = 0; i < select.length; i++) {
+		if (select[i].value === data) {
+			select[i].selected = true;
+			break;
+		}
+	}
+}

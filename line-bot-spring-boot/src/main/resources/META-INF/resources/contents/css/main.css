@@ -114,7 +114,7 @@ input:focus, textarea:focus, select:focus, {
 	background-color:white;
 }
 
-#button-blue{
+.button-blue{
 	font-family: 'Montserrat', Arial, Helvetica, sans-serif;
 	float:left;
 	width: 100%;
@@ -132,15 +132,15 @@ input:focus, textarea:focus, select:focus, {
 	font-weight:700;
 }
 
-#button-blue:hover{
+.button-blue:hover{
 	background-color: rgba(0,0,0,0);
 	color: #0493bd;
 }
-	
+
 .submit:hover {
 	color: #3498db;
 }
-	
+
 .ease {
 	width: 0px;
 	height: 74px;
@@ -170,4 +170,106 @@ input:focus, textarea:focus, select:focus, {
 
 .placeholder{
 	color: #ccc;
+}
+
+#list-div {
+	padding-left:2px;
+	padding-right:2px;
+	padding-top:10px;
+	padding-bottom:10px;
+	width: 450px;
+	float: left;
+	margin-top:5px;
+	width: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 auto;
+  padding: 0;
+  width: 650px;
+  table-layout: fixed;
+  color: #000;
+}
+
+table tr {
+  background-color: #fff;
+  padding: .35em;
+  border-bottom: 1px solid #bbb;
+}
+table thead{
+  border-bottom: 5px solid #ff9900;
+}
+table tr:last-child{
+   border-bottom: none
+}
+table th,
+table td {
+  padding: 1em 10px 1em 1em;
+  border-right: 1px solid #bbb;
+}
+table th:last-child,
+table td:last-child{
+    border: none;
+}
+tbody th {
+    color: #ff9901;
+}
+.txt{
+   text-align: left;
+   font-size: .85em;
+}
+.price{
+   text-align: right;
+}
+
+@media screen and (max-width: 600px) {
+  table {
+    border: 0;
+    width:70%
+  }
+  table th{
+    display: block;
+    border-right: none;
+    border-bottom: 5px solid #ff9901;
+    padding-bottom: .6em;
+    margin-bottom: .6em;
+
+  }
+  table thead {
+    border: none;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+  }
+  
+  table tr {
+    display: block;
+    margin-bottom: 2em;
+  }
+  
+  table td {
+    border-bottom: 1px solid #bbb;
+    display: block;
+    font-size: .8em;
+    text-align: right;
+    position: relative;
+    padding: .625em .625em .625em 4em;
+    border-right: none;
+  }
+  
+  table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    position: absolute;
+    left: 10px;
+  }
+  
+  table td:last-child {
+    border-bottom: 0;
+  }
 }
