@@ -34,15 +34,17 @@ $(function() {
 			window.location = $(this).attr('data-href');
 		});
 	});
-	
-	
+
+
 	$('#listbutton').click(function() {
 		name = $('#name').val();
 		if(name){
 			href = '/Insider?button=list&name=' + name;
 			window.location = href;
 		}else{
-			alert('投稿者に名前を入れてください');
+			$('#name')[0].setCustomValidity('入力した投稿者のお題を表示します');
+			$('#name')[0].reportValidity();
+			window.setTimeout("$('#name')[0].setCustomValidity('')", 2000)
 		}
 	});
 });
