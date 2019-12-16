@@ -16,6 +16,8 @@
 
 package com.example.bot.spring.echo;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -31,8 +33,10 @@ import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
+import com.linecorp.bot.model.action.Action;
 import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.action.PostbackAction;
+import com.linecorp.bot.model.action.URIActionNonAltUri;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.PostbackEvent;
@@ -41,6 +45,7 @@ import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplate;
+import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
@@ -76,14 +81,21 @@ public class EchoApplication {
     String userId = event.getSource().getUserId();
     String data = event.getPostbackContent().getData();
 
-    int dataInt = Integer.parseInt(data);
-    if (dataInt == 0) {
-      getOdai(event.getReplyToken(), 0);
+    try {
+      int dataInt = Integer.parseInt(data);
+      if (dataInt == 0) {
+        // お題取得
+        getOdai(event.getReplyToken(), 0);
 
-    } else {
-      // 村番号の場合
-      Village village = VillageList.getVillage(dataInt);
-      reply(event.getReplyToken(), village.getStatusMessage(userId));
+      } else {
+        // 村番号の場合
+        Village village = VillageList.getVillage(dataInt);
+        reply(event.getReplyToken(), village.getStatusMessage(userId));
+      }
+
+    } catch (NumberFormatException e) {
+      // お題登録
+      putOdai(event.getReplyToken(), data);
     }
 
   }
@@ -130,11 +142,32 @@ public class EchoApplication {
     try {
       lineMessagingClient
           .replyMessage(new ReplyMessage(replyToken,
-              new TemplateMessage(odai, confirmTemplate)))
+              new TemplateMessage("「" + odai + "」を取得しました。", confirmTemplate)))
           .get();
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
+  }
+
+  private void putOdai(String replyToken, String odai) {
+    InsertLogic logic = new InsertLogic();
+    try {
+      logic.addProblem(odai, "インサイダーツール", 0, "インサイダーツールでの追加");
+    } catch (SQLException e1) {
+      e1.printStackTrace();
+    }
+
+    String message = "ありがとうございます！ 「" + odai + "」を追加しました。";
+
+    List<Action> actionList = new ArrayList<Action>();
+    actionList.add(new URIActionNonAltUri("他に投稿してみる", MessageConst.URI_INSIDER));
+
+    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+        message, actionList);
+
+    List<Message> messages = Collections.singletonList(new TemplateMessage(message, buttons));
+
+    reply(replyToken, messages);
   }
 
   private void replyMessage(String replyToken, String userId, String userMessage) {
@@ -224,8 +257,13 @@ public class EchoApplication {
 
         VillageList.addVillage(newVillage);
 
-        String message = villageNum + "村 を新しく作成しました。\n" + MessageConst.OWNER_ODAIMESSAGE;
-        messages = Collections.singletonList(new TextMessage(message));
+        String message = villageNum + "村 を新しく作成しました。" + MessageConst.OWNER_ODAIMESSAGE;
+
+        ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+            message + "\nお題の自動取得もできます。", Collections.singletonList(
+                new PostbackAction("お題の自動取得", String.valueOf(0))));
+
+        messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
       } else if ("お題取得".equals(userMessage.trim())) {
         getOdai(replyToken, 0);

@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.example.bot.staticdata.MessageConst;
 
+import com.linecorp.bot.model.action.Action;
 import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.message.Message;
@@ -123,11 +124,13 @@ public class Village {
     String message = villageNum + "村："
         + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
 
+    List<Action> actionList = new ArrayList<Action>();
+    actionList.add(new MessageAction("再確認", String.valueOf(villageNum)));
+    actionList.add(new PostbackAction("お題を投稿", odai));
+
     if (message.length() <= 160) {
       ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-          message, Collections.singletonList(
-              new MessageAction("再確認", String.valueOf(villageNum))));
-
+          message, actionList);
       messages = Collections.singletonList(new TemplateMessage(message, buttons));
     } else {
       messages = Collections.singletonList(new TextMessage(message));

@@ -48,4 +48,6 @@ public class MessageConst {
   public static final String VILLAGERS_URL = "https://raw.githubusercontent.com/"
       + "ITSVKANRIBU/LineBot/3.0/Image/VILLAGERS.png";
 
+  public static final String URI_INSIDER = "https://insidergamehelper.herokuapp.com/Insider";
+
 }
