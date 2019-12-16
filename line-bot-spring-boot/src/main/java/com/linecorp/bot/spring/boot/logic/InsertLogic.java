@@ -100,4 +100,19 @@ public class InsertLogic {
     }
     return result;
   }
+
+  /**
+   * 一件取得.
+   */
+  public String getRandomProblem(int difficulty) {
+    String result = "取得失敗";
+    try (Connection con = ConnectionManager.getConnection()) {
+      ProblemDao dao = new ProblemDao(con);
+      result = dao.getRandomProblem(difficulty).getTheme();
+
+    } catch (SQLException | NullPointerException e) {
+      e.printStackTrace();
+    }
+    return result;
+  }
 }

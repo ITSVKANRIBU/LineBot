@@ -32,6 +32,7 @@ import com.example.bot.staticdata.VillageList;
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
 import com.linecorp.bot.model.action.MessageAction;
+import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.PostbackEvent;
@@ -43,6 +44,7 @@ import com.linecorp.bot.model.message.template.ButtonsTemplate;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+import com.linecorp.bot.spring.boot.logic.InsertLogic;
 
 import lombok.NonNull;
 
@@ -73,9 +75,17 @@ public class EchoApplication {
 
     String userId = event.getSource().getUserId();
     String data = event.getPostbackContent().getData();
-    Village village = VillageList.getVillage(Integer.parseInt(data));
 
-    reply(event.getReplyToken(), village.getStatusMessage(userId));
+    int dataInt = Integer.parseInt(data);
+    if (dataInt == 0) {
+      getOdai(event.getReplyToken(), 0);
+
+    } else {
+      // 村番号の場合
+      Village village = VillageList.getVillage(dataInt);
+      reply(event.getReplyToken(), village.getStatusMessage(userId));
+    }
+
   }
 
   @EventMapping
@@ -103,6 +113,24 @@ public class EchoApplication {
     try {
       lineMessagingClient
           .replyMessage(new ReplyMessage(replyToken, messages))
+          .get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void getOdai(String replyToken, int difficulty) {
+    InsertLogic logic = new InsertLogic();
+    String odai = logic.getRandomProblem(difficulty);
+
+    ConfirmTemplate confirmTemplate = new ConfirmTemplate("お題は「" + odai + "」です。確定しますか？",
+        new MessageAction("確定", odai),
+        new PostbackAction("再取得", String.valueOf(0)));
+
+    try {
+      lineMessagingClient
+          .replyMessage(new ReplyMessage(replyToken,
+              new TemplateMessage(odai, confirmTemplate)))
           .get();
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
@@ -198,6 +226,10 @@ public class EchoApplication {
 
         String message = villageNum + "村 を新しく作成しました。\n" + MessageConst.OWNER_ODAIMESSAGE;
         messages = Collections.singletonList(new TextMessage(message));
+
+      } else if ("お題取得".equals(userMessage.trim())) {
+        getOdai(replyToken, 0);
+        return;
 
       } else {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
