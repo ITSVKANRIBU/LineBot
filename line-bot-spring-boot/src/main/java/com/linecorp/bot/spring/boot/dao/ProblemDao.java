@@ -93,7 +93,8 @@ public class ProblemDao {
     String sql = "SELECT ID,THEME,NAME,DIFFICULTY,OTHER FROM PROBLEM WHERE"
         + "(CASE WHEN ? = 0 THEN TRUE ELSE ID=? END) AND"
         + "(CASE WHEN ? is null or ? = '' THEN TRUE ELSE THEME=? END) AND"
-        + "(CASE WHEN ? is null or ? = '' THEN TRUE ELSE NAME=? END)";
+        + "(CASE WHEN ? is null or ? = '' THEN TRUE ELSE NAME=? END)"
+        + "ORDER BY ID";
 
     ArrayList<Problem> resultList = new ArrayList<Problem>();
     try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -118,6 +119,30 @@ public class ProblemDao {
       }
     }
     return resultList;
+  }
+
+  /**
+   * ID検索 THEME検索 NAME検索.
+   */
+  public Problem getRandomProblem(int difficulty) throws SQLException {
+
+    String sql = "SELECT ID,THEME,NAME,DIFFICULTY,OTHER FROM PROBLEM "
+        + "WHERE DIFFICULTY >= ?  ORDER BY random() LiMIT 1";
+
+    Problem result = new Problem();
+    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+      stmt.setInt(1, difficulty);
+      try (ResultSet res = stmt.executeQuery()) {
+        if (res.next()) {
+          result.setId(res.getInt("ID"));
+          result.setTheme(res.getString("THEME"));
+          result.setName(res.getString("NAME"));
+          result.setDifficulty(res.getInt("DIFFICULTY"));
+          result.setOther(res.getString("OTHER"));
+        }
+      }
+    }
+    return result;
   }
 
 }
