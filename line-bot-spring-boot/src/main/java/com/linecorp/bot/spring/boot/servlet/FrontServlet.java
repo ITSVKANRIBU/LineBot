@@ -76,6 +76,12 @@ public class FrontServlet {
         InsertLogic logic = new InsertLogic();
         logic.updateProblem(updateProblem);
         model.addAttribute("message", "更新完了しました。続けて登録できます。");
+
+        // クッキーへ名前を保存
+        String nameStr = name.trim().replaceAll("[\\r\\n]", "");
+        Cookie cookName = new Cookie("userName", nameStr);
+        cookName.setMaxAge(3600000);
+        response.addCookie(cookName);
         // 初期遷移と同じ動作
         button = null;
       }

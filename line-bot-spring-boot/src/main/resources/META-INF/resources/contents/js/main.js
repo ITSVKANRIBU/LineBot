@@ -34,4 +34,15 @@ $(function() {
 			window.location = $(this).attr('data-href');
 		});
 	});
+	
+	
+	$('#listbutton').click(function() {
+		name = $('#name').val();
+		if(name){
+			href = '/Insider?button=list&name=' + name;
+			window.location = href;
+		}else{
+			alert('投稿者に名前を入れてください');
+		}
+	});
 });
