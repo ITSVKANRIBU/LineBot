@@ -15,23 +15,22 @@
  */
 package com.linecorp.bot.spring.boot.common;
 
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ErrCheck {
 
-  public static final List<String> ERR_WORDS = Collections
-      .unmodifiableList(new LinkedList<String>() {
-        {
-          add("神");
-          add("お題");
-          add("お題取得");
-          add("題");
-          add("配布");
-          add("ヘルプ");
-        }
-      });
+  private static List<String> ERR_WORDS;
+
+  static {
+    ERR_WORDS = new ArrayList<String>();
+    ERR_WORDS.add("神");
+    ERR_WORDS.add("お題");
+    ERR_WORDS.add("お題取得");
+    ERR_WORDS.add("題");
+    ERR_WORDS.add("配布");
+    ERR_WORDS.add("ヘルプ");
+  }
 
   /**
    * エラーの時true.
