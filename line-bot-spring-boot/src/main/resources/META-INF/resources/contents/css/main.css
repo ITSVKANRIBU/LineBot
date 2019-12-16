@@ -197,8 +197,15 @@ table tr {
   padding: .35em;
   border-bottom: 1px solid #bbb;
 }
+table tr:hover {
+  background-color: #d3d3d3;
+}
+
 table thead{
-  border-bottom: 5px solid #ff9900;
+  border-bottom: 5px solid #696969;
+}
+table thead th{
+   background-color: #f5f5f5;
 }
 table tr:last-child{
    border-bottom: none
@@ -214,7 +221,7 @@ table td:last-child{
     border: none;
 }
 tbody th {
-    color: #ff9901;
+    color: #696969;
 }
 .txt{
    text-align: left;
@@ -227,20 +234,16 @@ tbody th {
 @media screen and (max-width: 600px) {
   table {
     border: 0;
-    width:80%
+    width:80%;
   }
   table th{
     display: block;
     border-right: none;
-    border-bottom: 5px solid #ff9901;
-    padding-bottom: .6em;
-    margin-bottom: .6em;
-
+    border-bottom: 5px solid #696969;
   }
   table thead {
     border: none;
     clip: rect(0 0 0 0);
-    height: 1px;
     margin: -1px;
     overflow: hidden;
     padding: 0;
@@ -250,17 +253,20 @@ tbody th {
   
   table tr {
     display: block;
-    margin-bottom: 2em;
+    margin-bottom: 0.5em;
   }
   
   table td {
     border-bottom: 1px solid #bbb;
-    display: block;
+    width: 200px;
     font-size: .8em;
     text-align: right;
     position: relative;
     padding: .625em .625em .625em 4em;
     border-right: none;
+    min-height:30px; 
+    height:auto !important; 
+    height:30px;
   }
    table td.non {
     display: none;
@@ -274,6 +280,8 @@ tbody th {
   }
   
   table td:last-child {
+    width: 100%;
+    display: block;
     border-bottom: 0;
   }
 }
