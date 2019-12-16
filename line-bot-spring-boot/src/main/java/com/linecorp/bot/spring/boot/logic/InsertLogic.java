@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import com.linecorp.bot.spring.boot.common.ErrCheck;
 import com.linecorp.bot.spring.boot.dao.ConnectionManager;
 import com.linecorp.bot.spring.boot.dao.ProblemDao;
 import com.linecorp.bot.spring.boot.entity.Problem;
@@ -32,6 +33,11 @@ public class InsertLogic {
 
     try (Connection con = ConnectionManager.getConnection()) {
       ProblemDao dao = new ProblemDao(con);
+
+      // エラーチェック
+      if (ErrCheck.checkOdai(theme)) {
+        throw new SQLException("登録不能なお題です。");
+      }
 
       // 重複チェック
       Problem checkProblem = new Problem();
@@ -73,6 +79,11 @@ public class InsertLogic {
    * 更新.
    */
   public void updateProblem(Problem problem) throws SQLException {
+    // エラーチェック
+    if (ErrCheck.checkOdai(problem.getTheme())) {
+      throw new SQLException("登録不能なお題です。");
+    }
+
     try (Connection con = ConnectionManager.getConnection()) {
 
       ProblemDao dao = new ProblemDao(con);
