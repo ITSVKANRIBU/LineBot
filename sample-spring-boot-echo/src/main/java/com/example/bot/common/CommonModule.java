@@ -37,21 +37,8 @@ public class CommonModule {
     System.out.println("読み込み");
 
     String path = new File(".").getAbsoluteFile().getParent();
-    System.out.println(path);
-
-    File dirdefo = new File(path);
-    File[] fileListdefo = dirdefo.listFiles();
-    if (fileListdefo != null) {
-      for (File file : fileListdefo) {
-        System.out.println(file.getAbsolutePath());
-        System.out.println(file.getName());
-      }
-    }
-
     File dir = new File(path + MessageConst.ILLUSTRATION_PATH);
-
     File[] fileList = dir.listFiles();
-
     if (fileList != null) {
       for (File file : fileList) {
         String[] fileName = file.getName().split("_");

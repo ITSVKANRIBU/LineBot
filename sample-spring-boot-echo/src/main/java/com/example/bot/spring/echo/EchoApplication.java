@@ -203,14 +203,7 @@ public class EchoApplication {
             String roleUrl = MessageConst.GM_URL;
             VillageList.get(i).setInsiderNum(insiderNum);
             if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
-
-              roleUrl = MessageConst.GOD_URL;
-              try {
-                roleUrl = CommonModule.getIllustUrl("GOD");
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-
+              roleUrl = CommonModule.getIllustUrl("GOD");
               int gmNum = random.nextInt(number) + 1;
               while (gmNum == insiderNum) {
                 gmNum = random.nextInt(number) + 1;
