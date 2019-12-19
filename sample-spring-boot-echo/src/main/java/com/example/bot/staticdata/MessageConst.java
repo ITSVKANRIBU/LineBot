@@ -34,7 +34,7 @@ public class MessageConst {
   public static final String VILLAGE_ROLE = "村人";
   public static final String GAMEMASTER_ROLE = "ＧＭ";
   public static final int DEFAULT_GMNUM = 999;
-  public static final String ILLUSTRATION_PATH = "/LineBot/Image/";
+  public static final String ILLUSTRATION_PATH = "/Image/";
   public static final String ILLUSTRATION_URL_PREFIX = "https://raw.githubusercontent.com/"
       + "ITSVKANRIBU/LineBot/3.0/Image/";
 
