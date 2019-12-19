@@ -30,6 +30,7 @@ public class CommonModule {
 
   //ファイル名は　【役職】_【確率（整数）】_【任意】　とする。
   // 確率が高いほど当選確率よい
+
   static {
 
     illustrationMap = new HashMap<String, ArrayList<String>>();
@@ -37,6 +38,16 @@ public class CommonModule {
 
     String path = new File(".").getAbsoluteFile().getParent();
     System.out.println(path);
+
+    File dirdefo = new File(path);
+    File[] fileListdefo = dirdefo.listFiles();
+    if (fileListdefo != null) {
+      for (File file : fileListdefo) {
+        System.out.println(file.getAbsolutePath());
+        System.out.println(file.getName());
+      }
+    }
+
     File dir = new File(path + MessageConst.ILLUSTRATION_PATH);
 
     File[] fileList = dir.listFiles();
