@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.example.bot.common.CommonModule;
 import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
@@ -202,7 +203,14 @@ public class EchoApplication {
             String roleUrl = MessageConst.GM_URL;
             VillageList.get(i).setInsiderNum(insiderNum);
             if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
+
               roleUrl = MessageConst.GOD_URL;
+              try {
+                roleUrl = CommonModule.getIllustUrl("GOD");
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+
               int gmNum = random.nextInt(number) + 1;
               while (gmNum == insiderNum) {
                 gmNum = random.nextInt(number) + 1;

@@ -1,6 +1,19 @@
 ﻿@charset "utf-8";
 /* CSS Document */
 
+/*オリジナルフォント
+---------------------------------------------------------------------------*/
+@font-face {
+  font-family: "かわいいフォント１";
+  src: url("../font/Ronde-B_square.otf") format("woff");
+}
+
+@font-face {
+  font-family: "かわいいフォント２";
+  src: url("../font/WaonJoyo-R.otf") format("woff");
+}
+---------------------------------------------------------------------------*/
+
 body{
 	font: 14px/1.6 "Hiragino Kaku Gothic Pro",Osaka,"メイリオ","ＭＳ Ｐゴシック","MS PGothic",Verdana,Arial,sans-serif;
 	margin:0;
@@ -203,6 +216,7 @@ table tr:hover {
 
 table thead{
   border-bottom: 5px solid #696969;
+  font-family: 'かわいいフォント１','かわいいフォント２',"Hiragino Kaku Gothic Pro",Osaka,"メイリオ","ＭＳ Ｐゴシック";
 }
 table thead th{
    background-color: #f5f5f5;
@@ -283,5 +297,7 @@ tbody th {
     width: 100%;
     display: block;
     border-bottom: 0;
+    text-align: left;
   }
+  
 }

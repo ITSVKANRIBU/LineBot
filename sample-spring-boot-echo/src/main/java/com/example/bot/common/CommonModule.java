@@ -58,6 +58,7 @@ public class CommonModule {
           for (int i = 0; i < Integer.parseInt(fileName[1]); i++) {
             newList.add(file.getName());
           }
+          System.out.println(file.getName());
           illustrationMap.put(fileName[0], newList);
         }
 
