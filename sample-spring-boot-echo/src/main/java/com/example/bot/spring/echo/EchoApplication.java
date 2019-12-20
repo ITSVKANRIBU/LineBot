@@ -267,7 +267,7 @@ public class EchoApplication {
 
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
-      } else if ("@配布".equals(userMessage.trim()) | "＠配布".equals(userMessage.trim())) {
+      } else if ("@配布".equals(userMessage.trim()) || "＠配布".equals(userMessage.trim())) {
         messages = new ArrayList<Message>();
         String imageUrl = MessageConst.ILLUSTRATION_URL_PREFIX + "966mpnqz.png";
         Message imageMessage = new ImageMessage(imageUrl, imageUrl);
