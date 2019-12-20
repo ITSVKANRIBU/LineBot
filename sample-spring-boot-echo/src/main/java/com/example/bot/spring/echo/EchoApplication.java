@@ -200,7 +200,7 @@ public class EchoApplication {
 
             // インサイダー位置設定
             int insiderNum = random.nextInt(number) + 1;
-            String roleUrl = MessageConst.GM_URL;
+            String roleUrl = CommonModule.getIllustUrl("GM");
             VillageList.get(i).setInsiderNum(insiderNum);
             if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
               roleUrl = CommonModule.getIllustUrl("GOD");
