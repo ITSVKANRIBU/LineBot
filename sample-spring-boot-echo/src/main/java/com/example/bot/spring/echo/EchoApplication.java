@@ -42,6 +42,7 @@ import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.PostbackEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
+import com.linecorp.bot.model.message.ImageMessage;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
@@ -266,9 +267,15 @@ public class EchoApplication {
 
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
-      } else if ("お題取得".equals(userMessage.trim())) {
-        getOdai(replyToken, 0);
-        return;
+      } else if ("@配布".equals(userMessage.trim()) | "＠配布".equals(userMessage.trim())) {
+        messages = new ArrayList<Message>();
+        String imageUrl = MessageConst.ILLUSTRATION_URL_PREFIX + "966mpnqz.png";
+        Message imageMessage = new ImageMessage(imageUrl, imageUrl);
+        messages.add(imageMessage);
+        Message textMessage = new TextMessage("https://line.me/R/ti/p/%40966mpnqz");
+        messages.add(textMessage);
+        Message textMessage2 = new TextMessage("お友達ID\n@966mpnqz");
+        messages.add(textMessage2);
 
       } else {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
