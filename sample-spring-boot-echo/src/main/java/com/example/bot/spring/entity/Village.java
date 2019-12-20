@@ -156,7 +156,7 @@ public class Village {
         messages.add(getStatusMessage(userId).get(0));
       } else {
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
-            MessageConst.INSIDER_URL,
+            CommonModule.getIllustUrl("INSIDER"),
             message, Collections.singletonList(
                 new PostbackAction("入室状況確認", String.valueOf(villageNum))));
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
