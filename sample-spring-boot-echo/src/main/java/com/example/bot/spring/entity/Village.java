@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.example.bot.common.CommonModule;
 import com.example.bot.staticdata.MessageConst;
 
 import com.linecorp.bot.model.action.Action;
@@ -175,7 +176,7 @@ public class Village {
 
       if (message.length() <= 60) {
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
-            MessageConst.GM_URL,
+            CommonModule.getIllustUrl("GM"),
             message, Collections.singletonList(
                 new PostbackAction("入室状況確認", String.valueOf(villageNum))));
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
