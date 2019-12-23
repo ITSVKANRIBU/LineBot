@@ -165,7 +165,7 @@ public class Village {
     } else if (MessageConst.VILLAGE_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.VILLAGE_ROLE + "です。";
       ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
-          MessageConst.VILLAGERS_URL,
+          CommonModule.getIllustUrl("VILLAGERS"),
           message, Collections.singletonList(
               new PostbackAction("入室状況確認", String.valueOf(villageNum))));
       messages = Collections.singletonList(new TemplateMessage(message, buttons));
