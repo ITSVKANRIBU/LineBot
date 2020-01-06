@@ -127,9 +127,9 @@ public class Village {
         // 順番設定
         roleList.get(i).setIndex(i);
         // 役職設定
-        if (i == insiderNum) {
+        if (i + 1 == insiderNum) {
           roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
-        } else if (i == gmNum) {
+        } else if (i + 1 == gmNum) {
           roleList.get(i).setRole(MessageConst.GAMEMASTER_ROLE);
         } else {
           roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
