@@ -322,13 +322,8 @@ public class EchoApplication {
           messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
         } else {
           // 配役の設定
-          village.addRoleList(
-              village.getInsiderNum() == village.getRoleList().size() + 1
-                  ? MessageConst.INSIDER_ROLE
-                  : village.getGmNum() == village.getRoleList().size() + 1
-                      ? MessageConst.GAMEMASTER_ROLE
-                      : MessageConst.VILLAGE_ROLE,
-              userId);
+          village.addRoleList(null, userId);
+          village.setInsiderRole(userId);
 
           messages = village.getRoleMessage(userId);
 

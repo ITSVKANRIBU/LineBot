@@ -19,6 +19,7 @@ package com.example.bot.spring.entity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.example.bot.common.CommonModule;
 import com.example.bot.staticdata.MessageConst;
@@ -37,14 +38,14 @@ public class Village {
   private int villageNum;
   private String ownerId;
   private String odai;
-  private ArrayList<InsiderRole> roleList;
+  private List<InsiderRole> roleList;
 
   private int insiderNum;
   private int gmNum;
   private int villageSize;
 
   public Village() {
-    roleList = new ArrayList<InsiderRole>();
+    roleList = new CopyOnWriteArrayList<InsiderRole>();
   }
 
   public int getVillageNum() {
@@ -71,11 +72,11 @@ public class Village {
     this.odai = odai;
   }
 
-  public ArrayList<InsiderRole> getRoleList() {
+  public List<InsiderRole> getRoleList() {
     return roleList;
   }
 
-  public void setRoleList(ArrayList<InsiderRole> roleList) {
+  public void setRoleList(List<InsiderRole> roleList) {
     this.roleList = roleList;
   }
 
@@ -116,6 +117,28 @@ public class Village {
     return roleList.stream()
         .filter(dao -> userId.equals(dao.getUserId())).findFirst().orElse(new InsiderRole())
         .getRole();
+  }
+
+  // 役職の設定処理
+  public synchronized InsiderRole setInsiderRole(String userId) {
+    InsiderRole returnRole = null;
+    for (int i = 0; i < roleList.size(); i++) {
+      if (userId.equals(roleList.get(i).getUserId())) {
+        // 順番設定
+        roleList.get(i).setIndex(i);
+        // 役職設定
+        if (i == insiderNum) {
+          roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
+        } else if (i == gmNum) {
+          roleList.get(i).setRole(MessageConst.GAMEMASTER_ROLE);
+        } else {
+          roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
+        }
+        returnRole = roleList.get(i);
+        break;
+      }
+    }
+    return returnRole;
   }
 
   public List<Message> getMessageOwner() {
