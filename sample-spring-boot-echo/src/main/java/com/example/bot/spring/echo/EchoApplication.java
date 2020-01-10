@@ -92,7 +92,7 @@ public class EchoApplication {
 
       } else if (dataInt > 0 && dataInt < 10) {
         // お題詳細取得
-        getOdaiDetail(event.getReplyToken(), 0);
+        getOdaiDetail(event.getReplyToken(), dataInt);
 
       } else {
         // 村番号の場合
@@ -144,7 +144,7 @@ public class EchoApplication {
 
     ConfirmTemplate confirmTemplate = new ConfirmTemplate("お題は「" + odai + "」です。確定しますか？",
         new MessageAction("確定", odai),
-        new PostbackAction("再取得", String.valueOf(0)));
+        new PostbackAction("再取得", String.valueOf(8)));
 
     try {
       lineMessagingClient

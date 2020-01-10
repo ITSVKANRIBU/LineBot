@@ -64,10 +64,10 @@ public class WordGetter {
             break;
           }
         }
-        str = buffer.readLine();
+        str = buffer.readLine().split(",")[0];
 
       } catch (Exception e) {
-        throw e;
+        e.printStackTrace();
       }
     } catch (IOException e) {
       e.printStackTrace();
