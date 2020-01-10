@@ -61,10 +61,14 @@ public class WordGetter {
         while ((str = buffer.readLine()) != null) {
           i++;
           if (i >= line) {
+            str = buffer.readLine();
             break;
           }
         }
-        str = buffer.readLine().split(",")[0];
+
+        if (str != null) {
+          str = str.split(",")[0];
+        }
 
       } catch (Exception e) {
         e.printStackTrace();
