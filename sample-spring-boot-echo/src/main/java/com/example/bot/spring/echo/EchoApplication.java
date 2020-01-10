@@ -28,6 +28,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.example.bot.common.CommonModule;
+import com.example.bot.common.WordGetter;
 import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
@@ -89,6 +90,10 @@ public class EchoApplication {
         // お題取得
         getOdai(event.getReplyToken(), 0);
 
+      } else if (dataInt > 0 && dataInt < 10) {
+        // お題詳細取得
+        getOdaiDetail(event.getReplyToken(), 0);
+
       } else {
         // 村番号の場合
         Village village = VillageList.getVillage(dataInt);
@@ -149,6 +154,26 @@ public class EchoApplication {
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
+  }
+
+  private void getOdaiDetail(String replyToken, int difficulty) {
+    String odai = WordGetter.getWord(difficulty);
+
+    List<Message> messages = null;
+
+    String message = "お題は「" + odai + "」です。確定しますか？";
+
+    List<Action> actionList = new ArrayList<Action>();
+    actionList.add(new MessageAction("確定", odai));
+    actionList.add(new PostbackAction("初心者", String.valueOf(2)));
+    actionList.add(new PostbackAction("上級者", String.valueOf(3)));
+    actionList.add(new PostbackAction("変態", String.valueOf(4)));
+
+    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+        message, actionList);
+    messages = Collections.singletonList(new TemplateMessage(message, buttons));
+
+    reply(replyToken, messages);
   }
 
   private void putOdai(String replyToken, String odai) {
@@ -276,6 +301,10 @@ public class EchoApplication {
         messages.add(textMessage);
         Message textMessage2 = new TextMessage("お友達ID\n@966mpnqz");
         messages.add(textMessage2);
+
+      } else if ("@取得".equals(userMessage.trim()) || "＠取得".equals(userMessage.trim())) {
+        getOdaiDetail(replyToken, 10);
+        return;
 
       } else {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
