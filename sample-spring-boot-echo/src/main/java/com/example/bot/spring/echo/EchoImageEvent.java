@@ -31,8 +31,7 @@ public class EchoImageEvent {
   public List<Message> echo() {
 
     String message = "いつもご利用ありがとうございます。"
-        + "上記のような「神」「GM」「村人」「インサイダー」の画像を募集しております。"
-        + "その他要望、質問やバグ報告は以下に連絡ください。";
+        + "上記のような役職の画像を募集しております。その他要望や報告は以下に連絡ください。";
     ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
         CommonModule.getIllustUrl("VILLAGERS"),
         message, Collections.singletonList(
