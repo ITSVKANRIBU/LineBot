@@ -42,6 +42,7 @@ import com.linecorp.bot.model.action.URIActionNonAltUri;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.PostbackEvent;
+import com.linecorp.bot.model.event.message.StickerMessageContent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
 import com.linecorp.bot.model.message.ImageMessage;
 import com.linecorp.bot.model.message.Message;
@@ -105,6 +106,13 @@ public class EchoApplication {
       putOdai(event.getReplyToken(), data);
     }
 
+  }
+
+  @EventMapping
+  public void handleStickerMessageEvent(MessageEvent<StickerMessageContent> event) {
+    System.out.println("event: スタンプイベント");
+    EchoImageEvent logic = new EchoImageEvent();
+    reply(event.getReplyToken(), logic.echo());
   }
 
   @EventMapping
