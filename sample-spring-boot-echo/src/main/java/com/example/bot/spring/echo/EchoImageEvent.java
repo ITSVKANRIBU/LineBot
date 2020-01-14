@@ -30,8 +30,8 @@ public class EchoImageEvent {
 
   public List<Message> echo() {
 
-    String message = "いつもご利用ありがとうございます。"
-        + "役職画像を募集しております。要望や報告は以下にご連絡ください。";
+    String message = "ご利用ありがとうございます。"
+        + "役職画像を募集しております。要望報告は以下にご連絡ください。";
     ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
         CommonModule.getIllustUrl("INSIDER"),
         message, Collections.singletonList(
