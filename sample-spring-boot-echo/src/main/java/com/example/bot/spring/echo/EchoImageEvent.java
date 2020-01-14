@@ -31,13 +31,16 @@ public class EchoImageEvent {
   public List<Message> echo() {
 
     String message = "いつもご利用ありがとうございます。"
-        + "上記のような役職の画像を募集しております。その他要望や報告は以下に連絡ください。";
+        + "役職画像を募集しております。要望や報告は以下にご連絡ください。";
     ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
-        CommonModule.getIllustUrl("VILLAGERS"),
+        CommonModule.getIllustUrl("INSIDER"),
         message, Collections.singletonList(
             new URIActionNonAltUri("連絡", "https://twitter.com/2d7rqU5gFQ6VpGo")));
 
-    return Collections.singletonList(new TemplateMessage(message, buttons));
+    String titleMessage = "製作者の「白いフランです。」\n"
+        + message + "\n Twitter:  https://twitter.com/2d7rqU5gFQ6VpGo";
+
+    return Collections.singletonList(new TemplateMessage(titleMessage, buttons));
 
   }
 }
