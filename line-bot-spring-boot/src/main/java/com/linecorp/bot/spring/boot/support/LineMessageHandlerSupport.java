@@ -57,6 +57,7 @@ import com.linecorp.bot.model.event.message.MessageContent;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineBotMessages;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+import com.linecorp.bot.spring.boot.servlet.AjaxFrontServlet;
 import com.linecorp.bot.spring.boot.servlet.FrontServlet;
 
 import lombok.Value;
@@ -132,6 +133,31 @@ public class LineMessageHandlerSupport {
     }
 
     return new ModelAndView(nextUrl);
+  }
+
+  /**
+   * 修正箇所.
+   * @param model モデル
+   * @return
+   */
+  @RequestMapping("/specialvillage")
+  public void jsonApi(Model model) {
+    // データ取得
+    try {
+      ServletRequestAttributes servlet = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+      if (servlet != null) {
+        HttpServletRequest request = servlet.getRequest();
+        HttpServletResponse response = servlet.getResponse();
+        request.setCharacterEncoding("UTF-8");
+
+        AjaxFrontServlet frontServlet = new AjaxFrontServlet();
+        frontServlet.doServlet(request, response, model);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
   }
 
   @VisibleForTesting
