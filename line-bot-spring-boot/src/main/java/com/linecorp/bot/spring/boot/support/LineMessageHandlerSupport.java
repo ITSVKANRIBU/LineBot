@@ -39,6 +39,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.ui.Model;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -141,6 +142,7 @@ public class LineMessageHandlerSupport {
    * @return
    */
   @RequestMapping("/specialvillage")
+  @CrossOrigin
   public void jsonApi(Model model) {
     // データ取得
     try {
