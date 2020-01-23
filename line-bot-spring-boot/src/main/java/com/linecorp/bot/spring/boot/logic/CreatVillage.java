@@ -19,6 +19,7 @@ package com.linecorp.bot.spring.boot.logic;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.linecorp.bot.spring.boot.common.SpecialVillageList;
 import com.linecorp.bot.spring.boot.entity.SpecialVillage;
@@ -58,6 +59,7 @@ public class CreatVillage {
     // メッセージをランダムに並び替え
     Collections.shuffle(messageList);
     newVillage.setMessageList(messageList);
+    newVillage.setUserList(new CopyOnWriteArrayList<String>());
 
     // 追加
     SpecialVillageList.addVillage(newVillage);
