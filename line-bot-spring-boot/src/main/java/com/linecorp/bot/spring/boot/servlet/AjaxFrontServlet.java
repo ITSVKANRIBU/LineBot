@@ -44,12 +44,6 @@ public class AjaxFrontServlet {
       response.setContentType("application/json; charset=utf-8");
       response.addHeader("X-Content-Type-Options", "nosniff");
 
-      // レスポンスCORS対策設定
-      response.addHeader("Access-Control-Allow-Origin", "*");
-      response.addHeader("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
-      response.addHeader("Access-Control-Allow-Headers",
-          "Origin, X-Requested-With, Content-Type, Accept, Referer");
-
       System.out.println("通信確認");
 
       String reqJson = null;
