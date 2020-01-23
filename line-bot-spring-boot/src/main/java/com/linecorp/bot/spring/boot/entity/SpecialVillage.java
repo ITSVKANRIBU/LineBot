@@ -66,6 +66,7 @@ public class SpecialVillage {
 
   /**
    * メッセージ取得.
+   * 参加していない場合、null
    * @param userId ユーザーID
    * @return
    */
@@ -76,15 +77,23 @@ public class SpecialVillage {
     for (int i = 0; i < userList.size(); i++) {
       if (userId.equals(userList.get(i))) {
         message = this.messageList.get(i);
+        if (message == null || "".equals(message)) {
+          message = "メッセージは特にありません。";
+        }
       }
     }
+    if (message != null) {
 
-    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-        message, Collections.singletonList(
-            new PostbackAction("入室状況確認", String.valueOf(getVillageNum()))));
-    messages = Collections.singletonList(new TemplateMessage(message, buttons));
+      ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
+          message, Collections.singletonList(
+              new PostbackAction("入室状況確認", String.valueOf(getVillageNum()))));
+      messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
-    return messages;
+      return messages;
+    }
+
+    return null;
+
   }
 
   /**
@@ -105,4 +114,20 @@ public class SpecialVillage {
     return Collections.singletonList(new TextMessage(message));
   }
 
+  /**
+   * 参加確認.
+   * @param userId ユーザーID
+   * @return boolean
+   */
+  public boolean hasMember(String userId) {
+    boolean returnFlg = false;
+    for (int i = 0; i < userList.size(); i++) {
+      if (userId.equals(userList.get(i))) {
+        returnFlg = true;
+        break;
+      }
+    }
+    return returnFlg;
+
+  }
 }

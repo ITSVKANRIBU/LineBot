@@ -53,6 +53,8 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+import com.linecorp.bot.spring.boot.common.SpecialVillageList;
+import com.linecorp.bot.spring.boot.entity.SpecialVillage;
 import com.linecorp.bot.spring.boot.logic.InsertLogic;
 
 import lombok.NonNull;
@@ -95,9 +97,13 @@ public class EchoApplication {
         // お題詳細取得
         getOdaiDetail(event.getReplyToken(), dataInt);
 
-      } else {
+      } else if (dataInt < 10000) {
         // 村番号の場合
         Village village = VillageList.getVillage(dataInt);
+        reply(event.getReplyToken(), village.getStatusMessage(userId));
+      } else {
+        // 特殊村番号の場合
+        SpecialVillage village = SpecialVillageList.getVillage(dataInt);
         reply(event.getReplyToken(), village.getStatusMessage(userId));
       }
 
@@ -214,6 +220,12 @@ public class EchoApplication {
     try {
       int number = Integer.parseInt(userMessage.trim());
 
+      // 特殊村の場合
+      if (number > 9999) {
+        replyMessageSpecialVillage(replyToken, userId, number);
+        return;
+      }
+
       if (number > 100) {
         // 村番号の場合
         replyMessageVillageNum(replyToken, userId, number);
@@ -310,6 +322,10 @@ public class EchoApplication {
         Message textMessage2 = new TextMessage("お友達ID\n@966mpnqz");
         messages.add(textMessage2);
 
+      } else if ("@特殊".equals(userMessage.trim()) || "＠特殊".equals(userMessage.trim())) {
+        messages = Collections
+            .singletonList(new TextMessage("https://insidergametool.netlify.com/webcontent/form.html"));
+
       } else if ("@取得".equals(userMessage.trim()) || "＠取得".equals(userMessage.trim())) {
         getOdaiDetail(replyToken, 10);
         return;
@@ -351,7 +367,7 @@ public class EchoApplication {
 
     } else {
 
-      // 参加書の場合
+      // 参加者の場合
       String memberRole = village.getMemberRole(userId);
       if (memberRole == null) {
 
@@ -373,4 +389,36 @@ public class EchoApplication {
     reply(replyToken, messages);
   }
 
+  private void replyMessageSpecialVillage(String replyToken, String userId, int number) {
+    List<Message> messages = null;
+
+    SpecialVillage village = SpecialVillageList.getVillage(number);
+
+    if (village != null) {
+      // 参加者フラグ
+      boolean sankaFlg = village.hasMember(userId);
+
+      // 参加している場合
+      if (sankaFlg) {
+        messages = village.getRoleMessage(userId);
+
+      } else { //参加者の場合
+
+        if (village.getUserList().size() >= village.getMessageList().size()) {
+          messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
+        } else {
+          // 配役の設定
+          village.getUserList().add(userId);
+          messages = village.getRoleMessage(userId);
+        }
+      }
+    }
+
+    // メッセージの設定がない場合
+    if (null == messages) {
+      replyDefoltMessage(replyToken);
+    } else {
+      reply(replyToken, messages);
+    }
+  }
 }
