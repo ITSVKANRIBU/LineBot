@@ -43,6 +43,7 @@ public class AjaxFrontServlet {
       // レスポンス設定
       response.setContentType("application/json; charset=utf-8");
       response.addHeader("X-Content-Type-Options", "nosniff");
+      response.addHeader("Access-Control-Allow-Origin", "*");
 
       String reqJson = null;
 
