@@ -39,16 +39,15 @@ public class EchoImageEvent {
     actionList.add(new URIActionNonAltUri("ご意見",
         "https://docs.google.com/forms/d/e/1FAIpQLSf5pH-nC86Lb9L18dx9fBJv1ZUu-qdftS_PBkBRA5imjjFVgA/viewform"));
 
-    String word = "インサイダーゲームツール";
-    actionList.add(new URIActionNonAltUri("ググる",
-        "https://www.google.com/search?q=" + word));
+    actionList.add(new URIActionNonAltUri("ホームぺージ",
+        "https://insidergametool.netlify.com"));
 
     ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
         CommonModule.getIllustUrl("INSIDER"),
         message, actionList);
 
     String titleMessage = "製作者の「白いフランです。」\n"
-        + message + "\n Twitter:  https://twitter.com/2d7rqU5gFQ6VpGo";
+        + message + "\n Hp:  https://insidergametool.netlify.com";
 
     return Collections.singletonList(new TemplateMessage(titleMessage, buttons));
 

@@ -27,6 +27,7 @@ import com.example.bot.staticdata.MessageConst;
 import com.linecorp.bot.model.action.Action;
 import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.action.PostbackAction;
+import com.linecorp.bot.model.action.URIActionNonAltUri;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
@@ -171,17 +172,23 @@ public class Village {
 
     List<Message> messages = null;
     String message = null;
-
+    List<Action> actionList = new ArrayList<Action>();
+    String searchWord = null;
+    if (odai != null) {
+      searchWord = odai.trim().replace("\r", "").replace("\n", "");
+    }
     if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
       if (message.length() > 60) {
         messages = Collections.singletonList(new TextMessage(message));
         messages.add(getStatusMessage(userId).get(0));
       } else {
+        actionList.add(new PostbackAction("入室状況確認", String.valueOf(villageNum)));
+        actionList.add(new URIActionNonAltUri("ググる",
+            "https://www.google.com/search?q=" + searchWord));
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
             CommonModule.getIllustUrl("INSIDER"),
-            message, Collections.singletonList(
-                new PostbackAction("入室状況確認", String.valueOf(villageNum))));
+            message, actionList);
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
       }
 
@@ -194,20 +201,23 @@ public class Village {
       messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
     } else if (MessageConst.GAMEMASTER_ROLE.equals(role.getRole())) {
-      message = "あなたの役職は" + MessageConst.GAMEMASTER_ROLE + "です。\n"
+      message = "役職は" + MessageConst.GAMEMASTER_ROLE + "です。\n"
           + roleList.size() + "/" + villageSize + "人にお題を配りました。お題は『" + odai + "』です。";
+
+      // ボタン設定
+      actionList.add(new PostbackAction("入室状況確認", String.valueOf(villageNum)));
+      actionList.add(new URIActionNonAltUri("ググる",
+          "https://www.google.com/search?q=" + searchWord));
 
       if (message.length() <= 60) {
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
             CommonModule.getIllustUrl("GM"),
-            message, Collections.singletonList(
-                new PostbackAction("入室状況確認", String.valueOf(villageNum))));
+            message, actionList);
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
       } else if (message.length() <= 160) {
         ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-            message, Collections.singletonList(
-                new PostbackAction("入室状況確認", String.valueOf(villageNum))));
+            message, actionList);
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
       } else {
         //文字数が長い場合
