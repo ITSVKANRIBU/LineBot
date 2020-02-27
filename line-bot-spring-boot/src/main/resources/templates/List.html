@@ -9,12 +9,12 @@
 		<!-- リセット用、スタイルが崩れないようにするため -->
 		<link href="./contents/css/main.css" rel="stylesheet" type="text/css">
 		<!-- Bootstrap CSS -->
-		<link rel="stylesheet" type="text/css" href="./bootstrap4/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 		<!-- Optional JavaScript -->
 		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-		<script type="text/javascript" src="./bootstrap4/js/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-		<script type="text/javascript" src="./bootstrap4/js/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-		<script type="text/javascript" src="./bootstrap4/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 		<!-- Orignal JavaScript UOC部分 -->
 		<script src="./contents/js/main.js"></script>
 		<!--ソートテーブル -->
@@ -36,16 +36,33 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr th:each="problem : ${problemList}" th:attr="data-href=@{'/Insider?button=view&id=' + ${problem.id}}">
-							<td class="non" th:text="${problem.id}"></td>
-							<th th:text="${problem.theme}"></th>
-							<td data-label="作成者" th:text="${problem.name}"></td>
-							<td data-label="難易度" th:text="${problem.difficulty}"></td>
-							<td data-label="メモ" th:text="${problem.other}"></td>
+						<tr th:each="problem : ${problemList}" th:attr="data-href=@{'/Insider?button=view&id=' + ${problem.id}}">	
+							<td class="non idData" th:text="${problem.id}"></td>
+							<th class="themeData">
+								<label class="trigger" th:text="${problem.theme}" th:attr="id=@{'label' + ${problem.id}}"></label>
+								<div class="right">
+									<a class="WikiIcon" target="_blank" th:attr="id=@{'link' + ${problem.id}}">
+										<img src="./contents/img/Wiki.png">
+									</a>
+									<a class="googleIcon" th:attr="href=@{'https://www.google.com/search?q=' + ${problem.theme}}" target="_blank" >
+										<img src="./contents/img/google.png" th:attr="alt=@{${problem.theme}}">
+									</a>
+								</div>
+							</th>
+							<td data-label="作成者" th:text="${problem.name}" class="nameData"></td>
+							<td data-label="難易度" th:text="${problem.difficulty <= 0}? '無' : ${problem.difficulty}" class="difficultyData"></td>
+							<td data-label="メモ" th:text="${problem.other}" class="otherData"></td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 		</div>
+		
+		<!-- CODE -->
+		<div class="popup">
+			<a><img id="popImg"></a>
+			<p id="popData"></p>
+		</div>
+		<!-- / CODE -->
 	</body>
 </html>
