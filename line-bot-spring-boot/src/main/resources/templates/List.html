@@ -36,7 +36,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr th:each="problem : ${problemList}" th:attr="data-href=@{'/Insider?button=view&id=' + ${problem.id}}">	
+						<tr th:each="problem : ${problemList}" th:attr="data-href=@{'/Insider?button=view&id=' + ${problem.id}}">
 							<td class="non idData" th:text="${problem.id}"></td>
 							<th class="themeData">
 								<label class="trigger" th:text="${problem.theme}" th:attr="id=@{'label' + ${problem.id}}"></label>
@@ -45,7 +45,7 @@
 										<img src="./contents/img/Wiki.png">
 									</a>
 									<a class="googleIcon" th:attr="href=@{'https://www.google.com/search?q=' + ${problem.theme}}" target="_blank" >
-										<img src="./contents/img/google.png" th:attr="alt=@{${problem.theme}}">
+										<img src="./contents/img/Google.png" th:attr="alt=@{${problem.theme}}">
 									</a>
 								</div>
 							</th>
@@ -57,7 +57,7 @@
 				</table>
 			</div>
 		</div>
-		
+
 		<!-- CODE -->
 		<div class="popup">
 			<a><img id="popImg"></a>
