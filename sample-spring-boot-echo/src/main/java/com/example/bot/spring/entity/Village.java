@@ -209,6 +209,7 @@ public class Village {
     String searchWord = null;
     if (odai != null) {
       searchWord = odai.trim().replace("\r", "").replace("\n", "");
+      searchWord = searchWord.replace(" ", "").replace("　", "").replace("\t", "");
     }
     if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
