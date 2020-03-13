@@ -330,6 +330,19 @@ public class EchoApplication {
         getOdaiDetail(replyToken, 10);
         return;
 
+      } else if ("@逆村".equals(userMessage.trim()) || "＠逆村".equals(userMessage.trim())) {
+        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
+          if (VillageList.get(i).getRoleList().size() == 0
+              && userId.equals(VillageList.get(i).getOwnerId())) {
+            // フラグ設定
+            VillageList.get(i).setSpecialFlg(10);
+            String message = VillageList.get(i).getVillageNum() + "村 を『逆村』に設定しました。\n"
+                + "お題を知らない村人が1人となります。";
+            messages = Collections.singletonList(new TextMessage(message));
+            break;
+          }
+        }
+
       } else {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (null == VillageList.get(i).getOdai()

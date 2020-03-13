@@ -45,8 +45,12 @@ public class Village {
   private int gmNum;
   private int villageSize;
 
+  /* 10:逆村*/
+  private int specialFlg;
+
   public Village() {
     roleList = new CopyOnWriteArrayList<InsiderRole>();
+    specialFlg = 0;
   }
 
   public int getVillageNum() {
@@ -113,6 +117,14 @@ public class Village {
     this.villageSize = villageSize;
   }
 
+  public int getSpecialFlg() {
+    return specialFlg;
+  }
+
+  public void setSpecialFlg(int specialFlg) {
+    this.specialFlg = specialFlg;
+  }
+
   // 持ってなかったらnullを返却
   public String getMemberRole(String userId) {
     return roleList.stream()
@@ -123,20 +135,41 @@ public class Village {
   // 役職の設定処理
   public synchronized InsiderRole setInsiderRole(String userId) {
     InsiderRole returnRole = null;
-    for (int i = 0; i < roleList.size(); i++) {
-      if (userId.equals(roleList.get(i).getUserId())) {
-        // 順番設定
-        roleList.get(i).setIndex(i);
-        // 役職設定
-        if (i + 1 == insiderNum) {
-          roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
-        } else if (i + 1 == gmNum) {
-          roleList.get(i).setRole(MessageConst.GAMEMASTER_ROLE);
-        } else {
-          roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
+    if (specialFlg == 10) {
+      // 逆村設定
+      for (int i = 0; i < roleList.size(); i++) {
+        if (userId.equals(roleList.get(i).getUserId())) {
+          // 順番設定
+          roleList.get(i).setIndex(i);
+          // 役職設定
+          if (i + 1 == insiderNum) {
+            roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
+          } else if (i + 1 == gmNum) {
+            roleList.get(i).setRole(MessageConst.GAMEMASTER_ROLE);
+          } else {
+            roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
+          }
+          returnRole = roleList.get(i);
+          break;
         }
-        returnRole = roleList.get(i);
-        break;
+      }
+    } else {
+      // 通常処理
+      for (int i = 0; i < roleList.size(); i++) {
+        if (userId.equals(roleList.get(i).getUserId())) {
+          // 順番設定
+          roleList.get(i).setIndex(i);
+          // 役職設定
+          if (i + 1 == insiderNum) {
+            roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
+          } else if (i + 1 == gmNum) {
+            roleList.get(i).setRole(MessageConst.GAMEMASTER_ROLE);
+          } else {
+            roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
+          }
+          returnRole = roleList.get(i);
+          break;
+        }
       }
     }
     return returnRole;
