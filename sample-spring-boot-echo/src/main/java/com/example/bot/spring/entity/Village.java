@@ -154,7 +154,7 @@ public class Village {
         }
       }
     } else {
-      // 通常処理
+      // 通常村設定
       for (int i = 0; i < roleList.size(); i++) {
         if (userId.equals(roleList.get(i).getUserId())) {
           // 順番設定
