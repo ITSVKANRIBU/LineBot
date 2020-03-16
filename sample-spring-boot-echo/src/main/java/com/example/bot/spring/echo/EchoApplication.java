@@ -28,6 +28,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.example.bot.common.CommonModule;
+import com.example.bot.common.Request;
 import com.example.bot.common.WordGetter;
 import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
@@ -355,7 +356,12 @@ public class EchoApplication {
               message = message + MessageConst.OWNER_NUMSETMESSAGE;
             }
             messages = Collections.singletonList(new TextMessage(message));
-            break;
+
+            // replyして処理終了とする。
+            reply(replyToken, messages);
+            // 履歴取得
+            Request.run(userMessage, VillageList.get(i).getVillageNum() + "村：" + userId);
+            return;
           }
         }
       }
