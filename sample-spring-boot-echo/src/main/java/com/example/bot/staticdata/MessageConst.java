@@ -50,4 +50,8 @@ public class MessageConst {
 
   public static final String URI_INSIDER = "https://insidergamehelper.herokuapp.com/Insider";
 
+  //履歴
+  public static final boolean RIREKI_FLG = true;
+  public static final String URL_RIREKI = "https://script.google.com/macros/s/"
+      + "AKfycbz52vTMQ_CA9hjvV-NIaMo6mi2iJoZkIIkHtaM_/exec";
 }
