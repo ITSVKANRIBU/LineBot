@@ -34,7 +34,7 @@ public class WereWordEvent {
 
     String odai = village.getOdai();
     int villageSize = village.getVillageSize();
-    boolean gotFlg = village.getGmNum() == MessageConst.DEFAULT_GMNUM ? true : false;
+    boolean gotFlg = village.getGmNum() == 0 ? false : true;
 
     // お題と人数チェック
     if (villageSize <= 2
@@ -44,13 +44,13 @@ public class WereWordEvent {
     CreatWereWordsLogic createLogic = new CreatWereWordsLogic();
     int num = createLogic.createWereWords(gotFlg, villageSize, odai);
 
-    String message = "新たにワーワーズ村として『" + num + "』村を作成しました。";
+    String message = "お題を『" + odai + "』として新たにワーワーズの『" + num + "』村を作成しました。";
 
     if (gotFlg) {
-      message = message + "参加者へ伝えてください。";
+      message = message + "参加者へ『" + num + "』を伝えてください。";
     } else {
-      message = message + "参加者へ伝え、あなたも入室してください。\n"
-          + "■注意\n"
+      message = message + "参加者へ『" + num + "』を伝え、あなたも入室してください。\n"
+          + "\n■注意\n"
           + "あなたはGMです。入室時に表示された役職が欠けた役職となります。";
     }
 
