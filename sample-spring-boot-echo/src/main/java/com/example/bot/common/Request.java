@@ -30,12 +30,13 @@ import com.example.bot.staticdata.MessageConst;
 public class Request {
 
   private static RestTemplate restTemplate = new RestTemplate();
+  private static boolean rirekiFlg = true;
 
   @Async
   public static void run(String odai, String user) {
 
     // 履歴取得フラグがある場合のみ
-    if (MessageConst.RIREKI_FLG) {
+    if (rirekiFlg) {
       EntryOdai entryOdai = new EntryOdai(odai, user);
       try {
         RequestEntity<EntryOdai> requestEntity = RequestEntity
@@ -46,6 +47,9 @@ public class Request {
         System.out.println(requestEntity.toString());
       } catch (Exception e) {
         e.printStackTrace();
+
+        //なんかやばそうであるため、rirekiFlg = falseにする
+        rirekiFlg = false;
       }
     }
   }
