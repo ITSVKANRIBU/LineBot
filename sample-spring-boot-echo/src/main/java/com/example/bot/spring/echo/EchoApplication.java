@@ -344,6 +344,19 @@ public class EchoApplication {
           }
         }
 
+      } else if ("@わーわーず".equals(userMessage.trim()) || "＠わーわーず".equals(userMessage.trim())) {
+        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
+          if (VillageList.get(i).getRoleList().size() == 0
+              && userId.equals(VillageList.get(i).getOwnerId())) {
+            // 人数、お題チェック
+            if (VillageList.get(i).getVillageSize() > 2
+                && VillageList.get(i).getOdai() != null) {
+              WereWordEvent logic = new WereWordEvent();
+              messages = logic.branch(VillageList.get(i));
+            }
+            break;
+          }
+        }
       } else {
         for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
           if (null == VillageList.get(i).getOdai()
