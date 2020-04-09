@@ -32,7 +32,7 @@ public class CreatWereWordsLogic {
 
     CreatVillage create = new CreatVillage();
 
-    villageNum = create.createNewVillage(getMessages(godFlg, villageNum, theme));
+    villageNum = create.createNewVillage(getMessages(godFlg, num, theme));
 
     return villageNum;
   }
