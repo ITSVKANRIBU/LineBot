@@ -62,3 +62,4 @@ local.properties
 *.prefs
 */bin/*
 *.lock
+/.gradle/
