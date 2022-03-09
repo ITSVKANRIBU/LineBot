@@ -16,65 +16,121 @@
 
 package com.example.bot.common;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import com.example.bot.staticdata.MessageConst;
 
 public class CommonModule {
 
-  private static Map<String, ArrayList<String>> illustrationMap;
-
-  //ファイル名は　【役職】_【確率（整数）】_【任意】　とする。
-  // 確率が高いほど当選確率よい
-
-  static {
-
-    illustrationMap = new HashMap<String, ArrayList<String>>();
-    System.out.println("読み込み");
-
-    String path = new File(".").getAbsoluteFile().getParent();
-    File dir = new File(path + MessageConst.ILLUSTRATION_PATH);
-    File[] fileList = dir.listFiles();
-    if (fileList != null) {
-      for (File file : fileList) {
-        String[] fileName = file.getName().split("_");
-
-        if (fileName.length != 3) {
-          continue;
-        }
-
-        if (illustrationMap.containsKey(fileName[0])) {
-          for (int i = 0; i < Integer.parseInt(fileName[1]); i++) {
-            illustrationMap.get(fileName[0]).add(file.getName());
-          }
-        } else {
-          ArrayList<String> newList = new ArrayList<String>();
-          for (int i = 0; i < Integer.parseInt(fileName[1]); i++) {
-            newList.add(file.getName());
-          }
-          System.out.println(file.getName());
-          illustrationMap.put(fileName[0], newList);
-        }
-
-      }
-    }
-  }
+  private static final RestTemplate restTemplate = new RestTemplate();
+  private static final String URL = "https://script.googleusercontent.com/macros/echo?user_content_key=aKMvG1GRG6CYrznJw6x0cjbGjD3XCu6DkIARkCZYZB257AnrACX_SIEBnxtbI7z26GYt4zejEm13dha_xv4o3wgiVNcAjd6_m5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnCNpoqCEl5Y_84RG7F4nLvpUk-DyE4X5eE_1h0yajhEvYBr9Jf8qIeO625quMX_ShEW-dnclfdIe&lib=Mc3tlEOHbGs_amoROLTGc0nOYk-y_j7OD";
+  private static Map<String, ArrayList<Integer>> illustrationRtioMap;
+  private static Map<String, ArrayList<String>> illustrationUrlMap;
 
   public static String getIllustUrl(String roleName) {
 
     String returnPath = null;
-    if (illustrationMap.containsKey(roleName)) {
-      ArrayList<String> nameList = illustrationMap.get(roleName);
-      Random random = new Random();
-      int num = random.nextInt(nameList.size());
-      returnPath = MessageConst.ILLUSTRATION_URL_PREFIX + nameList.get(num);
-    } else {
-      returnPath = null;
+    try {
+      if (illustrationRtioMap.containsKey(roleName)) {
+        ArrayList<Integer> nameList = illustrationRtioMap.get(roleName);
+        Random random = new Random();
+        int num = random.nextInt(nameList.size());
+        returnPath = illustrationUrlMap.get(roleName).get(nameList.get(num));
+      } else {
+        return defoltIllustUrl(roleName);
+      }
+    } catch (Exception e) {
+      return defoltIllustUrl(roleName);
     }
     return returnPath;
+  }
+
+  private static String defoltIllustUrl(String roleName) {
+    switch (roleName) {
+    case "INSIDER":
+      return MessageConst.INSIDER_URL;
+
+    case "GM":
+      return MessageConst.GM_URL;
+
+    case "VILLAGERS":
+      return MessageConst.VILLAGERS_URL;
+
+    case "GOD":
+      return MessageConst.GOD_URL;
+
+    }
+    return null;
+  }
+
+  @SuppressWarnings("rawtypes")
+  public static void createMap() {
+
+    try {
+      ResponseEntity<Map> responseEntity = restTemplate.getForEntity(URL, Map.class);
+
+      Map res = responseEntity.getBody();
+
+      if (res == null) {
+        return;
+      }
+
+      List dataList = (List) res.get("files");
+      Map<String, ArrayList<Integer>> tmpdataMap = new HashMap<String, ArrayList<Integer>>();
+      Map<String, ArrayList<String>> tmpUrlMap = new HashMap<String, ArrayList<String>>();
+
+      for (Object object : dataList) {
+        @SuppressWarnings("unchecked")
+        Map<String, String> map = (Map<String, String>) object;
+
+        String name = map.get("name");
+        String[] fileNameArray = name.split("_");
+
+        // エラーチェック
+        if (fileNameArray.length != 3) {
+          continue;
+        }
+
+        // ある場合
+        if (tmpdataMap.containsKey(fileNameArray[0])) {
+
+          //urlListに追加
+          int urlListindex = tmpUrlMap.get(fileNameArray[0]).size();
+          tmpUrlMap.get(fileNameArray[0]).add(map.get("url"));
+
+          for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
+            tmpdataMap.get(fileNameArray[0]).add(urlListindex);
+          }
+        } else {
+
+          ArrayList<Integer> newIntList = new ArrayList<Integer>();
+
+          for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
+            newIntList.add(0);
+          }
+          // 追加
+          tmpdataMap.put(fileNameArray[0], newIntList);
+
+          ArrayList<String> newStrList = new ArrayList<String>();
+          newStrList.add(map.get("url"));
+          tmpUrlMap.put(fileNameArray[0], newStrList);
+
+        }
+      }
+
+      illustrationRtioMap = tmpdataMap;
+      illustrationUrlMap = tmpUrlMap;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
   }
 }
