@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import com.example.bot.common.CommonModule;
 import com.example.bot.common.Request;
@@ -61,6 +63,7 @@ import com.linecorp.bot.spring.boot.logic.InsertLogic;
 import lombok.NonNull;
 
 @SpringBootApplication
+@EnableScheduling
 @LineMessageHandler
 public class EchoApplication {
   @Autowired
@@ -68,6 +71,12 @@ public class EchoApplication {
 
   public static void main(String[] args) {
     SpringApplication.run(EchoApplication.class, args);
+  }
+
+  @Scheduled(fixedDelay = 300000)
+  public static void createMap() {
+    System.out.println("画像取得");
+    CommonModule.createMap();
   }
 
   @EventMapping
