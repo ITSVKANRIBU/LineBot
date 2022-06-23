@@ -17,19 +17,16 @@ package com.linecorp.bot.spring.boot.common;
 
 public class Properties {
 
-  //jdbc:postgresql://ec2-174-129-254-235.compute-1.amazonaws.com:5432/ddslj8lrpcv3ta
   //jdbc:postgresql://localhost:5432/postgres
   public static final String DB_URL = "jdbc:postgresql:"
-      + "//ec2-174-129-254-235.compute-1.amazonaws.com:5432/ddslj8lrpcv3ta";
+      + "//ec2-34-235-92-52.compute-1.amazonaws.com:5432/d9tmatn9aj1v6j";
 
-  //xteakkwpfsuepu
   //postgres
-  public static final String DB_USER = "xteakkwpfsuepu";
+  public static final String DB_USER = "flxxcrisejfjsu";
 
-  //9514102d518dc6dc4b4c251451e2caaa90b85dccec6f07d5ce034ee56394d047
   //root
-  public static final String DB_PASS = "9514102d518dc6dc4b4c251451e2"
-      + "caaa90b85dccec6f07d5ce034ee56394d047";
+  public static final String DB_PASS = "f608fb100882f007ffe980fed"
+      + "a6f1dbf6221a073742f277497a75a3ecfae2afc";
 
   public static final String ERR_NOINPUT = "入力内容が不正です。";
 
