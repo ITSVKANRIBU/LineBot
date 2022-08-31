@@ -51,31 +51,6 @@ public class LiffModelSerializeDeserializeTest {
         objectMapper = TestUtil.objectMapperWithProductionConfiguration(false);
     }
 
-    @Test
-    public void testLiffView() {
-        test(LIFF_VIEW, LiffView.class);
-    }
-
-    @Test
-    public void testLiffApp() {
-        test(LIFF_APP, LiffApp.class);
-    }
-
-    @Test
-    public void testLiffAppsResponse() {
-        test(LIFF_APPS_RESPONSE, LiffAppsResponse.class);
-    }
-
-    @Test
-    public void testAddLiffAppRequest() {
-        test(ADD_LIFF_APP_REQUEST, LiffAppAddRequest.class);
-    }
-
-    @Test
-    public void testAddLiffAppResponse() {
-        test(ADD_LIFF_APP_RESPONSE, LiffAppAddResponse.class);
-    }
-
     ///////////////////////////////////////////////////////////////////
 
     private <T> void test(final T original, final Class<T> clazz) {
