@@ -99,11 +99,7 @@ public class EchoApplication {
 
     try {
       int dataInt = Integer.parseInt(data);
-      if (dataInt == 0) {
-        // お題取得
-        getOdai(event.getReplyToken(), 0);
-
-      } else if (dataInt > 0 && dataInt < 10) {
+      if (dataInt >= 0 && dataInt < 10) {
         // お題詳細取得
         getOdaiDetail(event.getReplyToken(), dataInt);
 
@@ -162,6 +158,14 @@ public class EchoApplication {
     }
   }
 
+  /**
+   * 現在廃止中
+   * データベース連携処理
+   * 
+   * @param replyToken
+   * @param difficulty
+   */
+  @SuppressWarnings("unused")
   private void getOdai(String replyToken, int difficulty) {
     InsertLogic logic = new InsertLogic();
     String odai = logic.getRandomProblem(difficulty);
@@ -211,7 +215,9 @@ public class EchoApplication {
     String message = "ありがとうございます！ 「" + odai + "」を追加しました。";
 
     List<Action> actionList = new ArrayList<Action>();
-    actionList.add(new URIActionNonAltUri("他に投稿してみる", MessageConst.URI_INSIDER));
+    
+    // DB連携で廃止処理
+    //actionList.add(new URIActionNonAltUri("他に投稿してみる", MessageConst.URI_INSIDER));
 
     ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
         message, actionList);
