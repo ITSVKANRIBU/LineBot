@@ -19,7 +19,10 @@ apply plugin: 'org.springframework.boot'
 dependencies {
     compile project(':line-bot-spring-boot')
     compile 'com.google.guava:guava'
-    compile 'org.yaml:snakeyaml'
+    compile 'org.yaml:snakeyaml'    
+    
+    implementation 'javax.activation:activation:1.1'
+    
 }
 
 jar {

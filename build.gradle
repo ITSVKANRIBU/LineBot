@@ -26,8 +26,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.21.0'
-        classpath 'com.puppycrawl.tools:checkstyle:8.21'
-        classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:2.0.0'
         classpath 'gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:2.0.0'
         classpath 'io.franzbecker:gradle-lombok:3.1.0'
         classpath 'io.spring.gradle:dependency-management-plugin:1.0.8.RELEASE'
@@ -66,13 +64,11 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'com.github.spotbugs'
     apply plugin: 'propdeps'
     apply plugin: 'propdeps-maven'
     apply plugin: 'propdeps-idea'
     apply plugin: 'propdeps-eclipse'
     apply plugin: 'java'
-    apply plugin: 'checkstyle'
     apply plugin: 'io.franzbecker.gradle-lombok'
     if (new File("${project.rootDir}/.git").exists()) {
         logger.info("There's .git directory. Create git.properties.")
@@ -175,36 +171,11 @@ subprojects {
             }
         }
 
-        javadoc {
-            dependsOn delombok
-            source = delombok.outputDir
-            options.locale = 'en_US'
-            options.addStringOption('Xdoclint:none', '-quiet')
-            // To create javadoc for generated method&constructor, delombok & run javadoc on delombok.outputDir.
-        }
-
-        task javadocJar(type: Jar, dependsOn: 'javadoc') {
-            classifier = 'javadoc'
-            from javadoc.destinationDir
-        }
-
         task sourcesJar(type: Jar, dependsOn: 'classes') {
             classifier = 'sources'
             from sourceSets.main.allSource
         }
 
-        artifacts {
-            archives javadocJar, sourcesJar
-        }
-    }
-
-    checkstyle {
-        configProperties = [projectDir: rootProject.projectDir]
-        toolVersion = '8.21'
-    }
-
-    spotbugs {
-        excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
     }
 
     compileJava {

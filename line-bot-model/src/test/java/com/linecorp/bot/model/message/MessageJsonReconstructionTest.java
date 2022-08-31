@@ -76,30 +76,6 @@ public class MessageJsonReconstructionTest {
     }
 
     @Test
-    public void textMessageWithQuickReplyTest() {
-        List<QuickReplyItem> items = asList(
-                QuickReplyItem.builder()
-                              .action(CameraAction.withLabel("Camera Action Label"))
-                              .imageUrl(URI.create("https://example.com/image.png"))
-                              .build(),
-                QuickReplyItem.builder()
-                              .action(CameraRollAction.withLabel("Camera Roll Action Label"))
-                              .build(),
-                QuickReplyItem.builder()
-                              .action(LocationAction.withLabel("Location Action"))
-                              .build()
-        );
-
-        TextMessage target = TextMessage
-                .builder()
-                .text("TEST")
-                .quickReply(QuickReply.items(items))
-                .build();
-
-        test(target);
-    }
-
-    @Test
     public void stickerMessageTest() {
         test(new StickerMessage("123", "456"));
     }
@@ -112,16 +88,6 @@ public class MessageJsonReconstructionTest {
     @Test
     public void videoMessageTest() {
         test(new VideoMessage("https://example.com/original", "https://example.com/preview"));
-    }
-
-    @Test
-    public void imagemapMessageTest() {
-        test(ImagemapMessage.builder()
-                            .baseUrl("baseUrl")
-                            .altText("altText")
-                            .baseSize(new ImagemapBaseSize(1040, 1040))
-                            .actions(emptyList())
-                            .build());
     }
 
     @Test
@@ -174,13 +140,6 @@ public class MessageJsonReconstructionTest {
                 new Multicast(singleton("LINE_ID"), singletonList(new TextMessage("text")));
 
         test(multicast);
-    }
-
-    @Test
-    public void broadcast() {
-        final Broadcast broadcast = new Broadcast(singletonList(new TextMessage("text")), true);
-
-        test(broadcast);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
