@@ -184,7 +184,9 @@ public class Village {
 
     List<Action> actionList = new ArrayList<Action>();
     actionList.add(new MessageAction("再確認", String.valueOf(villageNum)));
-    actionList.add(new PostbackAction("お題を投稿", odai));
+    
+    // DB連携廃止
+    // actionList.add(new PostbackAction("お題を投稿", odai));
 
     if (message.length() <= 160) {
       ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
