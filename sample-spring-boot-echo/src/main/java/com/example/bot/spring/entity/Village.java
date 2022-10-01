@@ -27,7 +27,6 @@ import com.example.bot.staticdata.MessageConst;
 import com.linecorp.bot.model.action.Action;
 import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.action.PostbackAction;
-import com.linecorp.bot.model.action.URIActionNonAltUri;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
@@ -220,8 +219,9 @@ public class Village {
         messages.add(getStatusMessage(userId).get(0));
       } else {
         actionList.add(new PostbackAction("入室状況確認", String.valueOf(villageNum)));
-        actionList.add(new URIActionNonAltUri("ググる",
+        /*        actionList.add(new URIActionNonAltUri("ググる",
             "https://www.google.com/search?q=" + searchWord));
+        */
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
             CommonModule.getIllustUrl("INSIDER"),
             message, actionList);
@@ -242,9 +242,9 @@ public class Village {
 
       // ボタン設定
       actionList.add(new PostbackAction("入室状況確認", String.valueOf(villageNum)));
-      actionList.add(new URIActionNonAltUri("ググる",
+      /*      actionList.add(new URIActionNonAltUri("ググる",
           "https://www.google.com/search?q=" + searchWord));
-
+      */
       if (message.length() <= 60) {
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
             CommonModule.getIllustUrl("GM"),
