@@ -3,6 +3,7 @@ package com.example.bot.spring.echo;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +18,7 @@ import com.linecorp.bot.spring.boot.entity.SpecialVillage;
 public class MainController {
 
   @GetMapping("/callapi")
+  @CrossOrigin
   public List<Message> index(String message, String userId) {
     List<Message> messages = messageController(message, userId);
     if (messages == null) {
