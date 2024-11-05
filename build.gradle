@@ -21,7 +21,6 @@ buildscript {
 
     repositories {
         mavenCentral()
-        jcenter()
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
@@ -151,11 +150,21 @@ task codeCoverageReport(type: JacocoReport) {
     }
 
     reports {
-        xml.enabled true
-        xml.destination file('reports/jacoco/report.xml')
-        html.enabled true
-        csv.enabled false
-    }
+	    xml {
+            required.set(true)
+            outputLocation.set(file('reports/jacoco/report.xml'))
+	    }
+	    html {
+	        required.set(true)
+	        // HTMLレポートのデフォルト出力先を使用する場合は、outputLocationの設定は不要です。
+	        // カスタム出力先を指定する場合は、以下のコメントを外して適宜パスを設定してください。
+	        // outputLocation.set(file('path/to/your/html/report'))
+	    }
+	    csv {
+	        required.set(false)
+	        // CSVレポートを無効化する場合、`required.set(false)`を設定します。
+	    }
+	}
 }
 
 publishing {
