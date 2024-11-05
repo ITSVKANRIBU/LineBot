@@ -14,13 +14,15 @@
  * under the License.
  */
 
-dependencies {
-    implementation project(':line-bot-model')
-    implementation 'com.fasterxml.jackson.core:jackson-core'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'org.slf4j:slf4j-api'
+apply plugin: 'java-library'
 
-    implementation 'com.squareup.okhttp3:logging-interceptor'
-    implementation 'com.squareup.retrofit2:converter-jackson'
-    implementation 'com.squareup.retrofit2:retrofit'
+dependencies {
+    api project(':line-bot-model')
+    api 'com.fasterxml.jackson.core:jackson-core'
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'org.slf4j:slf4j-api'
+
+    api 'com.squareup.okhttp3:logging-interceptor'
+    api 'com.squareup.retrofit2:converter-jackson'
+    api 'com.squareup.retrofit2:retrofit'    
 }

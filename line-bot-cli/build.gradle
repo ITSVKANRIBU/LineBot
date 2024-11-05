@@ -16,13 +16,14 @@
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'signing'
+apply plugin: 'java-library'
 
 dependencies {
-    implementation project(':line-bot-spring-boot')
-    implementation 'com.google.guava:guava'
-    implementation 'org.yaml:snakeyaml'    
+    api project(':line-bot-spring-boot')
+    api 'com.google.guava:guava'
+    api 'org.yaml:snakeyaml'    
     
-    implementation 'javax.activation:activation:1.1'
+    api 'javax.activation:activation:1.1'
     
 }
 
