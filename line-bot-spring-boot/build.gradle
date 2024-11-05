@@ -15,12 +15,12 @@
  */
 
 dependencies {
-    compile project(':line-bot-api-client')
-    compile project(':line-bot-model')
-    compile project(':line-bot-servlet')
-    compile 'org.springframework.boot:spring-boot-autoconfigure'
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    compile files('lib/postgresql-42.2.8.jar')
-    optional 'javax.validation:validation-api'
+    implementation project(':line-bot-api-client')
+    implementation project(':line-bot-model')
+    implementation project(':line-bot-servlet')
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation files('lib/postgresql-42.2.8.jar')
+    compileOnly 'javax.validation:validation-api'
 }

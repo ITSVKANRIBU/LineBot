@@ -15,11 +15,12 @@
  */
 
 apply plugin: 'org.springframework.boot'
+apply plugin: 'signing'
 
 dependencies {
-    compile project(':line-bot-spring-boot')
-    compile 'com.google.guava:guava'
-    compile 'org.yaml:snakeyaml'    
+    implementation project(':line-bot-spring-boot')
+    implementation 'com.google.guava:guava'
+    implementation 'org.yaml:snakeyaml'    
     
     implementation 'javax.activation:activation:1.1'
     
@@ -39,6 +40,8 @@ bootJar {
     mainClassName = 'com.linecorp.bot.cli.Application'
 }
 
+
+
 // Reset bootRepackage dependency to remove dependency from bootRepackage to signArchives.
 // This causes circular dependency.
 //
@@ -46,7 +49,7 @@ bootJar {
 // But signArchives should be after repackages.
 bootJar.dependsOn.clear()
 bootJar.dependsOn jar
-signArchives.dependsOn bootJar
+//signArchives.dependsOn bootJar
 
 // Add exec jar into archives to be uploaded.
 artifacts.add('archives', file("$buildDir/libs/${project.name}-${project.version}-${bootJar.classifier}.jar")) {

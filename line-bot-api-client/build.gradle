@@ -15,10 +15,10 @@
  */
 
 dependencies {
-    compile project(':line-bot-model')
-    compile 'com.fasterxml.jackson.core:jackson-core'
-    compile 'com.fasterxml.jackson.core:jackson-databind'
-    compile 'org.slf4j:slf4j-api'
+    implementation project(':line-bot-model')
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.slf4j:slf4j-api'
 
     implementation 'com.squareup.okhttp3:logging-interceptor'
     implementation 'com.squareup.retrofit2:converter-jackson'
