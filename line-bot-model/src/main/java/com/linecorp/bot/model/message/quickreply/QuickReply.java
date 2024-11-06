@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Singular;
 import lombok.Value;
 
 /**
@@ -44,7 +43,7 @@ import lombok.Value;
 @AllArgsConstructor(staticName = "items", access = AccessLevel.PUBLIC)
 @JsonDeserialize(builder = QuickReply.QuickReplyBuilder.class)
 public class QuickReply {
-    @Singular
+    
     List<QuickReplyItem> items;
 
     @JsonPOJOBuilder(withPrefix = "")

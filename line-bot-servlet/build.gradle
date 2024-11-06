@@ -14,11 +14,13 @@
  * under the License.
  */
 
-dependencies {
-    compile project(':line-bot-api-client')
-    compile 'com.fasterxml.jackson.core:jackson-databind'
-    compile 'com.google.guava:guava'
+apply plugin: 'java-library'
 
-    optional 'javax.servlet:javax.servlet-api'
-    optional 'org.slf4j:slf4j-api'
+dependencies {
+    api project(':line-bot-api-client')
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'com.google.guava:guava'
+
+    compileOnly 'javax.servlet:javax.servlet-api'
+    compileOnly 'org.slf4j:slf4j-api'
 }

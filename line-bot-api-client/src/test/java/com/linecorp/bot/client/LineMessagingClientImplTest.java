@@ -16,14 +16,11 @@
 
 package com.linecorp.bot.client;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singleton;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -52,8 +49,6 @@ import com.linecorp.bot.model.response.NumberOfMessagesResponse;
 import com.linecorp.bot.model.response.NumberOfMessagesResponse.Status;
 import com.linecorp.bot.model.response.QuotaConsumptionResponse;
 import com.linecorp.bot.model.richmenu.RichMenu;
-import com.linecorp.bot.model.richmenu.RichMenuBlukLinkRequest;
-import com.linecorp.bot.model.richmenu.RichMenuBlukUnlinkRequest;
 import com.linecorp.bot.model.richmenu.RichMenuIdResponse;
 import com.linecorp.bot.model.richmenu.RichMenuListResponse;
 import com.linecorp.bot.model.richmenu.RichMenuResponse;
@@ -379,23 +374,6 @@ public class LineMessagingClientImplTest {
     }
 
     @Test
-    public void linkRichMenuToUsers() {
-        whenCall(retrofitMock.linkRichMenuToUsers(any()), null);
-
-        // Do
-        final BotApiResponse botApiResponse = target.linkRichMenuIdToUsers(Collections.singletonList("USER_ID"),
-                                                                           "RICH_MENU_ID")
-                                                    .join();
-
-        // Verify
-        verify(retrofitMock, only()).linkRichMenuToUsers(RichMenuBlukLinkRequest.builder()
-                                                                                .richMenuId("RICH_MENU_ID")
-                                                                                .userId("USER_ID")
-                                                                                .build());
-        assertThat(botApiResponse).isEqualTo(BOT_API_SUCCESS_RESPONSE);
-    }
-
-    @Test
     public void unlinkRichMenuIdFromUser() throws Exception {
         whenCall(retrofitMock.unlinkRichMenuIdFromUser(any()),
                  null);
@@ -408,20 +386,6 @@ public class LineMessagingClientImplTest {
         assertThat(botApiResponse).isEqualTo(BOT_API_SUCCESS_RESPONSE);
     }
 
-    @Test
-    public void unlinkRichMenuIdFromUsers() throws Exception {
-        whenCall(retrofitMock.unlinkRichMenuIdFromUsers(any()),
-                 null);
-
-        // Do
-        final BotApiResponse botApiResponse = target.unlinkRichMenuIdFromUsers(Collections.singletonList("ID"))
-                                                    .join();
-
-        // Verify
-        verify(retrofitMock, only()).unlinkRichMenuIdFromUsers(
-                RichMenuBlukUnlinkRequest.builder().userId("ID").build());
-        assertThat(botApiResponse).isEqualTo(BOT_API_SUCCESS_RESPONSE);
-    }
 
     @Test
     public void getRichMenuImageTest() throws Exception {

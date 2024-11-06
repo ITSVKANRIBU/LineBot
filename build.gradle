@@ -8,13 +8,13 @@
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations
  * under the License.
  */
 
-// ./gradlew clean && ./gradlew uploadArchives -Prelease
+//./gradlew clean && ./gradlew publish -Prelease
 
 buildscript {
     ext.kotlin_version = '1.3.31'
@@ -22,27 +22,28 @@ buildscript {
     repositories {
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'https://repo.spring.io/plugins-release' }
     }
     dependencies {
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.21.0'
-        classpath 'gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:2.0.0'
+        classpath 'gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:2.2.4'
         classpath 'io.franzbecker:gradle-lombok:3.1.0'
         classpath 'io.spring.gradle:dependency-management-plugin:1.0.8.RELEASE'
-        classpath 'io.spring.gradle:propdeps-plugin:0.0.10.RELEASE'
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.1.5.RELEASE'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'org.ajoberstar.grgit:grgit-core:4.1.1'
     }
 }
 
+apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.ben-manes.versions'
+apply plugin: 'maven-publish'
 
 group = 'com.linecorp.bot'
 version = '2.7.0'
 
-//set build variables based on build type (release, continuous integration, development)
+// Set build variables based on build type (release, continuous integration, development)
 def isDevBuild
 def isReleaseBuild
 def sonatypeRepositoryUrl
@@ -59,24 +60,21 @@ if (hasProperty('release')) {
 
 allprojects {
     repositories {
-        mavenCentral();
+        mavenCentral()
     }
 }
 
 subprojects {
-    apply plugin: 'propdeps'
-    apply plugin: 'propdeps-maven'
-    apply plugin: 'propdeps-idea'
-    apply plugin: 'propdeps-eclipse'
     apply plugin: 'java'
     apply plugin: 'io.franzbecker.gradle-lombok'
+    apply plugin: 'io.spring.dependency-management'
+
     if (new File("${project.rootDir}/.git").exists()) {
         logger.info("There's .git directory. Create git.properties.")
         apply plugin: 'com.gorylenko.gradle-git-properties'
     } else {
-        logger.warn("There's no .git directory. Can't create git.properties.");
+        logger.warn("There's no .git directory. Can't create git.properties.")
     }
-    apply plugin: 'io.spring.dependency-management'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -105,50 +103,21 @@ subprojects {
                 entry 'retrofit'
             }
             dependency 'org.assertj:assertj-core:3.12.1'
-            dependency 'org.projectlombok:lombok:1.18.8'
+            dependency 'org.projectlombok:lombok:1.18.34'
         }
     }
 
     dependencies {
         compileOnly 'org.springframework.boot:spring-boot-configuration-processor'
-        // http://docs.spring.io/spring-boot/docs/current/reference/html/configuration-metadata.html#configuration-metadata-annotation-processor
-
-        testCompile 'com.google.guava:guava'
-        testCompile 'com.github.stefanbirkner:system-rules'
-        testCompile 'com.squareup.okhttp3:mockwebserver'
-        testCompile 'org.hibernate:hibernate-validator'
-        testCompile 'org.springframework.boot:spring-boot-starter-test' // MockHttpServletRequest
-        testCompile 'org.springframework.boot:spring-boot-starter-logging'
+        testImplementation 'com.google.guava:guava'
+        testImplementation 'com.github.stefanbirkner:system-rules'
+        testImplementation 'com.squareup.okhttp3:mockwebserver'
+        testImplementation 'org.hibernate:hibernate-validator'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'org.springframework.boot:spring-boot-starter-logging'
     }
 
     compileJava.dependsOn(processResources)
-    // http://docs.spring.io/spring-boot/docs/current/reference/html/configuration-metadata.html#configuration-metadata-annotation-processor
-
-    def springManagedModules = [
-        'org.springframework',
-        'com.fasterxml.jackson',
-        'javax.validation',
-        'org.hibernate',
-        'javax.servlet'
-    ];
-    dependencyUpdates.resolutionStrategy {
-        componentSelection { rules ->
-            rules.all { ComponentSelection selection ->
-                boolean springManaged = springManagedModules.any { module ->
-                    selection.candidate.group.startsWith(module)
-                }
-                if (springManaged) {
-                    selection.reject('Spring Managed')
-                }
-                boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm'].any { qualifier ->
-                    selection.candidate.version ==~ /(?i).*[.-]${qualifier}\d*[.\d-]*/
-                }
-                if (rejected) {
-                    selection.reject('Release candidate')
-                }
-            }
-        }
-    }
 
     jar {
         manifest {
@@ -158,24 +127,7 @@ subprojects {
     }
 
     lombok {
-        version = '1.18.8'
-    }
-
-    if (!project.name.startsWith('sample-') && !project.name.startsWith('test-')) {
-        task delombok(type: io.franzbecker.gradle.lombok.task.DelombokTask, dependsOn: compileJava) {
-            ext.outputDir = file("$buildDir/delombok")
-            outputs.dir(outputDir)
-            sourceSets.main.java.srcDirs.each {
-                inputs.dir(it)
-                args(it, "-d", outputDir)
-            }
-        }
-
-        task sourcesJar(type: Jar, dependsOn: 'classes') {
-            classifier = 'sources'
-            from sourceSets.main.allSource
-        }
-
+        version = '1.18.34'
     }
 
     compileJava {
@@ -198,71 +150,69 @@ task codeCoverageReport(type: JacocoReport) {
     }
 
     reports {
-        xml.enabled true
-        xml.destination file('reports/jacoco/report.xml')
-        html.enabled true
-        csv.enabled false
-    }
+	    xml {
+            required.set(true)
+            outputLocation.set(file('reports/jacoco/report.xml'))
+	    }
+	    html {
+	        required.set(true)
+	        // HTMLレポートのデフォルト出力先を使用する場合は、outputLocationの設定は不要です。
+	        // カスタム出力先を指定する場合は、以下のコメントを外して適宜パスを設定してください。
+	        // outputLocation.set(file('path/to/your/html/report'))
+	    }
+	    csv {
+	        required.set(false)
+	        // CSVレポートを無効化する場合、`required.set(false)`を設定します。
+	    }
+	}
 }
 
-[':line-bot-api-client', ':line-bot-model', ':line-bot-servlet', ':line-bot-spring-boot', ':line-bot-cli'].each { projectName ->
-    project(projectName) { project ->
-        apply plugin: 'jacoco'
-        apply plugin: 'signing'
-        apply plugin: 'maven'
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'com.linecorp.bot'
+            artifactId = 'line-bot-sdk-java'
+            version = rootProject.version
 
-        signing {
-            required { isReleaseBuild }
-            sign configurations.archives
-        }
+            pom {
+                name = 'LineBot SDK'
+                description = 'LINE Bot SDK for Java'
+                url = 'https://github.com/line/line-bot-sdk-java'
 
-        uploadArchives {
-            repositories {
-                if (isDevBuild) {
-                    mavenLocal()
-                } else {
-                    mavenDeployer {
-                        if (isReleaseBuild) {
-                            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-                        }
+                scm {
+                    connection = 'scm:git@github.com:line/line-bot-sdk-java.git'
+                    developerConnection = 'scm:git@github.com:line/line-bot-sdk-java.git'
+                    url = 'https://github.com/line/line-bot-sdk-java'
+                }
 
-                        repository(url: sonatypeRepositoryUrl) {
-                            authentication(userName: sonatypeUsername, password: sonatypePassword)
-                        }
+                licenses {
+                    license {
+                        name = 'Apache License, Version 2.0'
+                        url = 'https://opensource.org/licenses/Apache-2.0'
+                        distribution = 'repo'
+                    }
+                }
 
-                        pom.project {
-                            name project.name
-                            packaging 'jar'
-                            description project.description
-                            url 'https://github.com/line/line-bot-sdk-java'
-
-                            scm {
-                                url 'scm:git@github.com:line/line-bot-sdk-java.git'
-                                connection 'scm:git@github.com:line/line-bot-sdk-java.git'
-                                developerConnection 'scm:git@github.com:line/line-bot-sdk-java.git'
-                            }
-                            licenses {
-                                license {
-                                    name 'Apache'
-                                    url 'https://opensource.org/licenses/Apache-2.0'
-                                }
-                            }
-                            developers {
-                                developer {
-                                    id 'tokuhirom'
-                                    name 'Tokuhiro Matsuno'
-                                    email 'tokuhirom@gmail.com'
-                                }
-                                developer {
-                                    id 'kazuki-ma'
-                                    name 'Kazuki MATSUDA'
-                                    email 'matsuda.kazuki@gmail.com'
-                                }
-                            }
-                        }
+                developers {
+                    developer {
+                        id = 'tokuhirom'
+                        name = 'Tokuhiro Matsuno'
+                        email = 'tokuhirom@gmail.com'
+                    }
+                    developer {
+                        id = 'kazuki-ma'
+                        name = 'Kazuki MATSUDA'
+                        email = 'matsuda.kazuki@gmail.com'
                     }
                 }
             }
+        }
+    }
+
+    repositories {
+        maven {
+            url = isReleaseBuild ? sonatypeRepositoryUrl : 'https://oss.sonatype.org/content/repositories/snapshots/'
         }
     }
 }

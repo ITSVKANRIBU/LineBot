@@ -17,8 +17,8 @@
 apply plugin: 'org.springframework.boot'
 
 dependencies {
-    compile project(':line-bot-spring-boot')
-    compile fileTree(dir: './main/lib', includes: ['*.jar'])
+    implementation project(':line-bot-spring-boot')
+    implementation fileTree(dir: './main/lib', includes: ['*.jar'])
 
 }
 
