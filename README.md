@@ -1,145 +1,112 @@
-# LINE Messaging API SDK for Java
+# インサイダーゲーム Bot
 
-[![Build Status](https://travis-ci.org/line/line-bot-sdk-java.svg?branch=master)](https://travis-ci.org/line/line-bot-sdk-java)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.linecorp.bot/line-bot-model/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.linecorp.bot/line-bot-model)
-[![javadoc.io](https://javadocio-badges.herokuapp.com/com.linecorp.bot/line-bot-model/badge.svg)](https://javadocio-badges.herokuapp.com/com.linecorp.bot/line-bot-model)
-[![codecov](https://codecov.io/gh/line/line-bot-sdk-java/branch/master/graph/badge.svg)](https://codecov.io/gh/line/line-bot-sdk-java)
+LINE Messaging APIを使って、インサイダーゲームとWerewordsを運営するBotです。Heroku上でSpring Bootアプリとして動作します。ゲーム状態はDBへ保存せず、プロセスのメモリだけで管理します。
 
+## ゲーム仕様
 
-## Introduction
+### 通常村
 
-The LINE Messaging API SDK for Java makes it easy to develop bots using LINE Messaging API, and you can create a sample bot within minutes.
+1. LINEで`お題`または`題`を送ると通常村を作成します。
+2. `神`を送ると、GM（ゲームマスター）を含む通常村を作成します。
+3. 村のオーナーが人数（2人以上）を送ると、参加人数を確定します。
+4. オーナーが自由文を送ると、その村のお題になります。
+5. 参加者が4桁の村番号を送ると、参加順に役職を受け取ります。
+6. オーナーが村番号を送ると、参加状況とお題を確認できます。
 
+通常村の役職は、村人・インサイダー・（神モード時のみ）GMです。役職の割り当て順は参加順と、村作成時に決まる番号で決定されます。
 
-## Documentation
+### 特殊操作
 
-See the official API documentation for more information.
+| 入力 | 動作 |
+| --- | --- |
+| `@取得` / `＠取得` | お題候補を取得する |
+| `@配布` / `＠配布` | Bot配布用の案内を表示する |
+| `@特殊` / `＠特殊` | 特殊村作成フォームを表示する |
+| `@逆村` / `＠逆村` | 作成直後の自分の村を逆村にする |
+| `@わーわーず` / `＠わーわーず` | 条件を満たす通常村からWerewords村を作成する |
 
-- English: https://developers.line.biz/en/docs/messaging-api/overview/
-- Japanese: https://developers.line.biz/ja/docs/messaging-api/overview/
+`お題の自動取得`のボタンでは難易度別のお題候補を取得できます。お題データは`sample-spring-boot-echo/src/main/resources/word.csv`を使用します。
 
+### 特殊村
 
-## Requirements
+特殊村は、外部フォームから次のJSONを`/specialvillage`へ送信して作成します。
 
-This library requires Java 8 or later.
-
-
-## Installation
-
-We've uploaded this library to the Maven Central Repository. You can install the modules using Maven or Gradle.
-
-http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.linecorp.bot%22
-
-
-## Modules
-
-This project contains the following modules:
-
- * line-bot-api-client: API client library for the Messaging API
- * line-bot-model: Model classes for the Messaging API
- * line-bot-servlet: Java servlet utilities for bot servers
- * line-bot-spring-boot: Spring Boot auto configuration library for bot servers
-
-This project contains the following sample projects:
-
- * sample-spring-boot-echo: A simple echo server. It includes a Heroku button.
- * sample-spring-boot-kitchensink: Full featured sample code.
-
-
-## Spring Boot integration
-
-The line-bot-spring-boot module lets you build a bot application as a Spring Boot application.
-
-```java
-/*
- * Copyright 2016 LINE Corporation
- *
- * LINE Corporation licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
- */
-
-package com.example.bot.spring.echo;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import com.linecorp.bot.model.event.Event;
-import com.linecorp.bot.model.event.MessageEvent;
-import com.linecorp.bot.model.event.message.TextMessageContent;
-import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.spring.boot.annotation.EventMapping;
-import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
-
-@SpringBootApplication
-@LineMessageHandler
-public class EchoApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(EchoApplication.class, args);
-    }
-
-    @EventMapping
-    public TextMessage handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
-        System.out.println("event: " + event);
-        return new TextMessage(event.getMessage().getText());
-    }
-
-    @EventMapping
-    public void handleDefaultMessageEvent(Event event) {
-        System.out.println("event: " + event);
-    }
-}
+```json
+{"message":["役職メッセージ1","役職メッセージ2"]}
 ```
 
-## How do I use a proxy server?
+メッセージをランダムに並べ替え、5桁の村番号を返します。参加者が村番号を送ると、参加順に対応するメッセージを受け取ります。
 
-You can use `LineMessagingServiceBuilder` to configure a proxy server. It accepts your own OkHttpBuilder instance.
+## HTTP API
 
-Note: You don't need to use an add-on like Fixie to have static IP addresses for proxy servers. You can make API calls without entering IP addresses on the server IP whitelist.
+### LINE webhook
 
+- `POST /callback`
+- LINE Messaging APIの署名検証後、テキスト・ポストバック・スタンプイベントを処理します。
 
-## Help and media
-FAQ: https://developers.line.biz/en/faq/
+### 村参加API
 
-Community Q&A: https://www.line-community.me/questions
+```text
+GET /callapi?message=<村番号>&userId=<LINEユーザーID>
+```
 
-News: https://developers.line.biz/en/news/
+通常村または特殊村への参加結果を、LINE Message API形式のJSON配列で返します。
 
-Twitter: [@LINE_DEV](https://twitter.com/LINE_DEV) 
+- `message`または`userId`が空の場合: HTTP 400
+- 存在しない村番号: `村が作成されていません`
+- 満員の場合: `村がいっぱいです。`
+- CORS: 有効
 
+`userId`はAPI呼び出し元から渡された値を、そのまま参加者識別に使用します。
 
-## Versioning
+### 特殊村作成API
 
-This project respects semantic versioning.
+```text
+POST /specialvillage
+```
 
-See http://semver.org/.
+リクエスト本文の`message`配列から特殊村を作成し、`{"data":"<村番号>"}`を返します。不正なJSONや必須データ不足の場合はHTTP 400です。
 
+## 状態管理と制限
 
-## Contributing
+- DB、migration、保存済み履歴は使用しません。
+- 通常村は最大50件、特殊村は最大30件です。
+- 上限を超えた場合は古い村からFIFOで削除します。
+- Herokuの再起動・再デプロイで、作成中の村は失われます。
+- 同じユーザーが再参加した場合は、既存の役職・メッセージを再表示します。
+- 村番号は通常村が4桁、特殊村が5桁です。
 
-Please check [CONTRIBUTING](CONTRIBUTING.md) before making a contribution.
+## 画像取得
 
+Bot起動後および5分間隔で、Google Apps Scriptから役職画像の一覧を取得します。取得に失敗した場合は、`MessageConst`に定義されたGitHub Rawの標準画像を使用します。
 
-## License
+## 運用
 
-    Copyright (C) 2016 LINE Corp.
+必要環境はJava 8です。
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+```bash
+./gradlew :sample-spring-boot-echo:bootRun
+```
 
-       http://www.apache.org/licenses/LICENSE-2.0
+Herokuでは`Procfile`に従い、次のjarを起動します。
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+```text
+sample-spring-boot-echo/build/libs/sample-spring-boot-echo-*.jar
+```
+
+LINE Messaging APIのチャネル設定では、Webhook URLを`https://<アプリのホスト>/callback`に設定してください。Botのアクセストークン等の秘密情報は、ソースコードへ記録せずHerokuの環境変数で管理します。
+
+## 主なコード構成
+
+- `sample-spring-boot-echo/.../EchoApplication.java`: LINEイベント処理とゲーム操作
+- `sample-spring-boot-echo/.../Village.java`: 通常村の状態・役職・メッセージ
+- `sample-spring-boot-echo/.../spring/game/`: 特殊村・Werewordsのゲームロジック
+- `sample-spring-boot-echo/.../MainController.java`: `/callapi`
+- `sample-spring-boot-echo/.../SpecialVillageController.java`: `/specialvillage`
+- `sample-spring-boot-echo/.../VillageList.java`: 通常村一覧とFIFO管理
+- `sample-spring-boot-echo/src/main/resources/word.csv`: お題データ
+- `line-bot-*`: LINE Messaging API SDKとSpring Boot連携基盤
+
+## 注意
+
+このBotは現在、単一プロセス内のメモリ状態を前提にしています。複数インスタンスでの共有、ゲーム状態の永続化、認証・課金機能は実装していません。
