@@ -18,7 +18,8 @@ public class VillageTest {
     village.setVillageNum(1234);
     village.setVillageSize(2);
     village.setInsiderNum(1);
-    village.setOdai("長いお題長いお題長いお題長いお題長いお題長いお題長いお題");
+    village.setOdai("長いお題長いお題長いお題長いお題長いお題長いお題長いお題"
+        + "長いお題長いお題長いお題長いお題長いお題長いお題長いお題");
     village.addRoleList(null, "user");
     assertNotNull(village.setInsiderRole("user"));
 
