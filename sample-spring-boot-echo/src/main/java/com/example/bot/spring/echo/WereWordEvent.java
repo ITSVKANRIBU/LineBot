@@ -24,7 +24,7 @@ import com.example.bot.staticdata.MessageConst;
 
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.spring.boot.logic.CreatWereWordsLogic;
+import com.example.bot.spring.game.CreatWereWordsLogic;
 
 public class WereWordEvent {
 

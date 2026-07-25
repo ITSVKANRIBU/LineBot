@@ -17,6 +17,7 @@
 package com.example.bot.staticdata;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import com.example.bot.spring.entity.Village;
 
@@ -41,7 +42,7 @@ public class VillageList {
     return rtnList;
   }
 
-  public static void addVillage(Village village) {
+  public static synchronized void addVillage(Village village) {
     villageList.add(village);
 
     if (villageList.size() > MAX_VILLAGE_NUM) {
@@ -56,6 +57,22 @@ public class VillageList {
 
   public static Village get(int i) {
     return villageList.get(i);
+  }
+
+  /** Returns a free four-digit village number, with a deterministic fallback. */
+  public static synchronized int nextVillageNumber(Random random) {
+    for (int attempt = 0; attempt < 100; attempt++) {
+      int candidate = random.nextInt(8999) + 1000;
+      if (getVillage(candidate) == null) {
+        return candidate;
+      }
+    }
+    for (int candidate = 1000; candidate <= 9998; candidate++) {
+      if (getVillage(candidate) == null) {
+        return candidate;
+      }
+    }
+    throw new IllegalStateException("No village number is available");
   }
 
 }

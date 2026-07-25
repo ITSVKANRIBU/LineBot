@@ -88,6 +88,20 @@ public class Village {
     roleList.add(new InsiderRole(role, userId));
   }
 
+  /** Atomically joins a user and assigns the role for the current village state. */
+  public synchronized InsiderRole join(String userId) {
+    for (InsiderRole role : roleList) {
+      if (userId.equals(role.getUserId())) {
+        return role;
+      }
+    }
+    if (roleList.size() >= villageSize) {
+      return null;
+    }
+    roleList.add(new InsiderRole(null, userId));
+    return setInsiderRole(userId);
+  }
+
   public boolean hasOwner(String userId) {
     return ownerId.equals(userId);
   }
@@ -184,9 +198,6 @@ public class Village {
     List<Action> actionList = new ArrayList<Action>();
     actionList.add(new MessageAction("再確認", String.valueOf(villageNum)));
     
-    // DB連携廃止
-    // actionList.add(new PostbackAction("お題を投稿", odai));
-
     if (message.length() <= 160) {
       ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
           message, actionList);
@@ -215,7 +226,8 @@ public class Village {
     if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
       if (message.length() > 60) {
-        messages = Collections.singletonList(new TextMessage(message));
+        messages = new ArrayList<Message>();
+        messages.add(new TextMessage(message));
         messages.add(getStatusMessage(userId).get(0));
       } else {
         actionList.add(new PostbackAction("入室状況確認", String.valueOf(villageNum)));
@@ -257,7 +269,8 @@ public class Village {
         messages = Collections.singletonList(new TemplateMessage(message, buttons));
       } else {
         //文字数が長い場合
-        messages = Collections.singletonList(new TextMessage(message));
+        messages = new ArrayList<Message>();
+        messages.add(new TextMessage(message));
         messages.add(getStatusMessage(userId).get(0));
       }
     } else {

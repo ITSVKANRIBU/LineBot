@@ -16,7 +16,6 @@
 
 package com.example.bot.spring.echo;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +29,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import com.example.bot.common.CommonModule;
-import com.example.bot.common.Request;
 import com.example.bot.common.WordGetter;
 import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
@@ -55,9 +53,8 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
-import com.linecorp.bot.spring.boot.common.SpecialVillageList;
-import com.linecorp.bot.spring.boot.entity.SpecialVillage;
-import com.linecorp.bot.spring.boot.logic.InsertLogic;
+import com.example.bot.spring.game.SpecialVillageList;
+import com.example.bot.spring.game.SpecialVillage;
 
 import lombok.NonNull;
 
@@ -105,7 +102,11 @@ public class EchoApplication {
       } else if (dataInt < 10000) {
         // 村番号の場合
         Village village = VillageList.getVillage(dataInt);
-        reply(event.getReplyToken(), village.getStatusMessage(userId));
+        if (village == null) {
+          replyDefoltMessage(event.getReplyToken());
+        } else {
+          reply(event.getReplyToken(), village.getStatusMessage(userId));
+        }
       } else {
         // 特殊村番号の場合
         SpecialVillage village = SpecialVillageList.getVillage(dataInt);
@@ -113,8 +114,8 @@ public class EchoApplication {
       }
 
     } catch (NumberFormatException e) {
-      // お題登録
-      putOdai(event.getReplyToken(), data);
+      // 旧DBのお題登録用ポストバックは廃止済み。安全な既定応答だけ返す。
+      replyDefoltMessage(event.getReplyToken());
     }
 
   }
@@ -142,6 +143,9 @@ public class EchoApplication {
               new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)))
           .get();
     } catch (InterruptedException | ExecutionException e) {
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
       e.printStackTrace();
     }
 
@@ -153,32 +157,9 @@ public class EchoApplication {
           .replyMessage(new ReplyMessage(replyToken, messages))
           .get();
     } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
-  }
-
-  /**
-   * 現在廃止中
-   * データベース連携処理
-   * 
-   * @param replyToken
-   * @param difficulty
-   */
-  @SuppressWarnings("unused")
-  private void getOdai(String replyToken, int difficulty) {
-    InsertLogic logic = new InsertLogic();
-    String odai = logic.getRandomProblem(difficulty);
-
-    ConfirmTemplate confirmTemplate = new ConfirmTemplate("お題は「" + odai + "」です。確定しますか？",
-        new MessageAction("確定", odai),
-        new PostbackAction("再取得", String.valueOf(8)));
-
-    try {
-      lineMessagingClient
-          .replyMessage(new ReplyMessage(replyToken,
-              new TemplateMessage("「" + odai + "」を取得しました。", confirmTemplate)))
-          .get();
-    } catch (InterruptedException | ExecutionException e) {
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
       e.printStackTrace();
     }
   }
@@ -199,29 +180,6 @@ public class EchoApplication {
     ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
         message, actionList);
     messages = Collections.singletonList(new TemplateMessage(message, buttons));
-
-    reply(replyToken, messages);
-  }
-
-  private void putOdai(String replyToken, String odai) {
-    InsertLogic logic = new InsertLogic();
-    try {
-      logic.addProblem(odai, "インサイダーツール", 0, "インサイダーツールでの追加");
-    } catch (SQLException e1) {
-      e1.printStackTrace();
-    }
-
-    String message = "ありがとうございます！ 「" + odai + "」を追加しました。";
-
-    List<Action> actionList = new ArrayList<Action>();
-    
-    // DB連携で廃止処理
-    //actionList.add(new URIActionNonAltUri("他に投稿してみる", MessageConst.URI_INSIDER));
-
-    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-        message, actionList);
-
-    List<Message> messages = Collections.singletonList(new TemplateMessage(message, buttons));
 
     reply(replyToken, messages);
   }
@@ -289,25 +247,10 @@ public class EchoApplication {
         }
       }
 
-    } catch (Throwable e) {
+    } catch (NumberFormatException e) {
       if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())
           || "神".equals(userMessage.trim())) {
-        int villageNum = random.nextInt(8999) + 1000;
-
-        // 重複しない番号取得（防止のため、100回まで）
-        for (int i = 0; i < 100; i++) {
-          boolean breakFlg = true;
-          for (Village dao : VillageList.getVillageList()) {
-            if (villageNum == dao.getVillageNum()) {
-              villageNum = random.nextInt(8999) + 1000;
-              breakFlg = false;
-              break;
-            }
-          }
-          if (breakFlg) {
-            break;
-          }
-        }
+        int villageNum = VillageList.nextVillageNumber(random);
 
         Village newVillage = new Village();
         newVillage.setOwnerId(userId);
@@ -386,8 +329,6 @@ public class EchoApplication {
 
             // replyして処理終了とする。
             reply(replyToken, messages);
-            // 履歴取得
-            Request.run(userMessage, VillageList.get(i).getVillageNum() + "村：" + userId);
             return;
           }
         }
@@ -407,6 +348,11 @@ public class EchoApplication {
 
     Village village = VillageList.getVillage(number);
 
+    if (village == null) {
+      replyDefoltMessage(replyToken);
+      return;
+    }
+
     if (userId.equals(village.getOwnerId())) {
       // オーナーの場合
       messages = village.getMessageOwner();
@@ -416,14 +362,9 @@ public class EchoApplication {
       // 参加者の場合
       String memberRole = village.getMemberRole(userId);
       if (memberRole == null) {
-
-        if (village.getRoleList().size() >= village.getVillageSize()) {
+        if (village.join(userId) == null) {
           messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
         } else {
-          // 配役の設定
-          village.addRoleList(null, userId);
-          village.setInsiderRole(userId);
-
           messages = village.getRoleMessage(userId);
 
         }
@@ -449,12 +390,9 @@ public class EchoApplication {
         messages = village.getRoleMessage(userId);
 
       } else { //参加者の場合
-
-        if (village.getUserList().size() >= village.getMessageList().size()) {
+        if (!village.join(userId)) {
           messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
         } else {
-          // 配役の設定
-          village.getUserList().add(userId);
           messages = village.getRoleMessage(userId);
         }
       }

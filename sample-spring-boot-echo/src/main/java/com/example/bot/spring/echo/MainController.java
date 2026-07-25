@@ -3,28 +3,37 @@ package com.example.bot.spring.echo;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.VillageList;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.spring.boot.common.SpecialVillageList;
-import com.linecorp.bot.spring.boot.entity.SpecialVillage;
+import com.example.bot.spring.game.SpecialVillageList;
+import com.example.bot.spring.game.SpecialVillage;
 
 @RestController
 public class MainController {
 
   @GetMapping("/callapi")
   @CrossOrigin
-  public List<Message> index(String message, String userId) {
+  public ResponseEntity<List<Message>> index(
+      @RequestParam(value = "message", required = false) String message,
+      @RequestParam(value = "userId", required = false) String userId) {
+    if (message == null || message.trim().isEmpty()
+        || userId == null || userId.trim().isEmpty()) {
+      return ResponseEntity.badRequest().build();
+    }
+
     List<Message> messages = messageController(message, userId);
     if (messages == null) {
       messages = Collections.singletonList(new TextMessage("村が作成されていません"));
     }
-    return messages;
+    return ResponseEntity.ok(messages);
   }
 
   private List<Message> messageController(String message, String userId) {
@@ -66,14 +75,9 @@ public class MainController {
       // 参加者の場合
       String memberRole = village.getMemberRole(userId);
       if (memberRole == null) {
-
-        if (village.getRoleList().size() >= village.getVillageSize()) {
+        if (village.join(userId) == null) {
           messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
         } else {
-          // 配役の設定
-          village.addRoleList(null, userId);
-          village.setInsiderRole(userId);
-
           messages = village.getRoleMessage(userId);
 
         }
@@ -104,12 +108,9 @@ public class MainController {
         messages = village.getRoleMessage(userId);
 
       } else { //参加者の場合
-
-        if (village.getUserList().size() >= village.getMessageList().size()) {
+        if (!village.join(userId)) {
           messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
         } else {
-          // 配役の設定
-          village.getUserList().add(userId);
           messages = village.getRoleMessage(userId);
         }
       }
