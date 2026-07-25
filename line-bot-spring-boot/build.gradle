@@ -14,11 +14,13 @@
  * under the License.
  */
 
+apply plugin: 'java-library'
+
 dependencies {
-    compile project(':line-bot-api-client')
-    compile project(':line-bot-model')
-    compile project(':line-bot-servlet')
-    compile 'org.springframework.boot:spring-boot-autoconfigure'
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    optional 'javax.validation:validation-api'
+    api project(':line-bot-api-client')
+    api project(':line-bot-model')
+    api project(':line-bot-servlet')
+    api 'org.springframework.boot:spring-boot-autoconfigure'
+    api 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'javax.validation:validation-api'
 }
