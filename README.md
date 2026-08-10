@@ -44,20 +44,30 @@ LINE Messaging APIを使って、インサイダーゲームとWerewordsを運�
 - `POST /callback`
 - LINE Messaging APIの署名検証後、テキスト・ポストバック・スタンプイベントを処理します。
 
-### 村参加API
+### 村操作API
 
 ```text
-GET /callapi?message=<村番号>&userId=<LINEユーザーID>
+GET /callapi?message=<メッセージ>&userId=<LINEユーザーID>
 ```
 
-通常村または特殊村への参加結果を、LINE Message API形式のJSON配列で返します。
+LINEへ送るのと同じ内容を`message`に渡し、応答をLINE Message API形式のJSON配列で返します。LINEの村番号判定が101以上であるのに対し、このAPIでは1000以上を村番号として扱います。
+
+| `message` | 動作 |
+| --- | --- |
+| 10000以上 | 特殊村へ参加する |
+| 1000〜9999 | 通常村へ参加する。オーナーの場合は配布状況を返す |
+| 0〜999 | 自分の村の参加人数を設定する |
+| `お題` / `題` / `神` | 通常村を作成する |
+| その他の文字列 | 自分の村のお題に設定する |
 
 - `message`または`userId`が空の場合: HTTP 400
-- 存在しない村番号: `村が作成されていません`
+- 存在しない村番号、対象の村がない場合: `村が作成されていません`
 - 満員の場合: `村がいっぱいです。`
+- 人数が2未満の場合: `村の人数は2人以上に設定してください。`
+- 内部エラー: HTTP 500と`{"error":"内部エラーが発生しました。"}`
 - CORS: 有効
 
-`userId`はAPI呼び出し元から渡された値を、そのまま参加者識別に使用します。
+`userId`はAPI呼び出し元から渡された値を、そのまま参加者識別に使用します。認証・レート制限はありません。
 
 ### 特殊村作成API
 
@@ -98,11 +108,13 @@ LINE Messaging APIのチャネル設定では、Webhook URLを`https://<アプ�
 
 ## 主なコード構成
 
-- `sample-spring-boot-echo/.../EchoApplication.java`: LINEイベント処理とゲーム操作
+- `sample-spring-boot-echo/.../EchoApplication.java`: LINEイベント処理とコマンド判定
+- `sample-spring-boot-echo/.../spring/game/VillageService.java`: LINEと`/callapi`で共通のゲーム操作
 - `sample-spring-boot-echo/.../Village.java`: 通常村の状態・役職・メッセージ
-- `sample-spring-boot-echo/.../spring/game/`: 特殊村・Werewordsのゲームロジック
+- `sample-spring-boot-echo/.../spring/game/`: 特殊村・Werewordsのゲームロジックとレジストリ
 - `sample-spring-boot-echo/.../MainController.java`: `/callapi`
 - `sample-spring-boot-echo/.../SpecialVillageController.java`: `/specialvillage`
+- `sample-spring-boot-echo/.../ApiExceptionHandler.java`: 公開APIの内部エラー応答
 - `sample-spring-boot-echo/.../VillageList.java`: 通常村一覧とFIFO管理
 - `sample-spring-boot-echo/src/main/resources/word.csv`: お題データ
 - `line-bot-*`: LINE Messaging API SDKとSpring Boot連携基盤
