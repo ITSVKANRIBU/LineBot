@@ -118,6 +118,31 @@ LOGGING_LEVEL_COM_EXAMPLE_BOT=DEBUG
 
 CIはGitHub Actionsで、本番と同じJava 8で`./gradlew check`と`bootJar`を実行します（`.github/workflows/ci.yml`）。
 
+## モジュール構成
+
+このリポジトリはGradleのmulti-project buildで、Bot本体とLINE Messaging API SDKからなります。
+
+```text
+sample-spring-boot-echo（Bot本体。ゲームロジックと公開API）
+  └─ line-bot-spring-boot（webhookの受け口とauto-configuration）
+       ├─ line-bot-api-client（LINE APIのHTTPクライアント）
+       ├─ line-bot-servlet（webhookの署名検証とparse）
+       └─ line-bot-model（メッセージ・イベントのデータ型）
+
+line-bot-cli（運用ツール。Bot本体の動作には不要）
+```
+
+| モジュール | 説明 |
+| --- | --- |
+| [sample-spring-boot-echo](sample-spring-boot-echo/README.md) | インサイダーゲームBot本体。LINEイベント処理、ゲーム状態、`/callapi`と`/specialvillage` |
+| [line-bot-spring-boot](line-bot-spring-boot/README.md) | `@LineMessageHandler` / `@EventMapping`によるイベント振り分けと、`line.bot.*`の設定 |
+| [line-bot-api-client](line-bot-api-client/README.md) | reply・push、プロフィール取得、リッチメニュー操作などのAPIクライアント |
+| line-bot-servlet | `LineBotCallbackRequestParser`。`X-Line-Signature`の検証とwebhook本文のparse |
+| line-bot-model | メッセージ・イベント・リッチメニュー・LIFFのデータ型 |
+| [line-bot-cli](line-bot-cli/README.md) | リッチメニューやLIFFアプリをコマンドラインから操作する運用ツール |
+
+`line-bot-*`はLINE公式SDK（line-bot-sdk-java）由来のモジュールです。
+
 ## 主なコード構成
 
 - `sample-spring-boot-echo/.../EchoApplication.java`: LINEイベント処理とコマンド判定

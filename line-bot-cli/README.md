@@ -1,161 +1,152 @@
 # line-bot-cli
 
-Command LINE interface based on line-bot-api-client.
+`line-bot-api-client`を使ったコマンドラインツールです。
+リッチメニュー、LIFFアプリ、pushメッセージを、Botを起動せずに操作できます。
 
-## Build
+Bot本体（`sample-spring-boot-echo`）の動作には必要ありません。
+チャネルの設定作業を手元から行うための運用ツールです。
+
+## ビルド
+
+```bash
+../gradlew clean build
 ```
-% ../gradlew clean build
 
-> Task :line-bot-cli:bootRepackage
+実行可能jarは`./build/libs/line-bot-cli-2.7.0-SNAPSHOT-exec.jar`に生成されます。
+launch script付きのため、そのまま実行できます。
 
-BUILD SUCCESSFUL in ...
+```bash
+./build/libs/line-bot-cli-2.7.0-SNAPSHOT-exec.jar --command=liff-list
 ```
 
-The executable file in `./build/libs/line-bot-cli-2.2.0-SNAPSHOT-exec.jar`
+## 事前準備
 
-## Usage
-```
-% cat application.yml
+`line.bot.channel-token`と`line.bot.channel-secret`をCLIへ渡す必要があります。
+Spring Bootの[Externalized Configuration](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html)の規則に従います。
+
+### application.ymlで渡す（推奨）
+
+カレントディレクトリに`application.yml`を置きます。
+
+```yaml
 line.bot:
   channel-token: 'your token'
   channel-secret: 'your secret'
+```
 
-% ./line-bot-cli.jar --command=liff-list
-...
-16:40:05  INFO - .b.c.LiffListCommand : Successfully finished.
-16:40:05  INFO - .b.c.LiffListCommand : You have 0 LIFF apps.
+```bash
+./line-bot-cli.jar --command=liff-list
+# ./application.yml から設定が読み込まれる
+```
 
-% cat liff.json
+### 環境変数で渡す
+
+```bash
+export LINE_BOT_CHANNEL_TOKEN='your token'
+export LINE_BOT_CHANNEL_SECRET='your secret'
+./line-bot-cli.jar --command=liff-list
+```
+
+## 共通引数
+
+| 引数 | 説明 |
+| -------- | ---- |
+| `--command` | 実行するコマンド名。未指定または該当なしの場合は、利用可能なコマンド一覧をlogへ出力します |
+| `--liff-id` | 削除・更新対象のLIFFアプリID |
+| `--rich-menu-id` | 操作対象のリッチメニューID |
+| `--user-id` | 操作対象のLINEユーザーID |
+| `--json` | 送信するJSONファイルのpath。`--data`・`--yaml`のいずれかひとつを使います |
+| `--yaml` | 送信するYAMLファイルのpath |
+| `--data` | 送信するJSONを直接指定 |
+
+## コマンド
+
+### message-push
+
+指定したユーザーへメッセージをpushします。`to`を複数指定した場合はmulticast APIを使います。
+
+```bash
+cat message-push.json
+```
+
+```json
+{
+  "to": [ "Ue87f273e325cd42ad2dd65946347f07f" ],
+  "messages": [
+    { "type": "text", "text": "Hello, World!" }
+  ]
+}
+```
+
+```bash
+./line-bot-cli.jar --command=message-push --json=message-push.json
+```
+
+```text
+18:47:47  INFO - c.l.bot.client.wire  : <-- 200 https://api.line.me/v2/bot/message/multicast (367ms)
+```
+
+### LIFFアプリ
+
+| コマンド | 説明 |
+| --- | --- |
+| `liff-create` | LIFFアプリを作成する。`--json`でviewを指定 |
+| `liff-list` | LIFFアプリの一覧を表示する |
+| `liff-update` | `--liff-id`のLIFFアプリを更新する |
+| `liff-delete` | `--liff-id`のLIFFアプリを削除する |
+
+```bash
+cat liff.json
+```
+
+```json
 {
     "type": "full",
     "url": "https://example.com"
 }
+```
 
-% ./line-bot-cli.jar --command=liff-create --json=liff.json
-...
+```bash
+./line-bot-cli.jar --command=liff-create --json=liff.json
+```
+
+```text
 16:37:40  INFO - .c.LiffCreateCommand : Successfully finished. Response : LiffAppAddResponse(liffId=1506753437-Xx5J85Ky)
+```
 
-% ./line-bot-cli.jar --command=liff-list
-...
+```bash
+./line-bot-cli.jar --command=liff-list
+```
+
+```text
 16:40:05  INFO - .b.c.LiffListCommand : Successfully finished.
 16:40:05  INFO - .b.c.LiffListCommand : You have 1 LIFF apps.
 16:40:05  INFO - .b.c.LiffListCommand : LiffApp(liffId=1506753437-Xx5J85Ky, view=LiffView(type=FULL, url=https://example.com))
 ```
 
-# Pre-requirement
-You need pass `line.bot.channel-token` and `line.bot.channel-secret` to CLI.
-
-CLI supports SpringBoot's [Externalized Configuration](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html) rule.
-
-## Configuration yml way. (Recommended)
-Put `application.yml` into current directory such as.
-
-```yml:application.yml
-line.bot:
-  channel-token: 'your token'
-  channel-secret: 'your secret'
+```bash
+./line-bot-cli.jar --command=liff-delete --liff-id=1506753437-Xx5J85Ky
 ```
 
-Then you can run 
+### リッチメニュー
+
+| コマンド | 説明 |
+| --- | --- |
+| `richmenu-create` | リッチメニューを作成する。`--json`または`--yaml`で定義を指定 |
+| `richmenu-get` | `--rich-menu-id`の定義を表示する |
+| `richmenu-list` | リッチメニューの一覧を表示する |
+| `richmenu-delete` | `--rich-menu-id`を削除する |
+| `richmenu-upload` | `--image`の画像をリッチメニューへ登録する |
+| `richmenu-download` | 登録済み画像を`--out`へ保存する |
+| `richmenu-link` | `--user-id`へリッチメニューを紐付ける |
+| `richmenu-unlink` | `--user-id`の紐付けを解除する |
+| `richmenu-getrichmenuidofuser` | `--user-id`に紐付いたリッチメニューIDを表示する |
 
 ```bash
-% ./line-bot-cli-2.2.0-SNAPSHOT.jar --command=liff-list
-# configuration loaded from ./application.yml
+cat richmenu-create.yml
 ```
 
-## Environment
-```bash
-% export LINE_BOT_CHANNEL_TOKEN='your token'
-% export LINE_BOT_CHANNEL_SECRET='your secret'
-% ./line-bot-cli-2.2.0-SNAPSHOT.jar --command=list-liff
-```
-
-# Synopsis
-
-## Common argument
-
-|  Name    |      |
-| -------- | ---- |
-|  --liff-id| LIFF App ID to DELETE/UPDATE  |
-|  --json  |  JSON file path to be sent. <br />Either this, `--data` or `--yaml` is available. |
-|  --yaml  |  YAML file path to be sent. |
-|  --data  |  Raw json data to be sent. |
-
-## message-push
-
-Push message for specific user(s).
-
-(Multiple "to" is supported, and multicast API is used in this case)
-
-```
-% cat message-push.json
-{
-  "to": [ "Ue87f273e325cd42ad2dd65946347f07f" ],
-  "messages": [
-    {
-      "type": "text",
-      "text": "Hello, Workd!"
-    }
-  ]
-}
-% ./line-bot-cli.jar --command=message-push --json=message-push.json
-...
-18:47:47  INFO - c.l.bot.client.wire  : <-- 200 https://api.line.me/v2/bot/message/multicast (367ms)
-```
-
-## liff-create
-Create LIFF App.
-
-```
-% cat liff.json
-{
-    "type": "full",
-    "url": "https://example.com"
-}
-% ./line-bot-cli.jar --command=liff-create --json=liff.json
-...
-16:37:40  INFO - .c.LiffCreateCommand : Successfully finished. Response : LiffAppAddResponse(liffId=1506753437-Xx5J85Ky)
-```
-
-## liff-delete
-Delete LIFF App.
-
-```
-% ./line-bot-cli.jar --command=liff-delete --liff-id=1506753437-Xx5J85Ky
-...
-16:39:10  INFO - .c.LiffDeleteCommand : Successfully finished.
-```
-
-
-## liff-list
-List your LIFF Apps.
-
-```
-% ./line-bot-cli.jar --command=liff-list
-...
-16:40:05  INFO - .b.c.LiffListCommand : Successfully finished.
-16:40:05  INFO - .b.c.LiffListCommand : You have 3 LIFF apps.
-16:40:05  INFO - .b.c.LiffListCommand : LiffApp(liffId=1506753437-2BQKOQr0, view=LiffView(type=FULL, url=https://example.com))
-...
-```
-
-## liff-update
-```
-% cat liff.json
-{
-    "type": "full",
-    "url": "https://example.com"
-}
-
-% ./line-bot-cli.jar --command=liff-update \
-  --liff-id=1506753437-XeLp9LeE --json=update_liff.json
-...
-16:41:30  INFO - .c.LiffUpdateCommand : Successfully finished.
-```
-
-##  richmenu-create
-```
-% cat richmenu-create.yml
+```yaml
 size:
   width: 2500
   height: 1686
@@ -165,86 +156,35 @@ chatBarText: CHAT
 areas:
   - bounds: {x: 0, y: 0, width: 2500, height: 1686}
     action: {type: message, label: LABEL, text: TEXT}
-% ./line-bot-cli.jar --command=richmenu-create --yaml=richmenu-create.yml
-...
-21:06:57  INFO - ichMenuCreateCommand : Successfully finished. RichMenuIdResponse(richMenuId=richmenu-0591a1ce01bda78f85213d347f0a966f) 
 ```
 
-## richmenu-get
-```
-% ./line-bot-cli.jar --command=richmenu-get --rich-menu-id=richmenu-0591a1ce01bda78f85213d347f0a966f
-...
-12:12:22  INFO - c.RichMenuGetCommand : response = RichMenuResponse(richMenuId=richmenu-0591a1ce01bda78f85213d347f0a966f, size=RichMenuSize(width=2500, height=1686), selected=false, name=From CLI, chatBarText=CHAT, areas=[RichMenuArea(bounds=RichMenuBounds(x=0, y=0, width=2500, height=1686), action=MessageAction(label=LABEL, text=TEXT))])
+```bash
+./line-bot-cli.jar --command=richmenu-create --yaml=richmenu-create.yml
 ```
 
-## richmenu-delete
-```
-% ./line-bot-cli.jar --command=richmenu-delete --rich-menu-id=richmenu-0591a1ce01bda78f85213d347f0a966f
-...
-12:13:35  INFO - ichMenuDeleteCommand : Successfully finished. BotApiResponse(message=, details=[])
+```text
+21:06:57  INFO - ichMenuCreateCommand : Successfully finished. RichMenuIdResponse(richMenuId=richmenu-0591a1ce01bda78f85213d347f0a966f)
 ```
 
-## richmenu-list
-```
-% ./line-bot-cli.jar --command=richmenu-list
-...
-12:17:12  INFO - .RichMenuListCommand : You have 3 RichMenues
-12:17:12  INFO - .RichMenuListCommand : RichMenuResponse(richMenuId=richmenu-0591a1ce01bda78f85213d347f0a966f, size=RichMenuSize(width=2500, height=1686), selected=false, name=From CLI, chatBarText=CHAT, areas=[RichMenuArea(bounds=RichMenuBounds(x=0, y=0, width=2500, height=1686), action=MessageAction(label=LABEL, text=TEXT))])
-... (+2 rich menues)
+```bash
+./line-bot-cli.jar --command=richmenu-upload --rich-menu-id=richmenu-00e97da3ae27b54bd603cf42b9fc7672 --image=image.jpeg
 ```
 
-## richmenu-upload
-```
-% ./line-bot-cli.jar --command=richmenu-upload --command=richmenu-upload --rich-menu-id=richmenu-00e97da3ae27b54bd603cf42b9fc7672 --image=image.jpeg
-...
-12:19:43  INFO - c.l.bot.client.wire  : --> POST https://api.line.me/v2/bot/richmenu/richmenu-00e97da3ae27b54bd603cf42b9fc7672/content
-...
-12:19:43  INFO - c.l.bot.client.wire  : <-- 200 https://api.line.me/v2/bot/richmenu/richmenu-00e97da3ae27b54bd603cf42b9fc7672/content (836ms)
-...
-12:19:43  INFO - nuImageUploadCommand : Request Successfully finished. BotApiResponse(message=, details=[])
+```bash
+./line-bot-cli.jar --command=richmenu-download --rich-menu-id=richmenu-00e97da3ae27b54bd603cf42b9fc7672 --out=out.jpeg
 ```
 
-## richmenu-download
-```
-% ./line-bot-cli.jar --command=richmenu-download --rich-menu-id=richmenu-00e97da3ae27b54bd603cf42b9fc7672 --out=out.jpeg
-...
-12:23:04  INFO - c.l.bot.client.wire  : --> GET https://api.line.me/v2/bot/richmenu/richmenu-00e97da3ae27b54bd603cf42b9fc7672/content
-...
-12:23:05  INFO - c.l.bot.client.wire  : <-- 200 https://api.line.me/v2/bot/richmenu/richmenu-00e97da3ae27b54bd603cf42b9fc7672/content (892ms)
-...
-12:23:05  INFO - ImageDownloadCommand : Successfully finished. Output = out.jpeg
+```bash
+./line-bot-cli.jar --command=richmenu-link --rich-menu-id=richmenu-00e97da3ae27b54bd603cf42b9fc7672 --user-id=Ue87f273e325cd42ad2dd65946347f07f
 ```
 
-## richmenu-link
-```
-% ./line-bot-cli.jar --command=richmenu-link --rich-menu-id=richmenu-00e97da3ae27b54bd603cf42b9fc7672 --user-id=Ue87f273e325cd42ad2dd65946347f07f
-...
-12:25:14  INFO - hMenuIdToUserCommand : response = BotApiResponse(message=, details=[])
-```
+## Tips
 
-## richmenu-getrichmenuidofuser
-```
-% ./line-bot-cli.jar --command=richmenu-getrichmenuidofuser --user-id=Ue87f273e325cd42ad2dd65946347f07f
-...
-12:26:20  INFO - hMenuIdOfUserCommand : response = RichMenuIdResponse(richMenuId=richmenu-00e97da3ae27b54bd603cf42b9fc7672)
-```
+### 複数のBotを扱う
 
-## richmenu-unlink
-```
-% ./line-bot-cli.jar --command=richmenu-unlink --user-id=Ue87f273e325cd42ad2dd65946347f07f
-...
-12:27:01  INFO - enuIdFromUserCommand : response = BotApiResponse(message=, details=[])
-```
+ひとつの設定ファイルに、複数Botの設定をprofileで分けて書けます。
 
-
-# Tips
-## Handling multiple bots.
-
-You can put configurations for multiple bots into one configuration file.
-
-Example:
-
-```yaml:application.yml
+```yaml
 line.bot:
   channel-token: 'dev token'
   channel-secret: 'dev secret'
@@ -256,8 +196,5 @@ line.bot:
   channel-secret: 'production secret'
 ```
 
-Default target is development environment.
-
-You can switch production configuration by adding `--spring.profiles.active=production`.
-
-For more details. Please visit SpringBoot's [Externalized Configuration](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html).
+既定は開発環境です。`--spring.profiles.active=production`を付けると本番設定へ切り替わります。
+詳細はSpring Bootの[Externalized Configuration](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html)を参照してください。
