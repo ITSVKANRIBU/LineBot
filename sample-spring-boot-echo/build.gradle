@@ -19,3 +19,10 @@ apply plugin: 'org.springframework.boot'
 dependencies {
     implementation project(':line-bot-spring-boot')
 }
+
+test {
+    // ゲーム状態はVillageList / SpecialVillageListのstaticレジストリで共有される。
+    // 各テストは@Beforeのclear()に依存しているため、同一JVMでの逐次実行が前提。
+    // 並列化するにはレジストリをインスタンス化してDIする必要がある。
+    maxParallelForks = 1
+}

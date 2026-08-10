@@ -17,10 +17,14 @@
 package com.example.bot.spring.entity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -32,14 +36,12 @@ public class VillageTest {
 
   @Test
   public void longInsiderMessageIncludesStatusWithoutMutatingSingletonList() {
-    Village village = new Village();
+    Village village = villageOf(2, insiderAt(1));
     village.setVillageNum(1234);
-    village.setVillageSize(2);
-    village.setInsiderNum(1);
-    village.setOdai("長いお題長いお題長いお題長いお題長いお題長いお題長いお題"
+    village.applyOdai("長いお題長いお題長いお題長いお題長いお題長いお題長いお題"
         + "長いお題長いお題長いお題長いお題長いお題長いお題長いお題");
-    village.addRoleList(null, "user");
-    assertNotNull(village.setInsiderRole("user"));
+    assertNotNull(village.join("user"));
+    assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("user"));
 
     List<Message> messages = village.getRoleMessage("user");
 
@@ -48,9 +50,7 @@ public class VillageTest {
 
   @Test
   public void joinIsCapacityBoundAndIdempotent() {
-    Village village = new Village();
-    village.setVillageSize(1);
-    village.setInsiderNum(1);
+    Village village = villageOf(1, insiderAt(1));
 
     assertNotNull(village.join("first"));
     assertNotNull(village.join("first"));
@@ -60,13 +60,9 @@ public class VillageTest {
 
   @Test
   public void normalVillageAssignsInsiderByJoinOrder() {
-    Village village = new Village();
-    village.setVillageSize(3);
-    village.setInsiderNum(2);
+    Village village = villageOf(3, insiderAt(2));
 
-    village.join("first");
-    village.join("second");
-    village.join("third");
+    joinAll(village, "first", "second", "third");
 
     assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("first"));
     assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("second"));
@@ -76,13 +72,11 @@ public class VillageTest {
   @Test
   public void godModeAssignsGameMasterAtItsOwnPosition() {
     Village village = new Village();
-    village.setVillageSize(3);
-    village.setInsiderNum(1);
-    village.setGmNum(3);
+    village.setGmNum(MessageConst.DEFAULT_GMNUM);
+    // インサイダーは1番目、GMは3番目
+    village.configure(3, new FixedRandom(0, 2));
 
-    village.join("first");
-    village.join("second");
-    village.join("third");
+    joinAll(village, "first", "second", "third");
 
     assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("first"));
     assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("second"));
@@ -90,19 +84,99 @@ public class VillageTest {
   }
 
   @Test
-  public void reverseVillageInvertsInsiderAndVillagers() {
+  public void godModeNeverPutsTheGameMasterOnTheInsiderPosition() {
     Village village = new Village();
-    village.setVillageSize(3);
-    village.setInsiderNum(2);
+    village.setGmNum(MessageConst.DEFAULT_GMNUM);
+    // GM位置がインサイダーと衝突したら引き直す
+    village.configure(3, new FixedRandom(1, 1, 1, 0));
+
+    assertEquals(2, village.getInsiderNum());
+    assertEquals(1, village.getGmNum());
+  }
+
+  @Test
+  public void reverseVillageInvertsInsiderAndVillagers() {
+    Village village = villageOf(3, insiderAt(2));
     // 逆村: お題を知らない村人が1人だけになる
     village.setSpecialFlg(10);
 
-    village.join("first");
-    village.join("second");
-    village.join("third");
+    joinAll(village, "first", "second", "third");
 
     assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("first"));
     assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("second"));
     assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("third"));
+  }
+
+  @Test
+  public void configureIsOneShotSoConcurrentSetupCannotReshuffleRoles() {
+    Village village = villageOf(3, insiderAt(2));
+
+    assertFalse("2度目の人数設定は拒否する", village.configure(5, insiderAt(1)));
+    assertEquals(3, village.getVillageSize());
+    assertEquals(2, village.getInsiderNum());
+  }
+
+  @Test
+  public void applyOdaiIsOneShot() {
+    Village village = new Village();
+
+    assertTrue(village.applyOdai("すいか"));
+    assertFalse(village.applyOdai("めろん"));
+    assertEquals("すいか", village.getOdai());
+  }
+
+  @Test
+  public void exactlyOneInsiderIsAssignedWhateverTheDraw() {
+    for (int seed = 0; seed < 50; seed++) {
+      Village village = new Village();
+      village.configure(6, new Random(seed));
+
+      joinAll(village, "u1", "u2", "u3", "u4", "u5", "u6");
+
+      int insiders = 0;
+      for (String userId : new String[] { "u1", "u2", "u3", "u4", "u5", "u6" }) {
+        if (MessageConst.INSIDER_ROLE.equals(village.getMemberRole(userId))) {
+          insiders++;
+        }
+      }
+      assertEquals("seed=" + seed, 1, insiders);
+    }
+  }
+
+  private Village villageOf(int size, Random random) {
+    Village village = new Village();
+    village.configure(size, random);
+    return village;
+  }
+
+  /** インサイダーを{@code position}番目に固定する乱数. */
+  private Random insiderAt(int position) {
+    return new FixedRandom(position - 1);
+  }
+
+  private void joinAll(Village village, String... userIds) {
+    List<String> joined = new ArrayList<String>();
+    for (String userId : userIds) {
+      assertNotNull("参加できなかった: " + userId, village.join(userId));
+      joined.add(userId);
+    }
+    assertEquals(joined.size(), village.getRoleList().size());
+  }
+
+  /** 決められた順に値を返すRandom. */
+  private static final class FixedRandom extends Random {
+    private static final long serialVersionUID = 1L;
+
+    private final int[] values;
+    private int index;
+
+    FixedRandom(int... values) {
+      this.values = values.clone();
+    }
+
+    @Override
+    public int nextInt(int bound) {
+      return values[index++];
+    }
   }
 }

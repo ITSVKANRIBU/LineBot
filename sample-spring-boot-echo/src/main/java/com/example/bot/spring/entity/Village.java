@@ -19,6 +19,7 @@ package com.example.bot.spring.entity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.example.bot.common.CommonModule;
@@ -33,12 +34,20 @@ import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonTitle;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 
+/**
+ * 通常村の状態.
+ *
+ * <p>可変状態へ触れるメソッドはすべてインスタンスのモニタ上で実行する。
+ * 人数設定と配役抽選、お題設定はそれぞれ1つの操作として原子的に行う必要がある。
+ * 途中経過が{@link #join(String)}から観測されると、
+ * インサイダー不在の村や「村がいっぱいです。」の誤判定が起こるため。
+ */
 public class Village {
 
   private int villageNum;
   private String ownerId;
   private String odai;
-  private List<InsiderRole> roleList;
+  private final List<InsiderRole> roleList;
 
   private int insiderNum;
   private int gmNum;
@@ -52,43 +61,75 @@ public class Village {
     specialFlg = 0;
   }
 
-  public int getVillageNum() {
+  public synchronized int getVillageNum() {
     return villageNum;
   }
 
-  public void setVillageNum(int villageNum) {
+  public synchronized void setVillageNum(int villageNum) {
     this.villageNum = villageNum;
   }
 
-  public String getOwnerId() {
+  public synchronized String getOwnerId() {
     return ownerId;
   }
 
-  public void setOwnerId(String ownerId) {
+  public synchronized void setOwnerId(String ownerId) {
     this.ownerId = ownerId;
   }
 
-  public String getOdai() {
+  public synchronized String getOdai() {
     return odai;
   }
 
-  public void setOdai(String odai) {
-    this.odai = odai;
+  /**
+   * お題を設定する.
+   *
+   * @param newOdai お題
+   * @return 設定できた場合true。既に設定済みの場合false
+   */
+  public synchronized boolean applyOdai(String newOdai) {
+    if (odai != null) {
+      return false;
+    }
+    odai = newOdai;
+    return true;
   }
 
-  public List<InsiderRole> getRoleList() {
+  public synchronized List<InsiderRole> getRoleList() {
     return roleList;
   }
 
-  public void setRoleList(List<InsiderRole> roleList) {
-    this.roleList = roleList;
+  /**
+   * 参加人数を確定し、インサイダーと（神モードなら）GMの位置を抽選する.
+   *
+   * <p>配役を先に決めてから{@code villageSize}を書くため、
+   * 参加者が「人数は設定済みだが配役は未確定」の状態を観測することはない。
+   *
+   * @param size 参加人数
+   * @param random 位置抽選に使う乱数
+   * @return 設定できた場合true。既に人数設定済みの場合false
+   */
+  public synchronized boolean configure(int size, Random random) {
+    if (villageSize != 0) {
+      return false;
+    }
+
+    insiderNum = random.nextInt(size) + 1;
+
+    if (gmNum == MessageConst.DEFAULT_GMNUM) {
+      int candidate = random.nextInt(size) + 1;
+      while (candidate == insiderNum) {
+        candidate = random.nextInt(size) + 1;
+      }
+      gmNum = candidate;
+    }
+
+    // 配役確定後に人数を公開する
+    villageSize = size;
+    return true;
   }
 
-  public void addRoleList(String role, String userId) {
-    roleList.add(new InsiderRole(role, userId));
-  }
-
-  /** Atomically joins a user and assigns the role for the current village state. */
+  /** ユーザーを参加させ、現在の村の状態で配役する. */
   public synchronized InsiderRole join(String userId) {
     for (InsiderRole role : roleList) {
       if (userId.equals(role.getUserId())) {
@@ -102,51 +143,39 @@ public class Village {
     return setInsiderRole(userId);
   }
 
-  public boolean hasOwner(String userId) {
-    return ownerId.equals(userId);
-  }
-
-  public int getInsiderNum() {
+  public synchronized int getInsiderNum() {
     return insiderNum;
   }
 
-  public void setInsiderNum(int insiderNum) {
-    this.insiderNum = insiderNum;
-  }
-
-  public int getGmNum() {
+  public synchronized int getGmNum() {
     return gmNum;
   }
 
-  public void setGmNum(int gmNum) {
+  public synchronized void setGmNum(int gmNum) {
     this.gmNum = gmNum;
   }
 
-  public int getVillageSize() {
+  public synchronized int getVillageSize() {
     return villageSize;
   }
 
-  public void setVillageSize(int villageSize) {
-    this.villageSize = villageSize;
-  }
-
-  public int getSpecialFlg() {
+  public synchronized int getSpecialFlg() {
     return specialFlg;
   }
 
-  public void setSpecialFlg(int specialFlg) {
+  public synchronized void setSpecialFlg(int specialFlg) {
     this.specialFlg = specialFlg;
   }
 
   // 持ってなかったらnullを返却
-  public String getMemberRole(String userId) {
+  public synchronized String getMemberRole(String userId) {
     return roleList.stream()
         .filter(dao -> userId.equals(dao.getUserId())).findFirst().orElse(new InsiderRole())
         .getRole();
   }
 
-  // 役職の設定処理
-  public synchronized InsiderRole setInsiderRole(String userId) {
+  // 役職の設定処理。joinからのみ呼ばれる
+  private InsiderRole setInsiderRole(String userId) {
     InsiderRole returnRole = null;
     if (specialFlg == 10) {
       // 逆村設定
@@ -188,7 +217,7 @@ public class Village {
     return returnRole;
   }
 
-  public List<Message> getMessageOwner() {
+  public synchronized List<Message> getMessageOwner() {
 
     List<Message> messages = null;
 
@@ -210,7 +239,7 @@ public class Village {
 
   }
 
-  public List<Message> getRoleMessage(String userId) {
+  public synchronized List<Message> getRoleMessage(String userId) {
 
     InsiderRole role = roleList.stream().filter(dao -> userId.equals(dao.getUserId())).findFirst()
         .orElse(new InsiderRole());
@@ -280,7 +309,7 @@ public class Village {
     return messages;
   }
 
-  public List<Message> getStatusMessage(String userId) {
+  public synchronized List<Message> getStatusMessage(String userId) {
     int inNum = 0;
     for (int i = 0; i < roleList.size(); i++) {
       if (userId.equals(roleList.get(i).getUserId())) {

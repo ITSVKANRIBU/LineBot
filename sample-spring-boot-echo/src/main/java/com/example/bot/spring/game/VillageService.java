@@ -78,6 +78,11 @@ public final class VillageService {
    * @return 設定完了メッセージ。人数未設定の自分の村がない場合はnull
    */
   public static List<Message> setVillageSize(String userId, int number) {
+    return setVillageSize(userId, number, new Random());
+  }
+
+  /** 乱数を差し替えられる{@link #setVillageSize(String, int)}。テスト用のseam. */
+  static List<Message> setVillageSize(String userId, int number, Random random) {
     Village village = VillageList.findLatestOwned(userId, target -> 0 == target.getVillageSize());
 
     if (village == null) {
@@ -88,24 +93,16 @@ public final class VillageService {
       return Collections.singletonList(new TextMessage(MessageConst.ERR_NUMSETMESSAGE));
     }
 
-    Random random = new Random();
+    // 神モードかどうかは人数確定で上書きされるため、先に控える
+    boolean godMode = village.getGmNum() == MessageConst.DEFAULT_GMNUM;
 
-    // 村人数設定
-    village.setVillageSize(number);
-
-    // インサイダー位置設定
-    int insiderNum = random.nextInt(number) + 1;
-    String roleUrl = CommonModule.getIllustUrl("GM");
-    village.setInsiderNum(insiderNum);
-    if (village.getGmNum() == MessageConst.DEFAULT_GMNUM) {
-      roleUrl = CommonModule.getIllustUrl("GOD");
-      int gmNum = random.nextInt(number) + 1;
-      while (gmNum == insiderNum) {
-        gmNum = random.nextInt(number) + 1;
-      }
-      village.setGmNum(gmNum);
+    // 人数確定と配役抽選は村側で原子的に行う
+    if (!village.configure(number, random)) {
+      // 同時操作で既に確定済み。既定応答へ落とす
+      return null;
     }
 
+    String roleUrl = CommonModule.getIllustUrl(godMode ? "GOD" : "GM");
     String villageNumStr = String.valueOf(village.getVillageNum());
     String message = "人数を『" + number
         + "人』に設定しました。"
@@ -134,7 +131,10 @@ public final class VillageService {
       return null;
     }
 
-    village.setOdai(odai);
+    if (!village.applyOdai(odai)) {
+      // 同時操作で既に設定済み。既定応答へ落とす
+      return null;
+    }
 
     String message = village.getVillageNum() + "村 のお題を『" + odai + "』に設定しました。\n";
     if (village.getGmNum() == MessageConst.DEFAULT_GMNUM) {
