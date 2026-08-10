@@ -33,7 +33,19 @@ import lombok.extern.slf4j.Slf4j;
 public class CommonModule {
 
   private static final RestTemplate restTemplate = new RestTemplate();
-  private static final String URL = "https://script.googleusercontent.com/macros/echo?user_content_key=aKMvG1GRG6CYrznJw6x0cjbGjD3XCu6DkIARkCZYZB257AnrACX_SIEBnxtbI7z26GYt4zejEm13dha_xv4o3wgiVNcAjd6_m5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnCNpoqCEl5Y_84RG7F4nLvpUk-DyE4X5eE_1h0yajhEvYBr9Jf8qIeO625quMX_ShEW-dnclfdIe&lib=Mc3tlEOHbGs_amoROLTGc0nOYk-y_j7OD";
+
+  /**
+   * イラスト一覧を返すGoogle Apps ScriptのウェブアプリURL.
+   *
+   * <p>必ずデプロイURL（{@code /macros/s/<デプロイID>/exec}）を指定する。
+   * ブラウザでこのURLを開くと{@code script.googleusercontent.com/macros/echo}へ
+   * 302で転送されるが、転送先の{@code user_content_key}は一時的な発行物で
+   * いずれ失効し、以降は400を返し続ける。転送先URLを貼ってはならない。
+   * GETのリダイレクト追跡は{@link RestTemplate}の既定動作で行われる。
+   */
+  static final String URL =
+      "https://script.google.com/macros/s/"
+      + "AKfycbyy5RZiz_11ylnVV4NB4kToZv6Qv9ecXkxRgnWo9yvE_AxNLvM/exec";
   private static Map<String, ArrayList<Integer>> illustrationRtioMap;
   private static Map<String, ArrayList<String>> illustrationUrlMap;
 
