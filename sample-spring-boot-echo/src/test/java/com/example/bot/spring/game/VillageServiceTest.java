@@ -17,8 +17,10 @@
 package com.example.bot.spring.game;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Random;
@@ -32,6 +34,7 @@ import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
+import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplate;
 
 /**
@@ -114,6 +117,39 @@ public class VillageServiceTest {
     assertNull(VillageService.setOdai(OWNER, "めろん"));
 
     assertEquals("すいか", VillageList.findLatestOwned(OWNER, target -> true).getOdai());
+  }
+
+  @Test
+  public void reverseVillageIsConfirmedToTheOwner() {
+    VillageService.createVillage(OWNER, false);
+    VillageService.setVillageSize(OWNER, 3, new FixedRandom(1));
+
+    List<Message> messages = VillageService.setReverseVillage(OWNER);
+
+    Village village = VillageList.findLatestOwned(OWNER, target -> true);
+    assertNotNull(messages);
+    assertTrue(village.isReverseVillage());
+    assertTrue(((TextMessage) messages.get(0)).getText()
+        .startsWith(village.getVillageNum() + "村 を『逆村』に設定しました。"));
+  }
+
+  @Test
+  public void reverseVillageIsRejectedOnceParticipantsJoined() {
+    VillageService.createVillage(OWNER, false);
+    VillageService.setVillageSize(OWNER, 3, new FixedRandom(1));
+    Village village = VillageList.findLatestOwned(OWNER, target -> true);
+    joinAll(village, "u1");
+
+    // 参加者がいる村は対象から外れるため、既定応答へ落ちる
+    assertNull(VillageService.setReverseVillage(OWNER));
+    assertFalse(village.isReverseVillage());
+    // インサイダーは2番目。逆村化されていればu1はインサイダーになっていた
+    assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("u1"));
+  }
+
+  @Test
+  public void reverseVillageWithoutAnOwnedVillageFallsBackToTheDefaultReply() {
+    assertNull(VillageService.setReverseVillage(OWNER));
   }
 
   private String thumbnailOf(List<Message> messages) {

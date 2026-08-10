@@ -147,6 +147,31 @@ public final class VillageService {
   }
 
   /**
+   * 自分の村を逆村へ切り替える.
+   *
+   * @param userId オーナーのユーザーID
+   * @return 設定完了メッセージ。参加者のいない自分の村がない場合はnull
+   */
+  public static List<Message> setReverseVillage(String userId) {
+    Village village = VillageList.findLatestOwned(userId, target -> !target.hasMembers());
+
+    if (village == null) {
+      return null;
+    }
+
+    // 参加者の有無の確認と切り替えは村側で原子的に行う
+    if (!village.applyReverseVillage()) {
+      // 同時操作で参加者が入室済み。既定応答へ落とす
+      return null;
+    }
+
+    String message = village.getVillageNum() + "村 を『逆村』に設定しました。\n"
+        + "お題を知らない村人が1人となります。";
+
+    return Collections.singletonList(new TextMessage(message));
+  }
+
+  /**
    * 通常村へ参加する。オーナーの場合は配布状況を返す.
    *
    * @param userId ユーザーID

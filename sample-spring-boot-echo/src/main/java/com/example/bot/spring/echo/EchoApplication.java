@@ -242,17 +242,10 @@ public class EchoApplication {
         return;
 
       } else if ("@逆村".equals(userMessage.trim()) || "＠逆村".equals(userMessage.trim())) {
-        Village village = VillageList.findLatestOwned(userId, target -> target.getRoleList().isEmpty());
-        if (village != null) {
-          // フラグ設定
-          village.setSpecialFlg(10);
-          String message = village.getVillageNum() + "村 を『逆村』に設定しました。\n"
-              + "お題を知らない村人が1人となります。";
-          messages = Collections.singletonList(new TextMessage(message));
-        }
+        messages = VillageService.setReverseVillage(userId);
 
       } else if ("@わーわーず".equals(userMessage.trim()) || "＠わーわーず".equals(userMessage.trim())) {
-        Village village = VillageList.findLatestOwned(userId, target -> target.getRoleList().isEmpty());
+        Village village = VillageList.findLatestOwned(userId, target -> !target.hasMembers());
         // 人数、お題チェック
         if (village != null && village.getVillageSize() > 2 && village.getOdai() != null) {
           WereWordEvent logic = new WereWordEvent();

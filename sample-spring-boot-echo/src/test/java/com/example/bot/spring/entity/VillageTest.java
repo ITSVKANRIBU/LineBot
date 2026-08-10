@@ -25,6 +25,11 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -98,13 +103,73 @@ public class VillageTest {
   public void reverseVillageInvertsInsiderAndVillagers() {
     Village village = villageOf(3, insiderAt(2));
     // 逆村: お題を知らない村人が1人だけになる
-    village.setSpecialFlg(10);
+    assertTrue(village.applyReverseVillage());
 
     joinAll(village, "first", "second", "third");
 
     assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("first"));
     assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("second"));
     assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("third"));
+  }
+
+  @Test
+  public void reverseVillageIsRejectedOnceSomeoneJoined() {
+    Village village = villageOf(3, insiderAt(2));
+    assertNotNull(village.join("first"));
+
+    // 参加後に切り替えると、既に配った配役と混在する
+    assertFalse("参加者がいる村は逆村化しない", village.applyReverseVillage());
+    assertFalse(village.isReverseVillage());
+    assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("first"));
+  }
+
+  @Test
+  public void concurrentJoinAndReverseSwitchNeverMixesRoles() throws Exception {
+    // 逆村化と参加が競合しても、村全体はどちらか一方の配役に収まること。
+    // 通常村ならインサイダーが1人、逆村なら村人が1人になる。
+    for (int attempt = 0; attempt < 200; attempt++) {
+      final Village village = villageOf(4, insiderAt(2));
+      final CountDownLatch start = new CountDownLatch(1);
+      ExecutorService pool = Executors.newFixedThreadPool(5);
+
+      pool.submit(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          start.await();
+          return village.applyReverseVillage();
+        }
+      });
+      for (final String userId : new String[] { "u1", "u2", "u3", "u4" }) {
+        pool.submit(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            start.await();
+            return village.join(userId);
+          }
+        });
+      }
+
+      start.countDown();
+      pool.shutdown();
+      assertTrue(pool.awaitTermination(10, TimeUnit.SECONDS));
+
+      int insiders = 0;
+      int villagers = 0;
+      for (String userId : new String[] { "u1", "u2", "u3", "u4" }) {
+        if (MessageConst.INSIDER_ROLE.equals(village.getMemberRole(userId))) {
+          insiders++;
+        } else if (MessageConst.VILLAGE_ROLE.equals(village.getMemberRole(userId))) {
+          villagers++;
+        }
+      }
+
+      int expectedMinority = village.isReverseVillage() ? villagers : insiders;
+      int expectedMajority = village.isReverseVillage() ? insiders : villagers;
+      assertEquals("attempt=" + attempt + " 逆村=" + village.isReverseVillage(),
+          1, expectedMinority);
+      assertEquals("attempt=" + attempt + " 逆村=" + village.isReverseVillage(),
+          3, expectedMajority);
+    }
   }
 
   @Test
@@ -160,7 +225,7 @@ public class VillageTest {
       assertNotNull("参加できなかった: " + userId, village.join(userId));
       joined.add(userId);
     }
-    assertEquals(joined.size(), village.getRoleList().size());
+    assertEquals(joined.size(), village.getMemberCount());
   }
 
   /** 決められた順に値を返すRandom. */

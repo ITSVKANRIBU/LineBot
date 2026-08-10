@@ -38,9 +38,11 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
  * 通常村の状態.
  *
  * <p>可変状態へ触れるメソッドはすべてインスタンスのモニタ上で実行する。
- * 人数設定と配役抽選、お題設定はそれぞれ1つの操作として原子的に行う必要がある。
+ * 人数設定と配役抽選、お題設定、逆村への切り替えは
+ * それぞれ1つの操作として原子的に行う必要がある。
  * 途中経過が{@link #join(String)}から観測されると、
- * インサイダー不在の村や「村がいっぱいです。」の誤判定が起こるため。
+ * インサイダー不在の村や「村がいっぱいです。」の誤判定、
+ * 通常村と逆村の配役の混在が起こるため。
  */
 public class Village {
 
@@ -53,12 +55,11 @@ public class Village {
   private int gmNum;
   private int villageSize;
 
-  /* 10:逆村*/
-  private int specialFlg;
+  /** 逆村。お題を知らない村人が1人だけになる. */
+  private boolean reverseVillage;
 
   public Village() {
     roleList = new CopyOnWriteArrayList<InsiderRole>();
-    specialFlg = 0;
   }
 
   public synchronized int getVillageNum() {
@@ -95,8 +96,13 @@ public class Village {
     return true;
   }
 
-  public synchronized List<InsiderRole> getRoleList() {
-    return roleList;
+  /** 参加者が1人以上いるか. */
+  public synchronized boolean hasMembers() {
+    return !roleList.isEmpty();
+  }
+
+  public synchronized int getMemberCount() {
+    return roleList.size();
   }
 
   /**
@@ -159,12 +165,25 @@ public class Village {
     return villageSize;
   }
 
-  public synchronized int getSpecialFlg() {
-    return specialFlg;
+  public synchronized boolean isReverseVillage() {
+    return reverseVillage;
   }
 
-  public synchronized void setSpecialFlg(int specialFlg) {
-    this.specialFlg = specialFlg;
+  /**
+   * まだ誰も参加していない場合に限り、村を逆村へ切り替える.
+   *
+   * <p>参加者の有無の確認と切り替えを同一のモニタ上で行う。
+   * 別操作にすると、その間に{@link #join(String)}された参加者だけが
+   * 通常村の配役を受け取り、村の中で配役が混在する。
+   *
+   * @return 切り替えた場合true。既に参加者がいる場合false
+   */
+  public synchronized boolean applyReverseVillage() {
+    if (!roleList.isEmpty()) {
+      return false;
+    }
+    reverseVillage = true;
+    return true;
   }
 
   // 持ってなかったらnullを返却
@@ -177,7 +196,7 @@ public class Village {
   // 役職の設定処理。joinからのみ呼ばれる
   private InsiderRole setInsiderRole(String userId) {
     InsiderRole returnRole = null;
-    if (specialFlg == 10) {
+    if (reverseVillage) {
       // 逆村設定
       for (int i = 0; i < roleList.size(); i++) {
         if (userId.equals(roleList.get(i).getUserId())) {
