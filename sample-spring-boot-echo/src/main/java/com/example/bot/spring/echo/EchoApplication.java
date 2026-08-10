@@ -87,6 +87,10 @@ public class EchoApplication {
     log.debug("Received text message event");
 
     String userId = event.getSource().getUserId();
+    if (userId == null) {
+      replyUnidentifiedUser(event.getReplyToken());
+      return;
+    }
     String userMessage = event.getMessage().getText();
 
     // messageの送信
@@ -103,8 +107,11 @@ public class EchoApplication {
     try {
       int dataInt = Integer.parseInt(data);
       if (dataInt >= 0 && dataInt < 10) {
-        // お題詳細取得
+        // お題詳細取得。userIdを使わないため識別できなくても応答する
         getOdaiDetail(event.getReplyToken(), dataInt);
+
+      } else if (userId == null) {
+        replyUnidentifiedUser(event.getReplyToken());
 
       } else if (dataInt < 10000) {
         // 村番号の場合
@@ -141,6 +148,20 @@ public class EchoApplication {
   @EventMapping
   public void handleDefaultMessageEvent(Event event) {
     log.debug("Received unhandled event: {}", event.getClass().getSimpleName());
+  }
+
+  /**
+   * LINE user IDが取れないイベントを、状態を変更せずに拒否する.
+   *
+   * <p>グループ・ルームのイベントは、利用者が公式アカウント利用規約に
+   * 同意していない場合userIdを含まない。userIdは村の所有者と参加者の
+   * 同一性判定に使うため、nullのまま処理を進めると以降の操作がNPEになり、
+   * ユーザーへ何も返信できなくなる。
+   */
+  private void replyUnidentifiedUser(@NonNull String replyToken) {
+    log.debug("Rejected an event without a LINE user ID");
+    reply(replyToken, Collections.<Message>singletonList(
+        new TextMessage(MessageConst.ERR_UNIDENTIFIED_USER)));
   }
 
   private void replyDefoltMessage(@NonNull String replyToken) {
