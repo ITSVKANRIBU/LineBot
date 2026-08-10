@@ -27,6 +27,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.bot.staticdata.MessageConst;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class CommonModule {
 
   private static final RestTemplate restTemplate = new RestTemplate();
@@ -129,7 +132,8 @@ public class CommonModule {
       illustrationUrlMap = tmpUrlMap;
 
     } catch (Exception e) {
-      e.printStackTrace();
+      // 取得できなければMessageConstの標準画像へfallbackする
+      log.warn("Failed to refresh the illustration catalog", e);
     }
 
   }

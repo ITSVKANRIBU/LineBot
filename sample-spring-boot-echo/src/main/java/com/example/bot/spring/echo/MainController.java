@@ -1,221 +1,87 @@
+/*
+ * Copyright 2016 LINE Corporation
+ *
+ * LINE Corporation licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
 package com.example.bot.spring.echo;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.bot.common.CommonModule;
-import com.example.bot.spring.entity.Village;
-import com.example.bot.staticdata.MessageConst;
-import com.example.bot.staticdata.VillageList;
-import com.linecorp.bot.model.action.MessageAction;
-import com.linecorp.bot.model.action.PostbackAction;
+import com.example.bot.spring.game.VillageService;
+
 import com.linecorp.bot.model.message.Message;
-import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.model.message.template.ButtonsTemplate;
-import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
-import com.linecorp.bot.spring.boot.common.SpecialVillageList;
-import com.linecorp.bot.spring.boot.entity.SpecialVillage;
 
 @RestController
 public class MainController {
 
-	@GetMapping("/callapi")
-	@CrossOrigin
-	public List<Message> index(String message, String userId) {
-		List<Message> messages = messageController(message, userId);
-		if (messages == null) {
-			messages = Collections.singletonList(new TextMessage("村が作成されていません"));
-		}
-		return messages;
-	}
+  /**
+   * 村への参加・作成・設定をLINEメッセージ形式のJSONで返す.
+   *
+   * @param message 村番号、または「お題」「題」「神」「人数」「お題文字列」
+   * @param userId 呼び出し元が指定する参加者識別子
+   * @return LINE Message APIのJSON配列。必須parameter不足はHTTP 400
+   */
+  @GetMapping("/callapi")
+  @CrossOrigin
+  public ResponseEntity<List<Message>> index(
+      @RequestParam(value = "message", required = false) String message,
+      @RequestParam(value = "userId", required = false) String userId) {
+    if (message == null || message.trim().isEmpty()
+        || userId == null || userId.trim().isEmpty()) {
+      return ResponseEntity.badRequest().build();
+    }
 
-	private List<Message> messageController(String message, String userId) {
-		int number = 0;
-		try {
-			number = Integer.parseInt(message);
+    List<Message> messages = messageController(message, userId);
+    if (messages == null) {
+      messages = Collections.singletonList(new TextMessage("村が作成されていません"));
+    }
+    return ResponseEntity.ok(messages);
+  }
 
-			if (number > 9999) {
-				return getMessageSpecialVillage(userId, number);
-			} else if (number > 999) {
-				return getMessageVillage(userId, number);
-			} else {
-				// 人数が0のものを探す
-				for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
-					if (0 == VillageList.get(i).getVillageSize() && userId.equals(VillageList.get(i).getOwnerId())) {
-						if (number <= 1) {
-							return Collections.singletonList(new TextMessage(MessageConst.ERR_NUMSETMESSAGE));
-						}
+  private List<Message> messageController(String message, String userId) {
+    int number;
+    try {
+      number = Integer.parseInt(message);
+    } catch (NumberFormatException e) {
+      return nonNumberMessage(message, userId);
+    }
 
-						// 村人数設定
-						VillageList.get(i).setVillageSize(number);
+    if (number > 9999) {
+      return VillageService.joinSpecialVillage(userId, number);
+    } else if (number > 999) {
+      return VillageService.joinVillage(userId, number);
+    } else {
+      return VillageService.setVillageSize(userId, number);
+    }
+  }
 
-						// インサイダー位置設定
-						Random random = new Random();
-						int insiderNum = random.nextInt(number) + 1;
-						String roleUrl = CommonModule.getIllustUrl("GM");
-						VillageList.get(i).setInsiderNum(insiderNum);
-						if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
-							roleUrl = CommonModule.getIllustUrl("GOD");
-							int gmNum = random.nextInt(number) + 1;
-							while (gmNum == insiderNum) {
-								gmNum = random.nextInt(number) + 1;
-							}
-							VillageList.get(i).setGmNum(gmNum);
-						}
-						String villageNumStr = String.valueOf(VillageList.get(i).getVillageNum());
-						String messageTmp = "人数を『" + number + "人』に設定しました。" + "\n皆さんに村番号を伝えてください。";
+  private List<Message> nonNumberMessage(String message, String userId) {
+    String command = message.trim();
 
-						ButtonsTemplate buttons = new ButtonsTemplate(roleUrl, villageNumStr + "村", messageTmp,
-								Collections.singletonList(new MessageAction("確認", villageNumStr)));
+    if ("お題".equals(command) || "題".equals(command) || "神".equals(command)) {
+      return VillageService.createVillage(userId, "神".equals(command));
+    }
 
-						return Collections
-								.singletonList(new TemplateMessage(message + "配布状況の確認は村番号を入力してください。", buttons));
-					}
-				}
-			}
-
-		} catch (NumberFormatException e) {
-			// メッセージ
-			return nonNumberMessage(message, userId);
-		} catch (Throwable e) {
-			return null;
-		}
-
-		return null;
-	}
-
-	private List<Message> getMessageVillage(String userId, int number) {
-		List<Message> messages = null;
-
-		Village village = VillageList.getVillage(number);
-
-		if (village == null) {
-			return null;
-		}
-
-		if (userId.equals(village.getOwnerId())) {
-			// オーナーの場合
-			messages = village.getMessageOwner();
-
-		} else {
-
-			// 参加者の場合
-			String memberRole = village.getMemberRole(userId);
-			if (memberRole == null) {
-
-				if (village.getRoleList().size() >= village.getVillageSize()) {
-					messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
-				} else {
-					// 配役の設定
-					village.addRoleList(null, userId);
-					village.setInsiderRole(userId);
-
-					messages = village.getRoleMessage(userId);
-
-				}
-			} else {
-				messages = village.getRoleMessage(userId);
-			}
-
-		}
-		return messages;
-	}
-
-	private List<Message> getMessageSpecialVillage(String userId, int number) {
-
-		List<Message> messages = null;
-
-		SpecialVillage village = SpecialVillageList.getVillage(number);
-
-		if (village == null) {
-			return null;
-		}
-
-		if (village != null) {
-			// 参加者フラグ
-			boolean sankaFlg = village.hasMember(userId);
-
-			// 参加している場合
-			if (sankaFlg) {
-				messages = village.getRoleMessage(userId);
-
-			} else { //参加者の場合
-
-				if (village.getUserList().size() >= village.getMessageList().size()) {
-					messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
-				} else {
-					// 配役の設定
-					village.getUserList().add(userId);
-					messages = village.getRoleMessage(userId);
-				}
-			}
-		}
-
-		return messages;
-
-	}
-
-	private List<Message> nonNumberMessage(String message, String userId) {
-
-		if ("お題".equals(message.trim()) || "題".equals(message.trim()) || "神".equals(message.trim())) {
-			Random random = new Random();
-			int villageNum = random.nextInt(8999) + 1000;
-
-			// 重複しない番号取得（防止のため、100回まで）
-			for (int i = 0; i < 100; i++) {
-				boolean breakFlg = true;
-				for (Village dao : VillageList.getVillageList()) {
-					if (villageNum == dao.getVillageNum()) {
-						villageNum = random.nextInt(8999) + 1000;
-						breakFlg = false;
-						break;
-					}
-				}
-				if (breakFlg) {
-					break;
-				}
-			}
-
-			Village newVillage = new Village();
-			newVillage.setOwnerId(userId);
-			newVillage.setVillageNum(villageNum);
-
-			if ("神".equals(message.trim())) {
-				newVillage.setGmNum(MessageConst.DEFAULT_GMNUM);
-			}
-
-			VillageList.addVillage(newVillage);
-
-			String messagetmp = villageNum + "村 を新しく作成しました。" + MessageConst.OWNER_ODAIMESSAGE;
-
-			ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(messagetmp + "\nお題の自動取得もできます。",
-					Collections.singletonList(new PostbackAction("お題の自動取得", String.valueOf(0))));
-
-			return Collections.singletonList(new TemplateMessage(messagetmp, buttons));
-
-		}
-
-		// お題設定の場合
-		for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
-			if (null == VillageList.get(i).getOdai() && userId.equals(VillageList.get(i).getOwnerId())) {
-				VillageList.get(i).setOdai(message);
-				String messageStr = VillageList.get(i).getVillageNum() + "村 のお題を『" + message + "』に設定しました。\n";
-				if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
-					messageStr += MessageConst.GOD_NUMSETMESSAGE;
-				} else {
-					messageStr += MessageConst.OWNER_NUMSETMESSAGE;
-				}
-				return Collections.singletonList(new TextMessage(messageStr));
-			}
-		}
-
-		return null;
-	}
-
+    // お題設定の場合
+    return VillageService.setOdai(userId, message);
+  }
 }

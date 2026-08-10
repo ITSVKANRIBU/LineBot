@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Random;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class WordGetter {
 
   public static final int FIRST_LINE = 61;
@@ -71,10 +74,10 @@ public class WordGetter {
         }
 
       } catch (Exception e) {
-        e.printStackTrace();
+        log.warn("Failed to read a word from the CSV", e);
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error("Failed to open the word CSV", e);
     }
 
     return str;

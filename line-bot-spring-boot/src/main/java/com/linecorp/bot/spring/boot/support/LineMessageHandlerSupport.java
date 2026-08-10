@@ -28,8 +28,6 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -37,15 +35,9 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.ui.Model;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
@@ -58,8 +50,6 @@ import com.linecorp.bot.model.event.message.MessageContent;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineBotMessages;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
-import com.linecorp.bot.spring.boot.servlet.AjaxFrontServlet;
-import com.linecorp.bot.spring.boot.servlet.FrontServlet;
 
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -105,61 +95,6 @@ public class LineMessageHandlerSupport {
         refresh();
       }
     });
-  }
-
-  /**
-   * 修正箇所.
-   * @param model モデル
-   * @return
-   */
-  @RequestMapping("/Insider")
-  public ModelAndView test(Model model) {
-
-    String nextUrl = "Entry";
-    // データ取得
-    try {
-      ServletRequestAttributes servlet = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
-      if (servlet != null) {
-        HttpServletRequest request = servlet.getRequest();
-        HttpServletResponse response = servlet.getResponse();
-
-        request.setCharacterEncoding("UTF-8");
-
-        FrontServlet frontServlet = new FrontServlet();
-        nextUrl = frontServlet.getnextPage(request, response, model);
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return new ModelAndView(nextUrl);
-  }
-
-  /**
-   * 修正箇所.
-   * @param model モデル
-   * @return
-   */
-  @RequestMapping("/specialvillage")
-  @CrossOrigin
-  public void jsonApi(Model model) {
-    // データ取得
-    try {
-      ServletRequestAttributes servlet = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
-      if (servlet != null) {
-        HttpServletRequest request = servlet.getRequest();
-        HttpServletResponse response = servlet.getResponse();
-        request.setCharacterEncoding("UTF-8");
-
-        AjaxFrontServlet frontServlet = new AjaxFrontServlet();
-        frontServlet.doServlet(request, response, model);
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
   }
 
   @VisibleForTesting

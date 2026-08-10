@@ -28,6 +28,8 @@ public class MessageConst {
       + "\n　例：「6」の場合は、「GM１人、インサイダー１人、村4人」です。";
   public static final String ERR_NUMSETMESSAGE = "村の人数は2人以上に設定してください。\n"
       + "もう一度村の人数を設定してください。";
+  public static final String ERR_UNIDENTIFIED_USER = "ユーザーを識別できないため操作できません。\n"
+      + "botとの1対1のトークから操作してください。";
   public static final String OWNER_CONFMESSAGE = "配布状況を確認したい場合は"
       + "村番号を入力してください。";
 
@@ -52,10 +54,4 @@ public class MessageConst {
   public static final String VILLAGERS_URL = "https://raw.githubusercontent.com/"
       + "ITSVKANRIBU/LineBot/3.0/Image/VILLAGERS.png";
 
-  public static final String URI_INSIDER = "https://insidergamehelper.herokuapp.com/Insider";
-
-  //履歴
-  public static final boolean RIREKI_FLG = true;
-  public static final String URL_RIREKI = "https://script.google.com/macros/s/"
-      + "AKfycbz52vTMQ_CA9hjvV-NIaMo6mi2iJoZkIIkHtaM_/exec";
 }

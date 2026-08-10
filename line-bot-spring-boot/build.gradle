@@ -22,7 +22,5 @@ dependencies {
     api project(':line-bot-servlet')
     api 'org.springframework.boot:spring-boot-autoconfigure'
     api 'org.springframework.boot:spring-boot-starter-web'
-    api 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    api files('lib/postgresql-42.2.8.jar')
     compileOnly 'javax.validation:validation-api'
 }
