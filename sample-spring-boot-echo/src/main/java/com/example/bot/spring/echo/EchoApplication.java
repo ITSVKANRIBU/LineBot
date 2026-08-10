@@ -56,7 +56,15 @@ import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
+/**
+ * LINEイベントの受け口とコマンド判定.
+ *
+ * <p>webhook eventにはLINE user IDとユーザーが入力したお題が含まれるため、
+ * event自体をlogへ出さない。記録するのはevent種別と処理結果までとする。
+ */
+@Slf4j
 @SpringBootApplication
 @EnableScheduling
 @LineMessageHandler
@@ -70,13 +78,13 @@ public class EchoApplication {
 
   @Scheduled(fixedDelay = 300000)
   public static void createMap() {
-    System.out.println("画像取得");
+    log.info("Refreshing illustration catalog");
     CommonModule.createMap();
   }
 
   @EventMapping
   public void handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
-    System.out.println("event: " + event);
+    log.debug("Received text message event");
 
     String userId = event.getSource().getUserId();
     String userMessage = event.getMessage().getText();
@@ -87,7 +95,7 @@ public class EchoApplication {
 
   @EventMapping
   public void handlePostbackEvent(PostbackEvent event) {
-    System.out.println("event: " + event);
+    log.debug("Received postback event");
 
     String userId = event.getSource().getUserId();
     String data = event.getPostbackContent().getData();
@@ -125,14 +133,14 @@ public class EchoApplication {
 
   @EventMapping
   public void handleStickerMessageEvent(MessageEvent<StickerMessageContent> event) {
-    System.out.println("event: スタンプイベント");
+    log.debug("Received sticker message event");
     EchoImageEvent logic = new EchoImageEvent();
     reply(event.getReplyToken(), logic.echo());
   }
 
   @EventMapping
   public void handleDefaultMessageEvent(Event event) {
-    System.out.println("event: " + event);
+    log.debug("Received unhandled event: {}", event.getClass().getSimpleName());
   }
 
   private void replyDefoltMessage(@NonNull String replyToken) {
@@ -149,7 +157,7 @@ public class EchoApplication {
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
-      e.printStackTrace();
+      log.error("Failed to send the default reply", e);
     }
 
   }
@@ -163,7 +171,7 @@ public class EchoApplication {
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
-      e.printStackTrace();
+      log.error("Failed to send a reply", e);
     }
   }
 

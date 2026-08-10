@@ -24,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 公開APIの内部エラーを、詳細を含まない一般的な応答へ丸める.
  *
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * お題やユーザーIDが外部へ漏れ得る。対象は公開APIの2 controllerに限定し、
  * {@code /callback}の署名検証結果には影響させない。
  */
+@Slf4j
 @RestControllerAdvice(assignableTypes = { MainController.class, SpecialVillageController.class })
 public class ApiExceptionHandler {
 
@@ -42,7 +45,7 @@ public class ApiExceptionHandler {
    */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, String>> handleUnexpected(Exception e) {
-    e.printStackTrace();
+    log.error("Unhandled error while serving a public API request", e);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(Collections.singletonMap("error", "内部エラーが発生しました。"));
   }

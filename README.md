@@ -106,6 +106,18 @@ sample-spring-boot-echo/build/libs/sample-spring-boot-echo-*.jar
 
 LINE Messaging APIのチャネル設定では、Webhook URLを`https://<アプリのホスト>/callback`に設定してください。Botのアクセストークン等の秘密情報は、ソースコードへ記録せずHerokuの環境変数で管理します。
 
+### ログ
+
+webhook eventにはLINEユーザーIDとユーザーが入力したお題が含まれるため、event自体はログへ出力しません。記録するのはevent種別と処理結果までです。
+
+受信イベントの種別を追う必要がある場合は、次の環境変数でDEBUGへ引き上げます。個人情報そのものは引き上げても出力されません。
+
+```bash
+LOGGING_LEVEL_COM_EXAMPLE_BOT=DEBUG
+```
+
+CIはGitHub Actionsで、本番と同じJava 8で`./gradlew check`と`bootJar`を実行します（`.github/workflows/ci.yml`）。
+
 ## 主なコード構成
 
 - `sample-spring-boot-echo/.../EchoApplication.java`: LINEイベント処理とコマンド判定
