@@ -18,61 +18,86 @@ package com.example.bot.staticdata;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.function.Predicate;
 
 import com.example.bot.spring.entity.Village;
 
-public class VillageList {
+/**
+ * 通常村のプロセス内レジストリ.
+ *
+ * <p>状態はプロセスメモリだけで保持し、{@link #MAX_VILLAGE_NUM}件を超えると
+ * 古い村からFIFOで削除する。再起動で失われる。
+ * 参照・更新はすべてクラスロック上で行うため、外部へ可変コレクションを公開しない。
+ */
+public final class VillageList {
 
   static final int MAX_VILLAGE_NUM = 50;
-  private static ArrayList<Village> villageList = new ArrayList<Village>();
+  private static final ArrayList<Village> villageList = new ArrayList<Village>();
 
-  public static ArrayList<Village> getVillageList() {
-    return villageList;
+  private VillageList() {
   }
 
-  public static ArrayList<Village> getVillageList(String userId) {
-    ArrayList<Village> rtnList = new ArrayList<Village>();
-
-    for (Village village : villageList) {
-      if (userId.equals(village.getOwnerId())) {
-        rtnList.add(village);
-      }
-    }
-
-    return rtnList;
-  }
-
-  public static synchronized void addVillage(Village village) {
+  /**
+   * 空き番号を採番して村を登録する.
+   *
+   * <p>採番と登録を同一ロック内で行うため、同時実行でも番号が重複しない。
+   *
+   * @param village 登録する村
+   * @param random 番号抽選に使う乱数
+   * @return 採番された村番号
+   */
+  public static synchronized int addVillage(Village village, Random random) {
+    village.setVillageNum(nextVillageNumber(random));
     villageList.add(village);
 
     if (villageList.size() > MAX_VILLAGE_NUM) {
+      // FIFO eviction is intentional runtime behavior.
       villageList.remove(0);
     }
+
+    return village.getVillageNum();
   }
 
-  public static Village getVillage(int villageNum) {
+  public static synchronized Village getVillage(int villageNum) {
     return villageList.stream()
         .filter(dao -> villageNum == dao.getVillageNum()).findFirst().orElse(null);
   }
 
-  public static Village get(int i) {
-    return villageList.get(i);
+  /**
+   * 指定ユーザーが所有し、条件を満たす最新の村を返す.
+   *
+   * @param userId オーナーのユーザーID
+   * @param predicate 村の追加条件
+   * @return 該当する最新の村。なければnull
+   */
+  public static synchronized Village findLatestOwned(String userId, Predicate<Village> predicate) {
+    for (int i = villageList.size() - 1; i >= 0; i--) {
+      Village village = villageList.get(i);
+      if (userId.equals(village.getOwnerId()) && predicate.test(village)) {
+        return village;
+      }
+    }
+    return null;
   }
 
-  /** Returns a free four-digit village number, with a deterministic fallback. */
-  public static synchronized int nextVillageNumber(Random random) {
+  /** テスト専用。レジストリを空にする. */
+  public static synchronized void clear() {
+    villageList.clear();
+  }
+
+  /** 呼び出し元がクラスロックを保持している前提で、未使用の4桁村番号を返す. */
+  private static int nextVillageNumber(Random random) {
     for (int attempt = 0; attempt < 100; attempt++) {
       int candidate = random.nextInt(8999) + 1000;
       if (getVillage(candidate) == null) {
         return candidate;
       }
     }
-    for (int candidate = 1000; candidate <= 9998; candidate++) {
+    for (int candidate = 1000; candidate <= 9999; candidate++) {
       if (getVillage(candidate) == null) {
         return candidate;
       }
     }
     throw new IllegalStateException("No village number is available");
   }
-
 }

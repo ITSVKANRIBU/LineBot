@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 LINE Corporation
+ *
+ * LINE Corporation licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
 package com.example.bot.spring.echo;
 
 import java.util.Collections;
@@ -9,16 +25,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.bot.spring.entity.Village;
-import com.example.bot.staticdata.VillageList;
+import com.example.bot.spring.game.VillageService;
+
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.SpecialVillage;
 
 @RestController
 public class MainController {
 
+  /**
+   * 村への参加・作成・設定をLINEメッセージ形式のJSONで返す.
+   *
+   * @param message 村番号、または「お題」「題」「神」「人数」「お題文字列」
+   * @param userId 呼び出し元が指定する参加者識別子
+   * @return LINE Message APIのJSON配列。必須parameter不足はHTTP 400
+   */
   @GetMapping("/callapi")
   @CrossOrigin
   public ResponseEntity<List<Message>> index(
@@ -37,87 +58,30 @@ public class MainController {
   }
 
   private List<Message> messageController(String message, String userId) {
-    boolean isNumber = false;
-    int number = 0;
+    int number;
     try {
       number = Integer.parseInt(message);
-      isNumber = true;
-
-      if (isNumber) {
-        if (number > 9999) {
-          return getMessageSpecialVillage(userId, number);
-        } else if (number > 999) {
-          return getMessageVillage(userId, number);
-        }
-      }
     } catch (NumberFormatException e) {
-      return null;
+      return nonNumberMessage(message, userId);
     }
 
-    return null;
-  }
-
-  private List<Message> getMessageVillage(String userId, int number) {
-    List<Message> messages = null;
-
-    Village village = VillageList.getVillage(number);
-
-    if (village == null) {
-      return null;
-    }
-
-    if (userId.equals(village.getOwnerId())) {
-      // オーナーの場合
-      messages = village.getMessageOwner();
-
+    if (number > 9999) {
+      return VillageService.joinSpecialVillage(userId, number);
+    } else if (number > 999) {
+      return VillageService.joinVillage(userId, number);
     } else {
-
-      // 参加者の場合
-      String memberRole = village.getMemberRole(userId);
-      if (memberRole == null) {
-        if (village.join(userId) == null) {
-          messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
-        } else {
-          messages = village.getRoleMessage(userId);
-
-        }
-      } else {
-        messages = village.getRoleMessage(userId);
-      }
-
+      return VillageService.setVillageSize(userId, number);
     }
-    return messages;
   }
 
-  private List<Message> getMessageSpecialVillage(String userId, int number) {
+  private List<Message> nonNumberMessage(String message, String userId) {
+    String command = message.trim();
 
-    List<Message> messages = null;
-
-    SpecialVillage village = SpecialVillageList.getVillage(number);
-
-    if (village == null) {
-      return null;
+    if ("お題".equals(command) || "題".equals(command) || "神".equals(command)) {
+      return VillageService.createVillage(userId, "神".equals(command));
     }
 
-    if (village != null) {
-      // 参加者フラグ
-      boolean sankaFlg = village.hasMember(userId);
-
-      // 参加している場合
-      if (sankaFlg) {
-        messages = village.getRoleMessage(userId);
-
-      } else { //参加者の場合
-        if (!village.join(userId)) {
-          messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
-        } else {
-          messages = village.getRoleMessage(userId);
-        }
-      }
-    }
-
-    return messages;
-
+    // お題設定の場合
+    return VillageService.setOdai(userId, message);
   }
-
 }

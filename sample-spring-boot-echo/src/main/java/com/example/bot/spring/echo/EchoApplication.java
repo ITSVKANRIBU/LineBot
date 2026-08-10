@@ -19,7 +19,6 @@ package com.example.bot.spring.echo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +30,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import com.example.bot.common.CommonModule;
 import com.example.bot.common.WordGetter;
 import com.example.bot.spring.entity.Village;
+import com.example.bot.spring.game.SpecialVillage;
+import com.example.bot.spring.game.SpecialVillageList;
+import com.example.bot.spring.game.VillageService;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
 
@@ -48,13 +50,10 @@ import com.linecorp.bot.model.message.ImageMessage;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.model.message.template.ButtonsTemplate;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.SpecialVillage;
 
 import lombok.NonNull;
 
@@ -110,7 +109,11 @@ public class EchoApplication {
       } else {
         // 特殊村番号の場合
         SpecialVillage village = SpecialVillageList.getVillage(dataInt);
-        reply(event.getReplyToken(), village.getStatusMessage(userId));
+        if (village == null) {
+          replyDefoltMessage(event.getReplyToken());
+        } else {
+          reply(event.getReplyToken(), village.getStatusMessage(userId));
+        }
       }
 
     } catch (NumberFormatException e) {
@@ -188,8 +191,6 @@ public class EchoApplication {
 
     List<Message> messages = null;
 
-    Random random = new Random();
-
     try {
       int number = Integer.parseInt(userMessage.trim());
 
@@ -205,70 +206,14 @@ public class EchoApplication {
         return;
 
       } else {
-        // 人数が0のものを探す
-        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
-          if (0 == VillageList.get(i).getVillageSize()
-              && userId.equals(VillageList.get(i).getOwnerId())) {
-            if (number <= 1) {
-              messages = Collections.singletonList(new TextMessage(MessageConst.ERR_NUMSETMESSAGE));
-              break;
-            }
-
-            // 村人数設定
-            VillageList.get(i).setVillageSize(number);
-
-            // インサイダー位置設定
-            int insiderNum = random.nextInt(number) + 1;
-            String roleUrl = CommonModule.getIllustUrl("GM");
-            VillageList.get(i).setInsiderNum(insiderNum);
-            if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
-              roleUrl = CommonModule.getIllustUrl("GOD");
-              int gmNum = random.nextInt(number) + 1;
-              while (gmNum == insiderNum) {
-                gmNum = random.nextInt(number) + 1;
-              }
-              VillageList.get(i).setGmNum(gmNum);
-            }
-            String villageNumStr = String.valueOf(VillageList.get(i).getVillageNum());
-            String message = "人数を『" + number
-                + "人』に設定しました。"
-                + "\n皆さんに村番号を伝えてください。";
-
-            ButtonsTemplate buttons = new ButtonsTemplate(
-                roleUrl,
-                villageNumStr + "村", message, Collections.singletonList(
-                    new MessageAction("確認", villageNumStr)));
-
-            messages = Collections.singletonList(
-                new TemplateMessage(message + "配布状況の確認は村番号を入力してください。", buttons));
-
-            break;
-          }
-        }
+        // 人数設定
+        messages = VillageService.setVillageSize(userId, number);
       }
 
     } catch (NumberFormatException e) {
       if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())
           || "神".equals(userMessage.trim())) {
-        int villageNum = VillageList.nextVillageNumber(random);
-
-        Village newVillage = new Village();
-        newVillage.setOwnerId(userId);
-        newVillage.setVillageNum(villageNum);
-
-        if ("神".equals(userMessage.trim())) {
-          newVillage.setGmNum(MessageConst.DEFAULT_GMNUM);
-        }
-
-        VillageList.addVillage(newVillage);
-
-        String message = villageNum + "村 を新しく作成しました。" + MessageConst.OWNER_ODAIMESSAGE;
-
-        ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-            message + "\nお題の自動取得もできます。", Collections.singletonList(
-                new PostbackAction("お題の自動取得", String.valueOf(0))));
-
-        messages = Collections.singletonList(new TemplateMessage(message, buttons));
+        messages = VillageService.createVillage(userId, "神".equals(userMessage.trim()));
 
       } else if ("@配布".equals(userMessage.trim()) || "＠配布".equals(userMessage.trim())) {
         messages = new ArrayList<Message>();
@@ -282,55 +227,36 @@ public class EchoApplication {
 
       } else if ("@特殊".equals(userMessage.trim()) || "＠特殊".equals(userMessage.trim())) {
         messages = Collections
-            .singletonList(new TextMessage("https://insidergametool.netlify.com/webcontent/form.html"));
+            .singletonList(new TextMessage("https://insidergametool.netlify.app/form.html"));
 
       } else if ("@取得".equals(userMessage.trim()) || "＠取得".equals(userMessage.trim())) {
         getOdaiDetail(replyToken, 10);
         return;
 
       } else if ("@逆村".equals(userMessage.trim()) || "＠逆村".equals(userMessage.trim())) {
-        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
-          if (VillageList.get(i).getRoleList().size() == 0
-              && userId.equals(VillageList.get(i).getOwnerId())) {
-            // フラグ設定
-            VillageList.get(i).setSpecialFlg(10);
-            String message = VillageList.get(i).getVillageNum() + "村 を『逆村』に設定しました。\n"
-                + "お題を知らない村人が1人となります。";
-            messages = Collections.singletonList(new TextMessage(message));
-            break;
-          }
+        Village village = VillageList.findLatestOwned(userId, target -> target.getRoleList().isEmpty());
+        if (village != null) {
+          // フラグ設定
+          village.setSpecialFlg(10);
+          String message = village.getVillageNum() + "村 を『逆村』に設定しました。\n"
+              + "お題を知らない村人が1人となります。";
+          messages = Collections.singletonList(new TextMessage(message));
         }
 
       } else if ("@わーわーず".equals(userMessage.trim()) || "＠わーわーず".equals(userMessage.trim())) {
-        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
-          if (VillageList.get(i).getRoleList().size() == 0
-              && userId.equals(VillageList.get(i).getOwnerId())) {
-            // 人数、お題チェック
-            if (VillageList.get(i).getVillageSize() > 2
-                && VillageList.get(i).getOdai() != null) {
-              WereWordEvent logic = new WereWordEvent();
-              messages = logic.branch(VillageList.get(i));
-            }
-            break;
-          }
+        Village village = VillageList.findLatestOwned(userId, target -> target.getRoleList().isEmpty());
+        // 人数、お題チェック
+        if (village != null && village.getVillageSize() > 2 && village.getOdai() != null) {
+          WereWordEvent logic = new WereWordEvent();
+          messages = logic.branch(village);
         }
-      } else {
-        for (int i = VillageList.getVillageList().size() - 1; i >= 0; i--) {
-          if (null == VillageList.get(i).getOdai()
-              && userId.equals(VillageList.get(i).getOwnerId())) {
-            VillageList.get(i).setOdai(userMessage);
-            String message = VillageList.get(i).getVillageNum() + "村 のお題を『" + userMessage + "』に設定しました。\n";
-            if (VillageList.get(i).getGmNum() == MessageConst.DEFAULT_GMNUM) {
-              message = message + MessageConst.GOD_NUMSETMESSAGE;
-            } else {
-              message = message + MessageConst.OWNER_NUMSETMESSAGE;
-            }
-            messages = Collections.singletonList(new TextMessage(message));
 
-            // replyして処理終了とする。
-            reply(replyToken, messages);
-            return;
-          }
+      } else {
+        messages = VillageService.setOdai(userId, userMessage);
+        if (messages != null) {
+          // replyして処理終了とする。
+          reply(replyToken, messages);
+          return;
         }
       }
 
@@ -344,59 +270,18 @@ public class EchoApplication {
   }
 
   private void replyMessageVillageNum(String replyToken, String userId, int number) {
-    List<Message> messages = null;
+    List<Message> messages = VillageService.joinVillage(userId, number);
 
-    Village village = VillageList.getVillage(number);
-
-    if (village == null) {
+    // メッセージの設定がない場合
+    if (null == messages) {
       replyDefoltMessage(replyToken);
-      return;
-    }
-
-    if (userId.equals(village.getOwnerId())) {
-      // オーナーの場合
-      messages = village.getMessageOwner();
-
     } else {
-
-      // 参加者の場合
-      String memberRole = village.getMemberRole(userId);
-      if (memberRole == null) {
-        if (village.join(userId) == null) {
-          messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
-        } else {
-          messages = village.getRoleMessage(userId);
-
-        }
-      } else {
-        messages = village.getRoleMessage(userId);
-      }
-
+      reply(replyToken, messages);
     }
-    reply(replyToken, messages);
   }
 
   private void replyMessageSpecialVillage(String replyToken, String userId, int number) {
-    List<Message> messages = null;
-
-    SpecialVillage village = SpecialVillageList.getVillage(number);
-
-    if (village != null) {
-      // 参加者フラグ
-      boolean sankaFlg = village.hasMember(userId);
-
-      // 参加している場合
-      if (sankaFlg) {
-        messages = village.getRoleMessage(userId);
-
-      } else { //参加者の場合
-        if (!village.join(userId)) {
-          messages = Collections.singletonList(new TextMessage("村がいっぱいです。"));
-        } else {
-          messages = village.getRoleMessage(userId);
-        }
-      }
-    }
+    List<Message> messages = VillageService.joinSpecialVillage(userId, number);
 
     // メッセージの設定がない場合
     if (null == messages) {
