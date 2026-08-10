@@ -31,14 +31,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bot.spring.game.CreatVillage;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /** HTTP adapter for the special-village creation form. */
 @RestController
 public class SpecialVillageController {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  /**
+   * 1つの村へ配れるメッセージ数の上限.
+   *
+   * <p>通常村は101以上の入力を村番号として扱うため、参加人数の上限が100人。
+   * 特殊村も同じ上限に揃える。
+   */
+  static final int MAX_MESSAGES = 100;
+
+  /** メッセージ長の上限。LINEのテキストメッセージが5000文字まで. */
+  static final int MAX_MESSAGE_LENGTH = 5000;
+
+  private final ObjectMapper objectMapper = new ObjectMapper()
+      .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
   /**
    * リクエスト本文の{@code message}配列から特殊村を作成する.
@@ -62,11 +74,11 @@ public class SpecialVillageController {
         }
       }
 
-      Map<String, Object> payload = objectMapper.readValue(
-          body.toString(), new TypeReference<Map<String, Object>>() { });
-      @SuppressWarnings("unchecked")
-      List<String> messages = (List<String>) payload.get("message");
-      if (messages == null) {
+      // 型付きDTOで読むことで、要素が文字列であることをJacksonに担保させる
+      SpecialVillageRequest payload =
+          objectMapper.readValue(body.toString(), SpecialVillageRequest.class);
+      List<String> messages = payload.getMessage();
+      if (!isDeliverable(messages)) {
         return ResponseEntity.badRequest().build();
       }
 
@@ -76,6 +88,38 @@ public class SpecialVillageController {
     } catch (Exception e) {
       // 不正なJSON・型不一致はすべてクライアント起因として400へ丸める
       return ResponseEntity.badRequest().build();
+    }
+  }
+
+  /**
+   * 登録前に、村が使用可能かつ配信可能かを判定する.
+   *
+   * <p>空の配列は誰も参加できない村になり、長すぎるメッセージはLINEが送信を拒否する。
+   * どちらも登録後には気付けないため、採番する前に弾く。
+   */
+  private boolean isDeliverable(List<String> messages) {
+    if (messages == null || messages.isEmpty() || messages.size() > MAX_MESSAGES) {
+      return false;
+    }
+    for (String message : messages) {
+      // nullと空文字はSpecialVillage側で「メッセージは特にありません。」に置き換わる
+      if (message != null && message.length() > MAX_MESSAGE_LENGTH) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** {@code POST /specialvillage}の本文. */
+  public static final class SpecialVillageRequest {
+    private List<String> message;
+
+    public List<String> getMessage() {
+      return message;
+    }
+
+    public void setMessage(List<String> message) {
+      this.message = message;
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package com.example.bot.spring.game;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,7 +26,18 @@ import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 
+/**
+ * 特殊村の状態.
+ *
+ * <p>配布メッセージはフォーム入力とワーワーズのお題の双方に由来し、
+ * どちらも長さの上限がない。{@code ButtonsTemplateNonURL}のtextは
+ * 画像・タイトルなしで160文字までのため、超過分はテキストへ振り分ける。
+ */
 public class SpecialVillage {
+
+  /** 画像・タイトルなしのボタンテンプレートに収まるtextの上限. */
+  private static final int BUTTONS_TEMPLATE_TEXT_MAX = 160;
+
   private int villageNum;
   private String ownerId;
   private List<String> userList;
@@ -53,6 +65,15 @@ public class SpecialVillage {
     if (message == null) {
       return null;
     }
+
+    if (message.length() > BUTTONS_TEMPLATE_TEXT_MAX) {
+      // ボタンに収まらない場合はテキストで送り、入室状況を続けて伝える
+      List<Message> messages = new ArrayList<Message>();
+      messages.add(new TextMessage(message));
+      messages.add(getStatusMessage(userId).get(0));
+      return messages;
+    }
+
     ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(message,
         Collections.singletonList(new PostbackAction("入室状況確認", String.valueOf(villageNum))));
     return Collections.singletonList(new TemplateMessage(message, buttons));

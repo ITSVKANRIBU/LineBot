@@ -97,4 +97,93 @@ public class SpecialVillageControllerTest {
         .content("{\"message\":\"役職1\"}"))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  public void rejectsEmptyMessageArray() throws Exception {
+    // 1件も配れない村は作っても参加できず、村番号だけを浪費する
+    mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"message\":[]}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void rejectsMoreMessagesThanAVillageCanHold() throws Exception {
+    mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(messageArrayOf(SpecialVillageController.MAX_MESSAGES + 1, "役職")))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void acceptsTheLargestAllowedVillage() throws Exception {
+    mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(messageArrayOf(SpecialVillageController.MAX_MESSAGES, "役職")))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void rejectsMessageLongerThanLineCanDeliver() throws Exception {
+    String tooLong = repeat("あ", SpecialVillageController.MAX_MESSAGE_LENGTH + 1);
+
+    mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"message\":[\"" + tooLong + "\"]}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void acceptsTheLongestDeliverableMessage() throws Exception {
+    String longest = repeat("あ", SpecialVillageController.MAX_MESSAGE_LENGTH);
+
+    mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"message\":[\"" + longest + "\"]}"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void rejectsStructuredMessageElements() throws Exception {
+    mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"message\":[{\"role\":\"役職1\"}]}"))
+        .andExpect(status().isBadRequest());
+
+    mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"message\":[[\"役職1\"]]}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void numericMessageElementsAreStoredAsDeliverableText() throws Exception {
+    // 以前はunchecked castをすり抜けてIntegerが混入し、参加時にCCEになっていた
+    MvcResult result = mockMvc.perform(post("/specialvillage")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"message\":[1,2]}"))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    SpecialVillage village = SpecialVillageList.getVillage(
+        Integer.parseInt(result.getResponse().getContentAsString().replaceAll("\\D", "")));
+    assertTrue(village.join("user"));
+    assertNotNull(village.getRoleMessage("user"));
+  }
+
+  private String messageArrayOf(int count, String text) {
+    StringBuilder body = new StringBuilder("{\"message\":[");
+    for (int i = 0; i < count; i++) {
+      body.append(i == 0 ? "" : ",").append('"').append(text).append(i).append('"');
+    }
+    return body.append("]}").toString();
+  }
+
+  private static String repeat(String unit, int times) {
+    StringBuilder builder = new StringBuilder(unit.length() * times);
+    for (int i = 0; i < times; i++) {
+      builder.append(unit);
+    }
+    return builder.toString();
+  }
 }
