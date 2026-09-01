@@ -78,6 +78,13 @@ public class EchoApplicationGroupEventTest {
   }
 
   @Test
+  public void randomVillageCreationWithoutUserIdIsRejectedInsteadOfCreatingANullOwnerVillage() {
+    application.handleTextMessageEvent(textEvent("ランダム"));
+
+    assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
+  }
+
+  @Test
   public void villageSizeWithoutUserIdIsRejectedInsteadOfFailing() {
     application.handleTextMessageEvent(textEvent("5"));
 

@@ -109,6 +109,64 @@ public class VillageServiceTest {
   }
 
   @Test
+  public void randomVillageDealsRolesAndAnOdaiWithoutAskingTheOwner() {
+    List<Message> created = VillageService.createRandomVillage(OWNER);
+
+    Village village = VillageList.findLatestOwned(OWNER, target -> true);
+    assertNotNull("お題が自動で決まっていない", village.getOdai());
+    assertTrue(((TextMessage) created.get(0)).getText()
+        .endsWith(MessageConst.RANDOM_NUMSETMESSAGE));
+
+    // オーナーが1人目。インサイダーは3番目、GMは1番目
+    VillageService.setVillageSize(OWNER, 4, new FixedRandom(2, 0));
+
+    assertEquals(4, village.getVillageSize());
+    assertEquals(MessageConst.GAMEMASTER_ROLE, village.getMemberRole(OWNER));
+
+    // 村を作成した人を含めて4人。GMとインサイダーは1人ずつ
+    joinAll(village, "u2", "u3", "u4");
+    assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("u2"));
+    assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("u3"));
+    assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("u4"));
+  }
+
+  @Test
+  public void randomVillageOwnerIsToldTheirOwnRoleInsteadOfTheOdai() {
+    VillageService.createRandomVillage(OWNER);
+    // オーナーは1人目。インサイダーは2番目、GMは3番目なのでオーナーは村人
+    List<Message> sizeMessages = VillageService.setVillageSize(OWNER, 3, new FixedRandom(1, 2));
+    Village village = VillageList.findLatestOwned(OWNER, target -> true);
+
+    assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole(OWNER));
+    assertTrue(((TextMessage) sizeMessages.get(0)).getText()
+        .startsWith(village.getVillageNum() + "村：人数を『3人』に設定しました。"));
+
+    // 村人になったオーナーへは、お題を含む配布状況ではなく村人の役職だけを返す
+    List<Message> ownerReply = VillageService.joinVillage(OWNER, village.getVillageNum());
+    assertEquals(village.getRoleMessage(OWNER), ownerReply);
+    assertEquals("あなたの役職は" + MessageConst.VILLAGE_ROLE + "です。", textOf(ownerReply.get(0)));
+  }
+
+  @Test
+  public void randomVillageOwnerIsAskedForTheSizeBeforeAnyRoleExists() {
+    VillageService.createRandomVillage(OWNER);
+    Village village = VillageList.findLatestOwned(OWNER, target -> true);
+
+    List<Message> messages = VillageService.joinVillage(OWNER, village.getVillageNum());
+
+    assertEquals(new TextMessage(MessageConst.RANDOM_NUMSETMESSAGE), messages.get(0));
+  }
+
+  @Test
+  public void randomVillageIsNotTurnedIntoAReverseVillage() {
+    VillageService.createRandomVillage(OWNER);
+
+    // 逆村化するとインサイダーが1人ではなくなる
+    assertNull(VillageService.setReverseVillage(OWNER));
+    assertFalse(VillageList.findLatestOwned(OWNER, target -> true).isReverseVillage());
+  }
+
+  @Test
   public void odaiIsSetOnlyOnce() {
     VillageService.createVillage(OWNER, false);
 
@@ -150,6 +208,13 @@ public class VillageServiceTest {
   @Test
   public void reverseVillageWithoutAnOwnedVillageFallsBackToTheDefaultReply() {
     assertNull(VillageService.setReverseVillage(OWNER));
+  }
+
+  private String textOf(Message message) {
+    if (message instanceof TextMessage) {
+      return ((TextMessage) message).getText();
+    }
+    return ((TemplateMessage) message).getAltText();
   }
 
   private String thumbnailOf(List<Message> messages) {

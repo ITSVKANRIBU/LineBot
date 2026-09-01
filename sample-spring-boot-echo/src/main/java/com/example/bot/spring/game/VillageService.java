@@ -16,11 +16,13 @@
 
 package com.example.bot.spring.game;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 import com.example.bot.common.CommonModule;
+import com.example.bot.common.WordGetter;
 import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
@@ -71,6 +73,29 @@ public final class VillageService {
   }
 
   /**
+   * ランダム村を作成する.
+   *
+   * <p>お題は「初心者」から自動で引く。役職はオーナーを含めて抽選するため、
+   * オーナーへ聞くのは人数だけになる。
+   *
+   * @param userId オーナーのユーザーID
+   * @return 作成完了メッセージ
+   */
+  public static List<Message> createRandomVillage(String userId) {
+    Village village = new Village();
+    village.setOwnerId(userId);
+    // GMも抽選対象にする
+    village.setGmNum(MessageConst.DEFAULT_GMNUM);
+    village.setRandomMode(true);
+    village.applyOdai(WordGetter.getWord(WordGetter.BEGINNER_RANK));
+
+    int villageNum = VillageList.addVillage(village, new Random());
+
+    return Collections.singletonList(new TextMessage(
+        villageNum + "村 を新しく作成しました。" + MessageConst.RANDOM_NUMSETMESSAGE));
+  }
+
+  /**
    * 参加人数を設定し、インサイダーとGMの位置を抽選する.
    *
    * @param userId オーナーのユーザーID
@@ -95,11 +120,21 @@ public final class VillageService {
 
     // 神モードかどうかは人数確定で上書きされるため、先に控える
     boolean godMode = village.getGmNum() == MessageConst.DEFAULT_GMNUM;
+    boolean randomMode = village.isRandomMode();
 
     // 人数確定と配役抽選は村側で原子的に行う
     if (!village.configure(number, random)) {
       // 同時操作で既に確定済み。既定応答へ落とす
       return null;
+    }
+
+    if (randomMode) {
+      // オーナーも参加者なので、村番号の案内と一緒に自分の役職を返す
+      List<Message> messages = new ArrayList<Message>();
+      messages.add(new TextMessage(village.getVillageNum() + "村：人数を『" + number
+          + "人』に設定しました。\n皆さんに村番号を伝えてください。"));
+      messages.addAll(village.getRoleMessage(userId));
+      return messages;
     }
 
     String roleUrl = CommonModule.getIllustUrl(godMode ? "GOD" : "GM");
@@ -153,7 +188,9 @@ public final class VillageService {
    * @return 設定完了メッセージ。参加者のいない自分の村がない場合はnull
    */
   public static List<Message> setReverseVillage(String userId) {
-    Village village = VillageList.findLatestOwned(userId, target -> !target.hasMembers());
+    // ランダム村はGMとインサイダーを1人ずつ配るため、逆村へは切り替えない
+    Village village = VillageList.findLatestOwned(
+        userId, target -> !target.hasMembers() && !target.isRandomMode());
 
     if (village == null) {
       return null;
@@ -174,6 +211,8 @@ public final class VillageService {
   /**
    * 通常村へ参加する。オーナーの場合は配布状況を返す.
    *
+   * <p>ただしランダム村のオーナーは参加者でもあるため、配布状況ではなく役職を返す。
+   *
    * @param userId ユーザーID
    * @param villageNum 村番号
    * @return 役職メッセージまたは配布状況。村がない場合はnull
@@ -186,12 +225,18 @@ public final class VillageService {
     }
 
     if (userId.equals(village.getOwnerId())) {
-      // オーナーの場合
-      return village.getMessageOwner();
-    }
-
-    // 参加者の場合。既に参加済みならjoinは呼ばずに役職を再表示する
-    if (village.getMemberRole(userId) == null && village.join(userId) == null) {
+      // オーナーの場合。ただしランダム村のオーナーは参加者なので、
+      // お題を含む配布状況ではなく自分の役職を返す
+      if (!village.isRandomMode()) {
+        return village.getMessageOwner();
+      }
+      if (village.getMemberRole(userId) == null) {
+        // 人数未設定のため、まだ配役されていない
+        return Collections.singletonList(
+            new TextMessage(MessageConst.RANDOM_NUMSETMESSAGE));
+      }
+    } else if (village.getMemberRole(userId) == null && village.join(userId) == null) {
+      // 参加者の場合。既に参加済みならjoinは呼ばずに役職を再表示する
       return Collections.singletonList(new TextMessage("村がいっぱいです。"));
     }
 

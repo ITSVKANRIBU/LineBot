@@ -26,6 +26,8 @@ public class MessageConst {
       + "\n　例：「5」の場合は、「インサイダー１人、村4人」です。";
   public static final String GOD_NUMSETMESSAGE = "お題を配りたい人数を入力してください。"
       + "\n　例：「6」の場合は、「GM１人、インサイダー１人、村4人」です。";
+  public static final String RANDOM_NUMSETMESSAGE = "人数を設定してください。"
+      + "役職もお題もランダムに配ります。";
   public static final String ERR_NUMSETMESSAGE = "村の人数は2人以上に設定してください。\n"
       + "もう一度村の人数を設定してください。";
   public static final String ERR_UNIDENTIFIED_USER = "ユーザーを識別できないため操作できません。\n"

@@ -205,7 +205,7 @@ public class EchoApplication {
 
     List<Action> actionList = new ArrayList<Action>();
     actionList.add(new MessageAction("確定", odai));
-    actionList.add(new PostbackAction("初心者", String.valueOf(2)));
+    actionList.add(new PostbackAction("初心者", String.valueOf(WordGetter.BEGINNER_RANK)));
     actionList.add(new PostbackAction("上級者", String.valueOf(3)));
     actionList.add(new PostbackAction("変態", String.valueOf(4)));
 
@@ -243,6 +243,9 @@ public class EchoApplication {
       if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())
           || "神".equals(userMessage.trim())) {
         messages = VillageService.createVillage(userId, "神".equals(userMessage.trim()));
+
+      } else if ("ランダム".equals(userMessage.trim())) {
+        messages = VillageService.createRandomVillage(userId);
 
       } else if ("@配布".equals(userMessage.trim()) || "＠配布".equals(userMessage.trim())) {
         messages = new ArrayList<Message>();

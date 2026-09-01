@@ -36,7 +36,7 @@ public class MainController {
   /**
    * 村への参加・作成・設定をLINEメッセージ形式のJSONで返す.
    *
-   * @param message 村番号、または「お題」「題」「神」「人数」「お題文字列」
+   * @param message 村番号、または「お題」「題」「神」「ランダム」「人数」「お題文字列」
    * @param userId 呼び出し元が指定する参加者識別子
    * @return LINE Message APIのJSON配列。必須parameter不足はHTTP 400
    */
@@ -79,6 +79,10 @@ public class MainController {
 
     if ("お題".equals(command) || "題".equals(command) || "神".equals(command)) {
       return VillageService.createVillage(userId, "神".equals(command));
+    }
+
+    if ("ランダム".equals(command)) {
+      return VillageService.createRandomVillage(userId);
     }
 
     // お題設定の場合
