@@ -51,6 +51,7 @@ import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
+import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 
@@ -164,17 +165,14 @@ public class EchoApplication {
   }
 
   private void replyDefoltMessage(@NonNull String replyToken) {
-    List<Action> actionList = new ArrayList<Action>();
-    actionList.add(new MessageAction("GM", "お題"));
-    actionList.add(new MessageAction("神", "神"));
-    actionList.add(new MessageAction("ランダム", "ランダム"));
-
-    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL("村の作成をしますか？", actionList);
+    ConfirmTemplate confirmTemplate = new ConfirmTemplate("村の作成をしますか？",
+        new MessageAction("GM", "お題"),
+        new MessageAction("神", "神"));
 
     try {
       lineMessagingClient
           .replyMessage(new ReplyMessage(replyToken,
-              new TemplateMessage(MessageConst.DEFAILT_MESSAGE, buttons)))
+              new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)))
           .get();
     } catch (InterruptedException | ExecutionException e) {
       if (e instanceof InterruptedException) {

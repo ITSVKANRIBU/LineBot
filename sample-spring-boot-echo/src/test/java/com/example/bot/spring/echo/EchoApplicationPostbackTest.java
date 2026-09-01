@@ -36,10 +36,12 @@ import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
+import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.event.PostbackEvent;
 import com.linecorp.bot.model.event.postback.PostbackContent;
 import com.linecorp.bot.model.event.source.UserSource;
 import com.linecorp.bot.model.message.TemplateMessage;
+import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.model.response.BotApiResponse;
 
 /**
@@ -89,14 +91,28 @@ public class EchoApplicationPostbackTest {
     assertEquals(MessageConst.DEFAILT_MESSAGE, repliedAltText());
   }
 
+  @Test
+  public void defaultMessageShowsOnlyTheTwoStandardVillageCommands() {
+    application.handlePostbackEvent(postback("1234"));
+
+    ConfirmTemplate confirm = (ConfirmTemplate) repliedTemplate().getTemplate();
+    assertEquals(2, confirm.getActions().size());
+    assertEquals(new MessageAction("GM", "お題"), confirm.getActions().get(0));
+    assertEquals(new MessageAction("神", "神"), confirm.getActions().get(1));
+  }
+
   private PostbackEvent postback(String data) {
     return new PostbackEvent("reply-token", new UserSource("user"),
         new PostbackContent(data, null), Instant.now());
   }
 
   private String repliedAltText() {
+    return repliedTemplate().getAltText();
+  }
+
+  private TemplateMessage repliedTemplate() {
     ArgumentCaptor<ReplyMessage> captor = ArgumentCaptor.forClass(ReplyMessage.class);
     verify(lineMessagingClient).replyMessage(captor.capture());
-    return ((TemplateMessage) captor.getValue().getMessages().get(0)).getAltText();
+    return (TemplateMessage) captor.getValue().getMessages().get(0);
   }
 }
