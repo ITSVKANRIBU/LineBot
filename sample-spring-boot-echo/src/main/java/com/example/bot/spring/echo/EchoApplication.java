@@ -51,7 +51,6 @@ import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
-import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
 
@@ -165,14 +164,17 @@ public class EchoApplication {
   }
 
   private void replyDefoltMessage(@NonNull String replyToken) {
-    ConfirmTemplate confirmTemplate = new ConfirmTemplate("村の作成をしますか？",
-        new MessageAction("GM", "お題"),
-        new MessageAction("神", "神"));
+    List<Action> actionList = new ArrayList<Action>();
+    actionList.add(new MessageAction("GM", "お題"));
+    actionList.add(new MessageAction("神", "神"));
+    actionList.add(new MessageAction("ランダム", "ランダム"));
+
+    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL("村の作成をしますか？", actionList);
 
     try {
       lineMessagingClient
           .replyMessage(new ReplyMessage(replyToken,
-              new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)))
+              new TemplateMessage(MessageConst.DEFAILT_MESSAGE, buttons)))
           .get();
     } catch (InterruptedException | ExecutionException e) {
       if (e instanceof InterruptedException) {
@@ -205,7 +207,7 @@ public class EchoApplication {
 
     List<Action> actionList = new ArrayList<Action>();
     actionList.add(new MessageAction("確定", odai));
-    actionList.add(new PostbackAction("初心者", String.valueOf(2)));
+    actionList.add(new PostbackAction("初心者", String.valueOf(WordGetter.BEGINNER_RANK)));
     actionList.add(new PostbackAction("上級者", String.valueOf(3)));
     actionList.add(new PostbackAction("変態", String.valueOf(4)));
 
@@ -243,6 +245,9 @@ public class EchoApplication {
       if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())
           || "神".equals(userMessage.trim())) {
         messages = VillageService.createVillage(userId, "神".equals(userMessage.trim()));
+
+      } else if ("ランダム".equals(userMessage.trim())) {
+        messages = VillageService.createRandomVillage(userId);
 
       } else if ("@配布".equals(userMessage.trim()) || "＠配布".equals(userMessage.trim())) {
         messages = new ArrayList<Message>();

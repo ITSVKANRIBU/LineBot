@@ -58,6 +58,9 @@ public class Village {
   /** 逆村。お題を知らない村人が1人だけになる. */
   private boolean reverseVillage;
 
+  /** ランダム村。オーナーも参加者として配役される. */
+  private boolean randomMode;
+
   public Village() {
     roleList = new CopyOnWriteArrayList<InsiderRole>();
   }
@@ -111,6 +114,10 @@ public class Village {
    * <p>配役を先に決めてから{@code villageSize}を書くため、
    * 参加者が「人数は設定済みだが配役は未確定」の状態を観測することはない。
    *
+   * <p>ランダム村ではオーナーも参加者に含めるため、人数公開と同じモニタ上で
+   * オーナーを先頭に着席させる。別操作にすると、その間に{@link #join(String)}した
+   * 参加者にオーナーの席を奪われ、オーナーが配役を受け取れない。
+   *
    * @param size 参加人数
    * @param random 位置抽選に使う乱数
    * @return 設定できた場合true。既に人数設定済みの場合false
@@ -132,6 +139,10 @@ public class Village {
 
     // 配役確定後に人数を公開する
     villageSize = size;
+
+    if (randomMode) {
+      join(ownerId);
+    }
     return true;
   }
 
@@ -167,6 +178,14 @@ public class Village {
 
   public synchronized boolean isReverseVillage() {
     return reverseVillage;
+  }
+
+  public synchronized boolean isRandomMode() {
+    return randomMode;
+  }
+
+  public synchronized void setRandomMode(boolean randomMode) {
+    this.randomMode = randomMode;
   }
 
   /**

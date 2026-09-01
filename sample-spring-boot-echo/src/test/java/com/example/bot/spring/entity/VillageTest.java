@@ -100,6 +100,27 @@ public class VillageTest {
   }
 
   @Test
+  public void randomModeSeatsTheOwnerAsTheFirstParticipant() {
+    Village village = new Village();
+    village.setOwnerId("owner");
+    village.setGmNum(MessageConst.DEFAULT_GMNUM);
+    village.setRandomMode(true);
+    // インサイダーは1番目、GMは2番目
+    village.configure(3, new FixedRandom(0, 1));
+
+    // 人数確定と同時に着席するため、他の参加者に先頭を奪われない
+    assertEquals(1, village.getMemberCount());
+    assertEquals(MessageConst.INSIDER_ROLE, village.getMemberRole("owner"));
+
+    // joinAllはオーナーの分を数えないため、ここでは直接参加させる
+    assertNotNull(village.join("second"));
+    assertNotNull(village.join("third"));
+    assertEquals(3, village.getMemberCount());
+    assertEquals(MessageConst.GAMEMASTER_ROLE, village.getMemberRole("second"));
+    assertEquals(MessageConst.VILLAGE_ROLE, village.getMemberRole("third"));
+  }
+
+  @Test
   public void reverseVillageInvertsInsiderAndVillagers() {
     Village village = villageOf(3, insiderAt(2));
     // 逆村: お題を知らない村人が1人だけになる

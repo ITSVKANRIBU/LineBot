@@ -83,6 +83,27 @@ public class MainControllerTest {
   }
 
   @Test
+  public void randomVillageCanBeCreatedThroughTheApi() {
+    ResponseEntity<List<Message>> created = controller.index("ランダム", OWNER);
+
+    assertEquals(HttpStatus.OK, created.getStatusCode());
+    assertEquals(new TextMessage(villageNumberOf(OWNER) + "村 を新しく作成しました。"
+        + MessageConst.RANDOM_NUMSETMESSAGE), created.getBody().get(0));
+
+    // 人数設定だけで配布が終わり、オーナーも参加者として数えられる
+    ResponseEntity<List<Message>> sized = controller.index("2", OWNER);
+    assertEquals(HttpStatus.OK, sized.getStatusCode());
+    assertTrue(((TextMessage) sized.getBody().get(0)).getText()
+        .contains("人数を『2人』に設定しました。"));
+
+    String villageNum = String.valueOf(villageNumberOf(OWNER));
+    assertTrue(isRoleMessage(controller.index(villageNum, MEMBER).getBody()));
+
+    ResponseEntity<List<Message>> full = controller.index(villageNum, "third");
+    assertEquals(new TextMessage("村がいっぱいです。"), full.getBody().get(0));
+  }
+
+  @Test
   public void odaiAndSizeCanBeSetThroughTheApi() {
     controller.index("神", OWNER);
 
