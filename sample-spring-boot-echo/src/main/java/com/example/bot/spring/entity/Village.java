@@ -156,8 +156,12 @@ public class Village {
     if (roleList.size() >= villageSize) {
       return null;
     }
-    roleList.add(new InsiderRole(null, userId));
-    return setInsiderRole(userId);
+
+    InsiderRole seated = new InsiderRole(null, userId);
+    roleList.add(seated);
+    // 追加後のsizeが、この参加者の席番号（1始まり）になる
+    seated.setRole(roleFor(roleList.size()));
+    return seated;
   }
 
   public synchronized int getInsiderNum() {
@@ -212,43 +216,24 @@ public class Village {
         .getRole();
   }
 
-  // 役職の設定処理。joinからのみ呼ばれる
-  private InsiderRole setInsiderRole(String userId) {
-    InsiderRole returnRole = null;
-    if (reverseVillage) {
-      // 逆村設定
-      for (int i = 0; i < roleList.size(); i++) {
-        if (userId.equals(roleList.get(i).getUserId())) {
-          // 役職設定
-          if (i + 1 == insiderNum) {
-            roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
-          } else if (i + 1 == gmNum) {
-            roleList.get(i).setRole(MessageConst.GAMEMASTER_ROLE);
-          } else {
-            roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
-          }
-          returnRole = roleList.get(i);
-          break;
-        }
-      }
-    } else {
-      // 通常村設定
-      for (int i = 0; i < roleList.size(); i++) {
-        if (userId.equals(roleList.get(i).getUserId())) {
-          // 役職設定
-          if (i + 1 == insiderNum) {
-            roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
-          } else if (i + 1 == gmNum) {
-            roleList.get(i).setRole(MessageConst.GAMEMASTER_ROLE);
-          } else {
-            roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
-          }
-          returnRole = roleList.get(i);
-          break;
-        }
-      }
+  /**
+   * 席番号から役職を決める. joinからのみ呼ばれる.
+   *
+   * <p>逆村は通常村の配役のうち、インサイダーと村人を入れ替えたもの。
+   * 抽選されたインサイダーの席が村人になり、それ以外がインサイダーになる。
+   * GMの席は逆村でも変わらない。
+   *
+   * @param seat 参加順の席番号（1始まり）。{@code insiderNum}・{@code gmNum}と同じ体系
+   * @return 役職名
+   */
+  private String roleFor(int seat) {
+    if (seat == insiderNum) {
+      return reverseVillage ? MessageConst.VILLAGE_ROLE : MessageConst.INSIDER_ROLE;
     }
-    return returnRole;
+    if (seat == gmNum) {
+      return MessageConst.GAMEMASTER_ROLE;
+    }
+    return reverseVillage ? MessageConst.INSIDER_ROLE : MessageConst.VILLAGE_ROLE;
   }
 
   public synchronized List<Message> getMessageOwner() {
