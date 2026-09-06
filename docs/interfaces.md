@@ -45,7 +45,7 @@ LINE Messaging API からの webhook を受けます。`X-Line-Signature` ヘッ
 
 **制約**
 
-LINE プラットフォームは、webhook に対して 2 秒以内の応答を要求します。現在の実装は返信 API の応答を同期的に待つため、この制約に対するマージンは実測で確認する必要があります（[architecture.md](architecture.md) の「既知の制約」参照）。
+LINE プラットフォームは、webhook に対して 2 秒以内の応答を要求します。返信 API の呼び出しは送りっぱなしにし、完了を待たずに webhook へ応答します（[architecture.md](architecture.md) の「返信の完了を待たない」参照）。返信に失敗した場合、利用者には何も届かず、ログにだけ記録が残ります。
 
 ## 受信：村操作 API
 

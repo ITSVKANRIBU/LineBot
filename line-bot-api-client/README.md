@@ -27,7 +27,9 @@ client.replyMessage(new ReplyMessage(replyToken, new TextMessage("hello")))
 ```
 
 APIはすべて`CompletableFuture`を返す非同期形式です。同期的に結果が必要な場合は
-`get()`で待ち合わせます（Bot本体の`LineEventHandler#reply`もこの形です）。
+`get()`で待ち合わせます。ただしBot本体の`LineEventHandler#reply`は待ち合わせません。
+webhookの2秒制限に返信APIの所要時間を持ち込まないため、`whenComplete`で
+失敗をログに落とすだけにしています。
 
 ## 主なクラス
 

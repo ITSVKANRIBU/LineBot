@@ -18,7 +18,6 @@ package com.example.bot.spring.echo;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import com.example.bot.spring.game.TextCommandHandler;
 import com.example.bot.spring.game.VillageService;
@@ -168,17 +167,23 @@ public class LineEventHandler {
         new TemplateMessage(MessageConst.DEFAULT_MESSAGE, confirmTemplate)));
   }
 
-  /** 返信APIの唯一の送信口. 送信の失敗はログに残すだけで、呼び出し元へは伝えない. */
+  /**
+   * 返信APIの唯一の送信口.
+   *
+   * <p>送信の完了を待たない。LINEプラットフォームはwebhookに2秒以内の応答を求めるが、
+   * 返信APIの所要時間はこちらで制御できない。待つと、返信APIが遅れたぶんだけ
+   * webhookの応答も遅れ、2秒を超えるとプラットフォーム側から失敗として扱われる。
+   *
+   * <p>待たないため、送信の失敗を利用者へ伝える手段はない。呼び出し元にも伝えず、
+   * ログに残すだけにする。返信を落としても、利用者はもう一度送れば同じ応答を受け取れる。
+   */
   private void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
-    try {
-      lineMessagingClient
-          .replyMessage(new ReplyMessage(replyToken, messages))
-          .get();
-    } catch (InterruptedException | ExecutionException e) {
-      if (e instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
-      log.error("Failed to send a reply", e);
-    }
+    lineMessagingClient
+        .replyMessage(new ReplyMessage(replyToken, messages))
+        .whenComplete((response, error) -> {
+          if (error != null) {
+            log.error("Failed to send a reply", error);
+          }
+        });
   }
 }
