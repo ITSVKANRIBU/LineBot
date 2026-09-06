@@ -1,170 +1,52 @@
 # インサイダーゲーム Bot
 
-LINE Messaging APIを使って、インサイダーゲームとWerewordsを運営するBotです。Heroku上でSpring Bootアプリとして動作します。ゲーム状態はDBへ保存せず、プロセスのメモリだけで管理します。
+会話ゲーム「インサイダーゲーム」と「Werewords」で、**参加者それぞれに
+異なる秘密情報（役職とお題）を配る**ための LINE Bot です。
 
-## ゲーム仕様
+対面で遊ぶゲームのうち、機械が必要なのは配役の瞬間だけです。LINE の
+1 対 1 トークを配布経路にすることで、各参加者は自分の情報だけを、いつでも
+自分の端末で確認できます。ゲームの進行と勝敗判定は対象外です。
 
-### 通常村
+## 使い方（利用者向け）
 
-1. LINEで`お題`または`題`を送ると通常村を作成します。
-2. `神`を送ると、GM（ゲームマスター）を含む通常村を作成します。
-3. 村のオーナーが人数（2人以上）を送ると、参加人数を確定します。
-4. オーナーが自由文を送ると、その村のお題になります。
-5. 参加者が4桁の村番号を送ると、参加順に役職を受け取ります。
-6. オーナーが村番号を送ると、参加状況とお題を確認できます。
+Bot とのトークで `お題` と送ると 4 桁の村番号が返ります。お題と参加人数を
+設定し、参加者へ村番号を伝えてください。参加者がその番号を送ると、参加順に
+役職が配られます。
 
-通常村の役職は、村人・インサイダー・（神モード時のみ）GMです。役職の割り当て順は参加順と、村作成時に決まる番号で決定されます。
+詳細は [ゲームの外部仕様](docs/game-spec.md) を参照してください。
 
-### ランダム村
+## 動かす（開発者向け）
 
-1. LINEで`ランダム`を送るとランダム村を作成します。お題は「初心者」の難易度から自動で決まります。
-2. オーナーが人数（2人以上）を送ると、その場で配役が決まり、オーナー自身の役職が返ります。
-3. 参加者が4桁の村番号を送ると、参加順に役職を受け取ります。
-
-村を作成した人も参加者に含めて役職を配ります。役職はGM・インサイダー・村人で、GMとインサイダーはそれぞれ1人です。オーナーは1人目の参加者として着席するため、設定した人数から1人を引いた数だけ他の参加者が入室できます。オーナーも参加者であることから、村番号を送ってもお題を含む配布状況ではなく自分の役職を返します。逆村への切り替えは、インサイダーが1人でなくなるため対象外です。
-
-### 特殊操作
-
-| 入力 | 動作 |
-| --- | --- |
-| `@取得` / `＠取得` | お題候補を取得する |
-| `@配布` / `＠配布` | Bot配布用の案内を表示する |
-| `@特殊` / `＠特殊` | 特殊村作成フォームを表示する |
-| `@逆村` / `＠逆村` | 作成直後の自分の村を逆村にする |
-| `@わーわーず` / `＠わーわーず` | 条件を満たす通常村からWerewords村を作成する |
-
-`お題の自動取得`のボタンでは難易度別のお題候補を取得できます。お題データは`sample-spring-boot-echo/src/main/resources/word.csv`を使用し、classpath上のリソースとして起動時に読み込みます。
-
-### 特殊村
-
-特殊村は、外部フォームから次のJSONを`/specialvillage`へ送信して作成します。
-
-```json
-{"message":["役職メッセージ1","役職メッセージ2"]}
-```
-
-メッセージをランダムに並べ替え、5桁の村番号を返します。参加者が村番号を送ると、参加順に対応するメッセージを受け取ります。
-
-## HTTP API
-
-### LINE webhook
-
-- `POST /callback`
-- LINE Messaging APIの署名検証後、テキスト・ポストバック・スタンプイベントを処理します。
-
-### 村操作API
-
-```text
-GET /callapi?message=<メッセージ>&userId=<LINEユーザーID>
-```
-
-LINEへ送るのと同じ内容を`message`に渡し、応答をLINE Message API形式のJSON配列で返します。LINEの村番号判定が101以上であるのに対し、このAPIでは1000以上を村番号として扱います。
-
-| `message` | 動作 |
-| --- | --- |
-| 10000以上 | 特殊村へ参加する |
-| 1000〜9999 | 通常村へ参加する。オーナーの場合は配布状況を返す |
-| 0〜999 | 自分の村の参加人数を設定する |
-| `お題` / `題` / `神` | 通常村を作成する |
-| `ランダム` | ランダム村を作成する |
-| その他の文字列 | 自分の村のお題に設定する |
-
-- `message`または`userId`が空の場合: HTTP 400
-- 存在しない村番号、対象の村がない場合: `村が作成されていません`
-- 満員の場合: `村がいっぱいです。`
-- 人数が2未満の場合: `村の人数は2人以上に設定してください。`
-- 内部エラー: HTTP 500と`{"error":"内部エラーが発生しました。"}`
-- CORS: 有効
-
-`userId`はAPI呼び出し元から渡された値を、そのまま参加者識別に使用します。認証・レート制限はありません。
-
-### 特殊村作成API
-
-```text
-POST /specialvillage
-```
-
-リクエスト本文の`message`配列から特殊村を作成し、`{"data":"<村番号>"}`を返します。不正なJSONや必須データ不足の場合はHTTP 400です。
-
-## 状態管理と制限
-
-- DB、migration、保存済み履歴は使用しません。
-- 通常村は最大50件、特殊村は最大30件です。
-- 上限を超えた場合は古い村からFIFOで削除します。
-- Herokuの再起動・再デプロイで、作成中の村は失われます。
-- 同じユーザーが再参加した場合は、既存の役職・メッセージを再表示します。
-- 村番号は通常村が4桁、特殊村が5桁です。
-
-## 画像取得
-
-Bot起動後および5分間隔で、Google Apps Scriptから役職画像の一覧を取得します。取得に失敗した場合は、`MessageConst`に定義されたGitHub Rawの標準画像を使用します。
-
-## 運用
-
-必要環境はJava 8です。
+Java 8 が必要です。
 
 ```bash
 ./gradlew :sample-spring-boot-echo:bootRun
 ```
 
-Herokuでは`Procfile`に従い、次のjarを起動します。
+環境変数 `LINE_BOT_CHANNEL_TOKEN` と `LINE_BOT_CHANNEL_SECRET` を設定して
+ください。LINE Developers コンソールでは、Webhook URL を
+`https://<アプリのホスト>/callback` に設定します。
 
-```text
-sample-spring-boot-echo/build/libs/sample-spring-boot-echo-*.jar
-```
+## ドキュメント
 
-LINE Messaging APIのチャネル設定では、Webhook URLを`https://<アプリのホスト>/callback`に設定してください。Botのアクセストークン等の秘密情報は、ソースコードへ記録せずHerokuの環境変数で管理します。
+設計と仕様は [`docs/`](docs/README.md) にあります。
 
-### ログ
-
-webhook eventにはLINEユーザーIDとユーザーが入力したお題が含まれるため、event自体はログへ出力しません。記録するのはevent種別と処理結果までです。
-
-受信イベントの種別を追う必要がある場合は、次の環境変数でDEBUGへ引き上げます。個人情報そのものは引き上げても出力されません。
-
-```bash
-LOGGING_LEVEL_COM_EXAMPLE_BOT=DEBUG
-```
-
-CIはGitHub Actionsで、本番と同じJava 8で`./gradlew check`と`bootJar`を実行します（`.github/workflows/ci.yml`）。
-
-## モジュール構成
-
-このリポジトリはGradleのmulti-project buildで、Bot本体とLINE Messaging API SDKからなります。
-
-```text
-sample-spring-boot-echo（Bot本体。ゲームロジックと公開API）
-  └─ line-bot-spring-boot（webhookの受け口とauto-configuration）
-       ├─ line-bot-api-client（LINE APIのHTTPクライアント）
-       ├─ line-bot-servlet（webhookの署名検証とparse）
-       └─ line-bot-model（メッセージ・イベントのデータ型）
-
-line-bot-cli（運用ツール。Bot本体の動作には不要）
-```
-
-| モジュール | 説明 |
+| 文書 | 内容 |
 | --- | --- |
-| [sample-spring-boot-echo](sample-spring-boot-echo/README.md) | インサイダーゲームBot本体。LINEイベント処理、ゲーム状態、`/callapi`と`/specialvillage` |
-| [line-bot-spring-boot](line-bot-spring-boot/README.md) | `@LineMessageHandler` / `@EventMapping`によるイベント振り分けと、`line.bot.*`の設定 |
-| [line-bot-api-client](line-bot-api-client/README.md) | reply・push、プロフィール取得、リッチメニュー操作などのAPIクライアント |
-| line-bot-servlet | `LineBotCallbackRequestParser`。`X-Line-Signature`の検証とwebhook本文のparse |
-| line-bot-model | メッセージ・イベント・リッチメニュー・LIFFのデータ型 |
-| [line-bot-cli](line-bot-cli/README.md) | リッチメニューやLIFFアプリをコマンドラインから操作する運用ツール |
+| [overview.md](docs/overview.md) | システムの目的、スコープ、設計原則 |
+| [game-spec.md](docs/game-spec.md) | ゲームの外部仕様。村の種類、コマンド、役職決定規則 |
+| [interfaces.md](docs/interfaces.md) | webhook と公開 HTTP API の契約、外部依存 |
+| [architecture.md](docs/architecture.md) | コンポーネント境界、状態モデル、並行性、設計判断 |
+| [operations.md](docs/operations.md) | 実行環境、設定、デプロイ、ログ方針 |
+| [roadmap.md](docs/roadmap.md) | 今後の計画（検討中のもの） |
 
-`line-bot-*`はLINE公式SDK（line-bot-sdk-java）由来のモジュールです。
+## リポジトリの構成
 
-## 主なコード構成
+Gradle のマルチプロジェクトビルドです。`sample-spring-boot-echo` が Bot 本体、
+`line-bot-*` が LINE Messaging API SDK（line-bot-sdk-java 由来。同梱）、
+`line-bot-cli` はリッチメニューなどの運用ツールです。詳細は
+[architecture.md](docs/architecture.md) を参照してください。
 
-- `sample-spring-boot-echo/.../EchoApplication.java`: LINEイベント処理とコマンド判定
-- `sample-spring-boot-echo/.../spring/game/VillageService.java`: LINEと`/callapi`で共通のゲーム操作
-- `sample-spring-boot-echo/.../Village.java`: 通常村の状態・役職・メッセージ
-- `sample-spring-boot-echo/.../spring/game/`: 特殊村・Werewordsのゲームロジックとレジストリ
-- `sample-spring-boot-echo/.../MainController.java`: `/callapi`
-- `sample-spring-boot-echo/.../SpecialVillageController.java`: `/specialvillage`
-- `sample-spring-boot-echo/.../ApiExceptionHandler.java`: 公開APIの内部エラー応答
-- `sample-spring-boot-echo/.../VillageList.java`: 通常村一覧とFIFO管理
-- `sample-spring-boot-echo/src/main/resources/word.csv`: お題データ
-- `line-bot-*`: LINE Messaging API SDKとSpring Boot連携基盤
+## ライセンス
 
-## 注意
-
-このBotは現在、単一プロセス内のメモリ状態を前提にしています。複数インスタンスでの共有、ゲーム状態の永続化、認証・課金機能は実装していません。
+[LICENSE.txt](LICENSE.txt)（Apache License 2.0）
