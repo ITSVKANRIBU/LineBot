@@ -34,6 +34,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.bot.common.CommonModule.CatalogFile;
 import com.example.bot.common.CommonModule.WeightedUrl;
+import com.example.bot.testing.FixedRandom;
 import com.example.bot.staticdata.MessageConst;
 
 /**
@@ -194,22 +195,6 @@ public class CommonModuleTest {
     return file;
   }
 
-  /** 指定した値を順に返す{@link Random}. */
-  private static final class FixedRandom extends Random {
-    private static final long serialVersionUID = 1L;
-
-    private final int[] values;
-    private int index;
-
-    FixedRandom(int... values) {
-      this.values = values.clone();
-    }
-
-    @Override
-    public int nextInt(int bound) {
-      return values[index++];
-    }
-  }
 
   /** 渡された上限を記録する{@link Random}. */
   private static final class RecordingRandom extends Random {

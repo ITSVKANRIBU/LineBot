@@ -16,6 +16,7 @@
 
 package com.example.bot.spring.echo;
 
+import static com.example.bot.testing.Texts.repeat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -177,13 +178,5 @@ public class SpecialVillageControllerTest {
       body.append(i == 0 ? "" : ",").append('"').append(text).append(i).append('"');
     }
     return body.append("]}").toString();
-  }
-
-  private static String repeat(String unit, int times) {
-    StringBuilder builder = new StringBuilder(unit.length() * times);
-    for (int i = 0; i < times; i++) {
-      builder.append(unit);
-    }
-    return builder.toString();
   }
 }

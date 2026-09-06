@@ -111,6 +111,9 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 ./gradlew :sample-spring-boot-echo:test
 ```
 
+テストのヘルパ（乱数を固定する`FixedRandom`、長い文字列を作る`Texts.repeat`）は
+`src/test/java/com/example/bot/testing/`にまとめてあります。
+
 ゲーム状態は`VillageList` / `SpecialVillageList`のstaticレジストリで共有されるため、
 各テストは`@Before`の`clear()`に依存しています。`build.gradle`で`maxParallelForks = 1`を指定し、
 同一JVMでの逐次実行を前提にしています。並列化するにはレジストリをインスタンス化してDIする必要があります。

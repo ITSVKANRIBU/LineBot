@@ -16,6 +16,7 @@
 
 package com.example.bot.spring.game;
 
+import static com.example.bot.testing.Texts.repeat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -94,13 +95,5 @@ public class SpecialVillageTest {
     village.setVillageNum(12345);
     assertTrue(village.join("user"));
     return village;
-  }
-
-  private static String repeat(String unit, int times) {
-    StringBuilder builder = new StringBuilder(unit.length() * times);
-    for (int i = 0; i < times; i++) {
-      builder.append(unit);
-    }
-    return builder.toString();
   }
 }

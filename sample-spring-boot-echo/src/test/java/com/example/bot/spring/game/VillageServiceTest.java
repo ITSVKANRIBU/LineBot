@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.example.bot.staticdata.MessageConst;
 
+import com.example.bot.testing.FixedRandom;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
@@ -223,23 +224,6 @@ public class VillageServiceTest {
   private void joinAll(Village village, String... userIds) {
     for (String userId : userIds) {
       assertNotNull("参加できなかった: " + userId, village.join(userId));
-    }
-  }
-
-  /** 決められた順に値を返すRandom. */
-  private static final class FixedRandom extends Random {
-    private static final long serialVersionUID = 1L;
-
-    private final int[] values;
-    private int index;
-
-    FixedRandom(int... values) {
-      this.values = values.clone();
-    }
-
-    @Override
-    public int nextInt(int bound) {
-      return values[index++];
     }
   }
 }

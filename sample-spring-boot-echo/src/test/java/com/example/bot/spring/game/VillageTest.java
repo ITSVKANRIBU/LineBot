@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import com.example.bot.staticdata.MessageConst;
 
+import com.example.bot.testing.FixedRandom;
 import com.linecorp.bot.model.message.Message;
 
 public class VillageTest {
@@ -247,22 +248,5 @@ public class VillageTest {
       joined.add(userId);
     }
     assertEquals(joined.size(), village.getMemberCount());
-  }
-
-  /** 決められた順に値を返すRandom. */
-  private static final class FixedRandom extends Random {
-    private static final long serialVersionUID = 1L;
-
-    private final int[] values;
-    private int index;
-
-    FixedRandom(int... values) {
-      this.values = values.clone();
-    }
-
-    @Override
-    public int nextInt(int bound) {
-      return values[index++];
-    }
   }
 }
