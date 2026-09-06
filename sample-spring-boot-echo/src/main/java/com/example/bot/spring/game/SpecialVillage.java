@@ -39,14 +39,11 @@ public class SpecialVillage {
   private static final int BUTTONS_TEMPLATE_TEXT_MAX = 160;
 
   private int villageNum;
-  private String ownerId;
   private List<String> userList;
   private List<String> messageList;
 
   public int getVillageNum() { return villageNum; }
   public void setVillageNum(int villageNum) { this.villageNum = villageNum; }
-  public String getOwnerId() { return ownerId; }
-  public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
   public List<String> getUserList() { return userList; }
   public void setUserList(List<String> userList) { this.userList = userList; }
   public List<String> getMessageList() { return messageList; }

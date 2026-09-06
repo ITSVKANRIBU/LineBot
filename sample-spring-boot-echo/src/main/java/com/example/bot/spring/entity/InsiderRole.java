@@ -18,10 +18,8 @@ package com.example.bot.spring.entity;
 
 public class InsiderRole {
 
-  private int index;
   private String role;
   private String userId;
-  private boolean checkFlg;
 
   public InsiderRole() {
   }
@@ -29,14 +27,6 @@ public class InsiderRole {
   public InsiderRole(String role, String userId) {
     this.role = role;
     this.userId = userId;
-  }
-
-  public int getIndex() {
-    return index;
-  }
-
-  public void setIndex(int index) {
-    this.index = index;
   }
 
   public String getRole() {
@@ -53,14 +43,6 @@ public class InsiderRole {
 
   public void setUserId(String userId) {
     this.userId = userId;
-  }
-
-  public boolean isCheckFlg() {
-    return checkFlg;
-  }
-
-  public void setCheckFlg(boolean checkFlg) {
-    this.checkFlg = checkFlg;
   }
 
 }

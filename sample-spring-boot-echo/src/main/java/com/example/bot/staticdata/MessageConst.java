@@ -32,10 +32,6 @@ public class MessageConst {
       + "もう一度村の人数を設定してください。";
   public static final String ERR_UNIDENTIFIED_USER = "ユーザーを識別できないため操作できません。\n"
       + "botとの1対1のトークから操作してください。";
-  public static final String OWNER_CONFMESSAGE = "配布状況を確認したい場合は"
-      + "村番号を入力してください。";
-
-  public static final String WEREWORD_DEFOLT = "お題と人数を設定してください";
   public static final String WEREWORD_ERR = "お題と人数を設定してください";
 
   public static final String INSIDER_ROLE = "インサイダー";

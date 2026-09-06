@@ -219,8 +219,6 @@ public class Village {
       // 逆村設定
       for (int i = 0; i < roleList.size(); i++) {
         if (userId.equals(roleList.get(i).getUserId())) {
-          // 順番設定
-          roleList.get(i).setIndex(i);
           // 役職設定
           if (i + 1 == insiderNum) {
             roleList.get(i).setRole(MessageConst.VILLAGE_ROLE);
@@ -237,8 +235,6 @@ public class Village {
       // 通常村設定
       for (int i = 0; i < roleList.size(); i++) {
         if (userId.equals(roleList.get(i).getUserId())) {
-          // 順番設定
-          roleList.get(i).setIndex(i);
           // 役職設定
           if (i + 1 == insiderNum) {
             roleList.get(i).setRole(MessageConst.INSIDER_ROLE);
@@ -285,11 +281,6 @@ public class Village {
     List<Message> messages = null;
     String message = null;
     List<Action> actionList = new ArrayList<Action>();
-    String searchWord = null;
-    if (odai != null) {
-      searchWord = odai.trim().replace("\r", "").replace("\n", "");
-      searchWord = searchWord.replace(" ", "").replace("　", "").replace("\t", "");
-    }
     if (MessageConst.INSIDER_ROLE.equals(role.getRole())) {
       message = "あなたの役職は" + MessageConst.INSIDER_ROLE + "です。お題は『" + odai + "』です。";
       if (message.length() > 60) {
@@ -298,9 +289,6 @@ public class Village {
         messages.add(getStatusMessage(userId).get(0));
       } else {
         actionList.add(new PostbackAction("入室状況確認", String.valueOf(villageNum)));
-        /*        actionList.add(new URIActionNonAltUri("ググる",
-            "https://www.google.com/search?q=" + searchWord));
-        */
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
             CommonModule.getIllustUrl("INSIDER"),
             message, actionList);
@@ -321,9 +309,6 @@ public class Village {
 
       // ボタン設定
       actionList.add(new PostbackAction("入室状況確認", String.valueOf(villageNum)));
-      /*      actionList.add(new URIActionNonAltUri("ググる",
-          "https://www.google.com/search?q=" + searchWord));
-      */
       if (message.length() <= 60) {
         ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
             CommonModule.getIllustUrl("GM"),

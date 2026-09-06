@@ -28,8 +28,6 @@ import com.example.bot.spring.game.CreatWereWordsLogic;
 
 public class WereWordEvent {
 
-  static final String DEFOLT_MESSAGE = "";
-
   public List<Message> branch(Village village) {
 
     String odai = village.getOdai();

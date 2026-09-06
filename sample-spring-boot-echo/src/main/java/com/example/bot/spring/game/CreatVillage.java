@@ -31,7 +31,6 @@ public class CreatVillage {
    */
   public int createNewVillage(List<String> messageList) {
     SpecialVillage village = new SpecialVillage();
-    village.setOwnerId("DEFOLT");
 
     // メッセージをランダムに並び替え
     Collections.shuffle(messageList);
