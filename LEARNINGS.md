@@ -10,6 +10,8 @@
 
 ## Patterns That Work
 （効いたやり方・型）
+- 2026-09-07: Spring Bootの起動クラスをルートパッケージへ置くと `scanBasePackages` の指定が要らなくなる。パッケージ構成を層に合わせて切り直すときに、この指定ごと消せる。
+- 2026-09-07: パッケージ名を変えるときは、名前が**文字列として**埋まっている場所を洗う。Spring Bootのログレベル環境変数 `LOGGING_LEVEL_<パッケージ>` がそれで、`docs/operations.md` と README の運用手順に出ている。コンパイルが通っても運用手順だけ古くなる。
 - 2026-09-07: Gradleのモジュール名を変えるときは、ディレクトリと `settings.gradle` だけでなく成果物名の消費者を必ず洗う。このリポジトリでは `Procfile` のjarワイルドカードと `.github/workflows/ci.yml` のタスク名が該当し、どちらもビルドは通るのに本番だけ壊れる種類の参照だった。
 - 2026-09-07: 「待たないこと」をテストで固定するには、完了させない `CompletableFuture` を返すmockと `@Test(timeout = ...)` を組み合わせる。待つ実装に戻すとハングではなくタイムアウト失敗になるため、CIでも回収できる。
 - 2026-09-07: 非同期化を実機で確かめるには、応答しないTCPリスナーを立てて外部APIのエンドポイントをそこへ向ける。外部へ一切出さずに「相手が固まっている」状況を作れる。LINE SDKは `line.bot.api-end-point` で差し替えられる。
@@ -32,14 +34,15 @@
 
 ## Domain Knowledge
 （業務・仕様に関する事実）
+- 2026-09-07: ログレベルの環境変数は `LOGGING_LEVEL_INSIDERGAME`（旧 `LOGGING_LEVEL_COM_EXAMPLE_BOT`）。Herokuに旧名が残っていると引き上げが効かない。
 - 2026-09-07: Bot本体のモジュールは `insider-game-bot`（旧 `sample-spring-boot-echo`）。起動クラスは `InsiderGameBotApplication`、jarは `insider-game-bot-2.7.0-SNAPSHOT.jar`。2026-09-07時点のベースラインは `check` が4モジュール計259テスト、`:insider-game-bot:test` が136テスト。
-- 2026-09-07: パッケージは `com.example.bot.spring.echo` のまま残っている。モジュールとクラスからEcho由来の名前は消したが、`com.example` と `echo` というパッケージ名はオーナーが今回の範囲外と判断した。
+- 2026-09-07: パッケージは `insidergame` をルートに、docs/architecture.md の層と対応させている。`adapter`（入力アダプタ）/ `game`（ゲーム操作と状態）/ `common`・`message`（補助データ）/ `testing`（テスト専用）。起動クラス `InsiderGameBotApplication` はルート直下。
 - 2026-09-07: `LineEventHandler.reply` は返信APIの完了を待たない。送信失敗はログにだけ残り、利用者からは「Botが黙った」ように見える。復帰手段は同じ入力を送り直すこと。この判断は `docs/architecture.md`「返信の完了を待たない」に記載。
 - 2026-09-07: `word.csv` の2列目から難易度境界を導出すると、途中で読み込みが途切れた辞書の境界が不整合になり `Random.nextInt` が負の上限で例外になる。読み込み後に全難易度の境界が揃っているか検証し、揃わなければ辞書を捨てる必要がある。これは `docs/interfaces.md` の「読み込みに失敗した場合、お題の自動取得は何も返しません」と一致する。
 - 2026-09-07: `@LineMessageHandler` は `@Component` のメタannotationを持つため、受け口クラスをコンポーネントスキャン範囲に置くだけでBean登録される。`@Bean` メソッドは不要。
 - 2026-09-07: `LineMessageHandlerSupport.eventConsumerList` はpackage-privateだが `ReflectionTestUtils.getField` で覗ける。`@SpringBootTest` でハンドラ登録数と、各イベントに選ばれるハンドラの所有Beanを検証できる。
 - 2026-09-07: オーナー確認済み: LINE と `/callapi` の処理は LINE を正として共通化する（数値境界 100、`@` コマンドの解釈を API にも適用）。経路差として残すのは「対象の村がないときの応答」だけで、API は `村が作成されていません` テキストを維持する。
-- 2026-09-07: `EchoApplication` の `@SpringBootApplication` は `com.example.bot.spring.echo` 配下しかスキャンしない。`common`/`spring.game`/`staticdata` に Bean を置くなら `scanBasePackages = "com.example.bot"` が必要。
+- 2026-09-07: `@SpringBootApplication` は起動クラスのパッケージ配下しかスキャンしない。起動クラスをルートへ置いた現在は `scanBasePackages` の指定なしで全Beanが見つかるが、起動クラスをサブパッケージへ動かすと無言でBeanが検出されなくなる。
 - 2026-09-07: `SpecialVillageController` は村作成を含む全体を `catch (Exception)` で 400 に丸めるため、`docs/interfaces.md` の「内部エラー 500」は `/callapi` にしか当たらない。`CreatVillage` は登録時に全メッセージをシャッフルするので、`getMessages` の先頭役職は配布順を意味しない。
 - 2026-09-06: `word.csv` の 2 列目（難易度 1〜5）の切り替わり行は `WordGetter` の行番号定数（954/5084/7646/8436）と完全に一致する。難易度境界は 2 列目から導出できる。
 - 2026-09-06: `docs/` は外部仕様の一次資料で、既存テストは応答文を完全一致で検証している。応答文字列・数値境界・`Random` の呼び出し順は契約として扱う。
