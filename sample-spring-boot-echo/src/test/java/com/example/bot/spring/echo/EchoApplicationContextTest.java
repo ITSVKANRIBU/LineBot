@@ -39,7 +39,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.staticdata.VillageList;
+import com.example.bot.spring.game.VillageList;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;

@@ -29,10 +29,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.example.bot.spring.entity.Village;
 import com.example.bot.spring.game.SpecialVillageList;
+import com.example.bot.spring.game.Village;
+import com.example.bot.spring.game.VillageList;
 import com.example.bot.staticdata.MessageConst;
-import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;

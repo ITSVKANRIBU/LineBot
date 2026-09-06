@@ -84,10 +84,13 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 
 ### 状態
 
-- `spring/entity/Village.java` — 通常村の状態、役職の割り当て、メッセージ生成。
-- `spring/entity/InsiderRole.java` — 役職の定義。
-- `staticdata/VillageList.java` — 通常村のstaticレジストリ。上限50件、超過分はFIFOで削除。
+- `spring/game/Village.java` — 通常村の状態、役職の割り当て、メッセージ生成。
+- `spring/game/InsiderRole.java` — 役職の定義。
+- `spring/game/VillageList.java` — 通常村のstaticレジストリ。上限50件、超過分はFIFOで削除。
 - `spring/game/SpecialVillageList.java` — 特殊村のstaticレジストリ。上限30件。
+
+状態とレジストリは`spring/game`にまとめてあります。通常村と特殊村で
+置き場所が分かれていると、対になる不変条件を追うのに2箇所を見る必要があるためです。
 
 ゲーム状態はDBに保存せず、プロセスのメモリだけで管理します。
 再起動・再デプロイで作成中の村は失われ、複数インスタンスでの共有もできません。

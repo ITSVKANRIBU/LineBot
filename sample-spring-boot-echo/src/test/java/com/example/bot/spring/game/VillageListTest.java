@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package com.example.bot.staticdata;
+package com.example.bot.spring.game;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -28,7 +28,6 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.example.bot.spring.entity.Village;
 
 /** 通常村レジストリの採番・FIFO eviction・検索を固定する. */
 public class VillageListTest {

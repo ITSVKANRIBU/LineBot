@@ -28,9 +28,7 @@ import java.util.Random;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
-import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;

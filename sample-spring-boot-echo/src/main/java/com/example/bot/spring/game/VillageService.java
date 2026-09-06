@@ -23,9 +23,7 @@ import java.util.Random;
 
 import com.example.bot.common.CommonModule;
 import com.example.bot.common.WordGetter;
-import com.example.bot.spring.entity.Village;
 import com.example.bot.staticdata.MessageConst;
-import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.model.action.MessageAction;
 import com.linecorp.bot.model.action.PostbackAction;

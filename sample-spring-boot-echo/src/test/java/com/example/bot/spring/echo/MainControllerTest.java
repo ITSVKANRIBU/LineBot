@@ -27,8 +27,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.example.bot.spring.game.SpecialVillageList;
+import com.example.bot.spring.game.VillageList;
 import com.example.bot.staticdata.MessageConst;
-import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.message.Message;

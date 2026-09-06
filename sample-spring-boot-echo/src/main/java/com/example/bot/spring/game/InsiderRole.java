@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package com.example.bot.spring.entity;
+package com.example.bot.spring.game;
 
 public class InsiderRole {
 

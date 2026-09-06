@@ -14,13 +14,11 @@
  * under the License.
  */
 
-package com.example.bot.staticdata;
+package com.example.bot.spring.game;
 
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.function.Predicate;
-
-import com.example.bot.spring.entity.Village;
 
 /**
  * 通常村のプロセス内レジストリ.
