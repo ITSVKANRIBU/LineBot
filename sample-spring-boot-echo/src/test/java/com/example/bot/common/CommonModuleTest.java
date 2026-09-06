@@ -23,17 +23,21 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.junit.Test;
 
+import com.example.bot.common.CommonModule.CatalogFile;
+import com.example.bot.common.CommonModule.WeightedUrl;
 import com.example.bot.staticdata.MessageConst;
 
 /**
- * イラストカタログの取得先と、取得できない場合の挙動を固定する.
+ * イラストカタログの取得先、抽選の分布、取得できない場合の挙動を固定する.
  *
  * <p>ネットワークへは出ない。実際の取得は{@code @Scheduled}から行われる。
+ * 解析と抽選はstaticなカタログから切り離してあるため、他のテストへ影響しない。
  */
 public class CommonModuleTest {
 
@@ -70,26 +74,104 @@ public class CommonModuleTest {
    */
   @Test
   public void catalogEntriesWithoutAThreePartNameAreIgnored() {
-    Map<String, ArrayList<Integer>> ratioMap = new HashMap<String, ArrayList<Integer>>();
-    Map<String, ArrayList<String>> urlMap = new HashMap<String, ArrayList<String>>();
-
-    CommonModule.parseCatalog(Arrays.asList(
+    Map<String, List<WeightedUrl>> parsed = CommonModule.parseCatalog(Arrays.asList(
         catalogEntry("INSIDER_2_a.png", "https://example.com/insider.png"),
         catalogEntry("VILLAGERS.png", "https://example.com/no-weight.png"),
-        catalogEntry("GM_1_b_c.png", "https://example.com/too-many-parts.png")),
-        ratioMap, urlMap);
+        catalogEntry("GM_1_b_c.png", "https://example.com/too-many-parts.png")));
 
-    assertEquals(Collections.singleton("INSIDER"), ratioMap.keySet());
-    // 重み2は抽選枠を2つ持つ
-    assertEquals(Arrays.asList(0, 0), ratioMap.get("INSIDER"));
-    assertEquals(Collections.singletonList("https://example.com/insider.png"),
-        urlMap.get("INSIDER"));
+    assertEquals(Collections.singleton("INSIDER"), parsed.keySet());
+    assertEquals("https://example.com/insider.png",
+        CommonModule.getIllustUrl("INSIDER", parsed, new FixedRandom(0, 1)));
+    // 取り込まれなかった役職は既定画像へ落ちる
+    assertEquals(MessageConst.VILLAGERS_URL,
+        CommonModule.getIllustUrl("VILLAGERS", parsed, new FixedRandom(0)));
   }
 
-  private static Map<String, String> catalogEntry(String name, String url) {
-    Map<String, String> element = new HashMap<String, String>();
-    element.put("name", name);
-    element.put("url", url);
-    return element;
+  /** 重み1と3のとき、抽選枠は1:3に分かれる. */
+  @Test
+  public void weightsDecideHowManyDrawSlotsAFileGets() {
+    Map<String, List<WeightedUrl>> parsed = CommonModule.parseCatalog(Arrays.asList(
+        catalogEntry("INSIDER_1_rare.png", "https://example.com/rare.png"),
+        catalogEntry("INSIDER_3_common.png", "https://example.com/common.png")));
+
+    // 総重み4のうち、0番目の枠だけがrare、1〜3番目がcommon
+    assertEquals("https://example.com/rare.png", drawn(parsed, 0));
+    assertEquals("https://example.com/common.png", drawn(parsed, 1));
+    assertEquals("https://example.com/common.png", drawn(parsed, 3));
+
+    assertEquals("抽選の範囲は総重み", 4, boundPassedToRandom(parsed));
+  }
+
+  /** 重みが0や負数のファイルは抽選枠を持たないため選ばれない. */
+  @Test
+  public void filesWithoutAPositiveWeightAreNeverDrawn() {
+    Map<String, List<WeightedUrl>> parsed = CommonModule.parseCatalog(Arrays.asList(
+        catalogEntry("INSIDER_0_zero.png", "https://example.com/zero.png"),
+        catalogEntry("INSIDER_-2_negative.png", "https://example.com/negative.png"),
+        catalogEntry("INSIDER_1_only.png", "https://example.com/only.png")));
+
+    assertEquals(1, boundPassedToRandom(parsed));
+    assertEquals("https://example.com/only.png", drawn(parsed, 0));
+  }
+
+  /** 総重みが0の役職と、空のカタログは既定画像へ落とす. */
+  @Test
+  public void aRoleWithoutAnyPositiveWeightFallsBackToTheFixedIllustration() {
+    Map<String, List<WeightedUrl>> allZero = CommonModule.parseCatalog(Arrays.asList(
+        catalogEntry("INSIDER_0_a.png", "https://example.com/a.png"),
+        catalogEntry("INSIDER_0_b.png", "https://example.com/b.png")));
+
+    assertEquals(MessageConst.INSIDER_URL,
+        CommonModule.getIllustUrl("INSIDER", allZero, new FixedRandom(0)));
+    assertEquals(MessageConst.INSIDER_URL, CommonModule.getIllustUrl(
+        "INSIDER", CommonModule.parseCatalog(new ArrayList<CatalogFile>()), new FixedRandom(0)));
+  }
+
+  private String drawn(Map<String, List<WeightedUrl>> parsed, int value) {
+    return CommonModule.getIllustUrl("INSIDER", parsed, new FixedRandom(value));
+  }
+
+  /** 抽選に渡された上限（＝その役職の総重み）を覗く. */
+  private int boundPassedToRandom(Map<String, List<WeightedUrl>> parsed) {
+    RecordingRandom random = new RecordingRandom();
+    CommonModule.getIllustUrl("INSIDER", parsed, random);
+    return random.bound;
+  }
+
+  private static CatalogFile catalogEntry(String name, String url) {
+    CatalogFile file = new CatalogFile();
+    file.setName(name);
+    file.setUrl(url);
+    return file;
+  }
+
+  /** 指定した値を順に返す{@link Random}. */
+  private static final class FixedRandom extends Random {
+    private static final long serialVersionUID = 1L;
+
+    private final int[] values;
+    private int index;
+
+    FixedRandom(int... values) {
+      this.values = values.clone();
+    }
+
+    @Override
+    public int nextInt(int bound) {
+      return values[index++];
+    }
+  }
+
+  /** 渡された上限を記録する{@link Random}. */
+  private static final class RecordingRandom extends Random {
+    private static final long serialVersionUID = 1L;
+
+    private int bound;
+
+    @Override
+    public int nextInt(int bound) {
+      this.bound = bound;
+      return 0;
+    }
   }
 }

@@ -17,18 +17,27 @@
 package com.example.bot.common;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.bot.staticdata.MessageConst;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 役職に添えるイラストのカタログを外部から取得し、重み付きで抽選する.
+ *
+ * <p>画像はBotのリリースと無関係に差し替えられるため、一覧を外部化している。
+ * カタログは取得のたびに不変mapへ差し替える。取得に失敗した場合は前回の
+ * カタログをそのまま使い、対象の役職が無ければ{@link MessageConst}の既定画像へ落とす。
+ */
 @Slf4j
 public class CommonModule {
 
@@ -46,30 +55,49 @@ public class CommonModule {
   static final String URL =
       "https://script.google.com/macros/s/"
       + "AKfycbyy5RZiz_11ylnVV4NB4kToZv6Qv9ecXkxRgnWo9yvE_AxNLvM/exec";
-  /** 役職名 → URLリストの添字を重みぶん並べたリスト。カタログ取得のたびに差し替える. */
-  private static Map<String, ArrayList<Integer>> illustrationRtioMap =
-      new HashMap<String, ArrayList<Integer>>();
-  /** 役職名 → URLリスト。{@link #illustrationRtioMap}と同時に差し替える. */
-  private static Map<String, ArrayList<String>> illustrationUrlMap =
-      new HashMap<String, ArrayList<String>>();
 
+  /** ファイル名の構成。{@code <役職名>_<重み>_<任意の文字列>}の3部. */
+  private static final int FILE_NAME_PART_COUNT = 3;
+
+  /**
+   * 役職名 → 重み付きURL.
+   *
+   * <p>読み手はスケジューラと複数のwebhookスレッド。更新は常に丸ごとの差し替えで、
+   * 参照は不変mapのため、参照の可視性だけをvolatileで保証すればよい。
+   */
+  private static volatile Map<String, List<WeightedUrl>> catalog = Collections.emptyMap();
+
+  /**
+   * 役職に添えるイラストのURLを1つ返す.
+   *
+   * @param roleName {@code INSIDER} / {@code VILLAGERS} / {@code GM} / {@code GOD}
+   * @return イラストのURL。カタログに候補がなければ既定画像
+   */
   public static String getIllustUrl(String roleName) {
+    return getIllustUrl(roleName, catalog, new Random());
+  }
 
-    String returnPath = null;
-    try {
-      if (illustrationRtioMap.containsKey(roleName)) {
-        ArrayList<Integer> nameList = illustrationRtioMap.get(roleName);
-        Random random = new Random();
-        int num = random.nextInt(nameList.size());
-        returnPath = illustrationUrlMap.get(roleName).get(nameList.get(num));
-      } else {
-        return defoltIllustUrl(roleName);
-      }
-    } catch (Exception e) {
-      // 総重みが0の役職ではnextInt(0)が例外になる。既定画像へ落とす
+  /** 乱数とカタログを差し替えられる{@link #getIllustUrl(String)}。テスト用のseam. */
+  static String getIllustUrl(String roleName,
+      Map<String, List<WeightedUrl>> from, Random random) {
+    List<WeightedUrl> candidates = from.get(roleName);
+    if (candidates == null || candidates.isEmpty()) {
       return defoltIllustUrl(roleName);
     }
-    return returnPath;
+
+    int totalWeight = candidates.get(candidates.size() - 1).cumulativeWeight;
+    if (totalWeight <= 0) {
+      // 重みが正のファイルが1つもない役職。抽選できないので既定画像へ落とす
+      return defoltIllustUrl(roleName);
+    }
+
+    int draw = random.nextInt(totalWeight);
+    for (WeightedUrl candidate : candidates) {
+      if (draw < candidate.cumulativeWeight) {
+        return candidate.url;
+      }
+    }
+    return defoltIllustUrl(roleName);
   }
 
   private static String defoltIllustUrl(String roleName) {
@@ -90,84 +118,118 @@ public class CommonModule {
     return null;
   }
 
-  @SuppressWarnings("rawtypes")
+  /** カタログを取り直して差し替える。失敗した場合は前回のカタログを使い続ける. */
   public static void createMap() {
-
     try {
-      ResponseEntity<Map> responseEntity = restTemplate.getForEntity(URL, Map.class);
+      CatalogResponse body = restTemplate.getForEntity(URL, CatalogResponse.class).getBody();
 
-      Map res = responseEntity.getBody();
-
-      if (res == null) {
+      if (body == null || body.getFiles() == null) {
+        log.warn("The illustration catalog response has no files");
         return;
       }
 
-      List dataList = (List) res.get("files");
-      Map<String, ArrayList<Integer>> tmpdataMap = new HashMap<String, ArrayList<Integer>>();
-      Map<String, ArrayList<String>> tmpUrlMap = new HashMap<String, ArrayList<String>>();
-
-      parseCatalog(dataList, tmpdataMap, tmpUrlMap);
-
-      illustrationRtioMap = tmpdataMap;
-      illustrationUrlMap = tmpUrlMap;
+      catalog = parseCatalog(body.getFiles());
 
     } catch (Exception e) {
-      // 取得できなければMessageConstの標準画像へfallbackする
+      // 取得できなければ前回のカタログ、無ければMessageConstの標準画像へfallbackする
       log.warn("Failed to refresh the illustration catalog", e);
     }
-
   }
 
   /**
-   * カタログ応答の{@code files}要素を、役職ごとの重みリストとURLリストへ展開する.
+   * カタログ応答の{@code files}を、役職ごとの重み付きURL一覧へ展開する.
    *
    * <p>HTTPから切り離してあるため、解析だけを単体テストできる。
-   * 呼び出し元が渡すmapへ書き込むだけで、staticなカタログには触れない。
+   * 重みは抽選枠の数を表し、その役職の総重みに対する比率で選ばれる。
+   * 重みが0以下のファイルは枠を持たないため選ばれない。
    *
-   * @param dataList {@code files}配列。各要素は{@code name}と{@code url}を持つmap
-   * @param ratioMap 役職名 → URLリストの添字を重みぶん並べたリスト
-   * @param urlMap 役職名 → URLリスト
+   * @param files カタログの要素
+   * @return 役職名 → 重み付きURLの不変map
    */
-  @SuppressWarnings("rawtypes")
-  static void parseCatalog(List dataList,
-      Map<String, ArrayList<Integer>> ratioMap, Map<String, ArrayList<String>> urlMap) {
-    for (Object object : dataList) {
-      @SuppressWarnings("unchecked")
-      Map<String, String> map = (Map<String, String>) object;
+  static Map<String, List<WeightedUrl>> parseCatalog(List<CatalogFile> files) {
+    Map<String, List<WeightedUrl>> parsed = new HashMap<String, List<WeightedUrl>>();
 
-      String name = map.get("name");
-      String[] fileNameArray = name.split("_");
+    for (CatalogFile file : files) {
+      String[] fileNameArray = file.getName().split("_");
 
-      // エラーチェック
-      if (fileNameArray.length != 3) {
+      // 規約外のファイル名は取り込まない
+      if (fileNameArray.length != FILE_NAME_PART_COUNT) {
         continue;
       }
 
-      // ある場合
-      if (ratioMap.containsKey(fileNameArray[0])) {
+      String roleName = fileNameArray[0];
+      int weight = Integer.parseInt(fileNameArray[1]);
 
-        //urlListに追加
-        int urlListindex = urlMap.get(fileNameArray[0]).size();
-        urlMap.get(fileNameArray[0]).add(map.get("url"));
-
-        for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
-          ratioMap.get(fileNameArray[0]).add(urlListindex);
-        }
-      } else {
-
-        ArrayList<Integer> newIntList = new ArrayList<Integer>();
-
-        for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
-          newIntList.add(0);
-        }
-        // 追加
-        ratioMap.put(fileNameArray[0], newIntList);
-
-        ArrayList<String> newStrList = new ArrayList<String>();
-        newStrList.add(map.get("url"));
-        urlMap.put(fileNameArray[0], newStrList);
-
+      List<WeightedUrl> candidates = parsed.get(roleName);
+      if (candidates == null) {
+        candidates = new ArrayList<WeightedUrl>();
+        parsed.put(roleName, candidates);
       }
+      // 重みが0以下のファイルは枠を持たない。累積は直前の要素から引き継ぐ
+      candidates.add(new WeightedUrl(
+          file.getUrl(), totalWeightOf(candidates) + Math.max(weight, 0)));
+    }
+
+    for (Map.Entry<String, List<WeightedUrl>> entry : parsed.entrySet()) {
+      entry.setValue(Collections.unmodifiableList(entry.getValue()));
+    }
+    return Collections.unmodifiableMap(parsed);
+  }
+
+  private static int totalWeightOf(List<WeightedUrl> candidates) {
+    return candidates.isEmpty() ? 0 : candidates.get(candidates.size() - 1).cumulativeWeight;
+  }
+
+  /** 抽選枠を累積で持つイラストURL. */
+  static final class WeightedUrl {
+    private final String url;
+    /** この要素までの重みの合計。抽選値がこの値未満ならこのURLが選ばれる. */
+    private final int cumulativeWeight;
+
+    WeightedUrl(String url, int cumulativeWeight) {
+      this.url = url;
+      this.cumulativeWeight = cumulativeWeight;
+    }
+
+    String getUrl() {
+      return url;
+    }
+  }
+
+  /** カタログ応答の本体. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  static final class CatalogResponse {
+    private List<CatalogFile> files;
+
+    public List<CatalogFile> getFiles() {
+      return files;
+    }
+
+    public void setFiles(List<CatalogFile> files) {
+      this.files = files;
+    }
+  }
+
+  /** カタログの1要素. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  static final class CatalogFile {
+    private String name;
+    private String url;
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public String getUrl() {
+      return url;
+    }
+
+    public void setUrl(String url) {
+      this.url = url;
     }
   }
 }
