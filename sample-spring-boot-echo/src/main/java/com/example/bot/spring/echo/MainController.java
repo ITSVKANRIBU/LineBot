@@ -33,6 +33,12 @@ import com.linecorp.bot.model.message.TextMessage;
 @RestController
 public class MainController {
 
+  /** これを超える数値は特殊村の番号として扱う. */
+  private static final int MAX_VILLAGE_NUMBER = 9999;
+
+  /** このAPIから設定できる参加人数の上限。これを超える数値は通常村の番号として扱う. */
+  private static final int MAX_SIZE_INPUT = 999;
+
   /**
    * 村への参加・作成・設定をLINEメッセージ形式のJSONで返す.
    *
@@ -65,9 +71,9 @@ public class MainController {
       return nonNumberMessage(message, userId);
     }
 
-    if (number > 9999) {
+    if (number > MAX_VILLAGE_NUMBER) {
       return VillageService.joinSpecialVillage(userId, number);
-    } else if (number > 999) {
+    } else if (number > MAX_SIZE_INPUT) {
       return VillageService.joinVillage(userId, number);
     } else {
       return VillageService.setVillageSize(userId, number);

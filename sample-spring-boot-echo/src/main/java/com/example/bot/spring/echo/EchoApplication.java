@@ -69,6 +69,19 @@ import lombok.extern.slf4j.Slf4j;
 @EnableScheduling
 @LineMessageHandler
 public class EchoApplication {
+
+  /** これを超える数値は特殊村の番号として扱う. */
+  private static final int MAX_VILLAGE_NUMBER = 9999;
+
+  /** LINEから設定できる参加人数の上限。これを超える数値は通常村の番号として扱う. */
+  private static final int MAX_SIZE_INPUT = 100;
+
+  /** ポストバックdataがこの値未満なら、村番号ではなくお題候補の難易度. */
+  private static final int ODAI_RANK_DATA_LIMIT = 10;
+
+  /** ポストバックdataがこの値以上なら特殊村の番号. */
+  private static final int MIN_SPECIAL_VILLAGE_NUMBER = 10000;
+
   @Autowired
   private LineMessagingClient lineMessagingClient;
 
@@ -106,14 +119,14 @@ public class EchoApplication {
 
     try {
       int dataInt = Integer.parseInt(data);
-      if (dataInt >= 0 && dataInt < 10) {
+      if (dataInt >= 0 && dataInt < ODAI_RANK_DATA_LIMIT) {
         // お題詳細取得。userIdを使わないため識別できなくても応答する
         getOdaiDetail(event.getReplyToken(), dataInt);
 
       } else if (userId == null) {
         replyUnidentifiedUser(event.getReplyToken());
 
-      } else if (dataInt < 10000) {
+      } else if (dataInt < MIN_SPECIAL_VILLAGE_NUMBER) {
         // 村番号の場合
         Village village = VillageList.getVillage(dataInt);
         if (village == null) {
@@ -224,12 +237,12 @@ public class EchoApplication {
       int number = Integer.parseInt(userMessage.trim());
 
       // 特殊村の場合
-      if (number > 9999) {
+      if (number > MAX_VILLAGE_NUMBER) {
         replyMessageSpecialVillage(replyToken, userId, number);
         return;
       }
 
-      if (number > 100) {
+      if (number > MAX_SIZE_INPUT) {
         // 村番号の場合
         replyMessageVillageNum(replyToken, userId, number);
         return;

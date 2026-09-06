@@ -25,13 +25,20 @@ import com.example.bot.spring.entity.Village;
 /**
  * 通常村のプロセス内レジストリ.
  *
- * <p>状態はプロセスメモリだけで保持し、{@link #MAX_VILLAGE_NUM}件を超えると
+ * <p>状態はプロセスメモリだけで保持し、{@link #MAX_VILLAGE_COUNT}件を超えると
  * 古い村からFIFOで削除する。再起動で失われる。
  * 参照・更新はすべてクラスロック上で行うため、外部へ可変コレクションを公開しない。
  */
 public final class VillageList {
 
-  static final int MAX_VILLAGE_NUM = 50;
+  /** レジストリが保持する村の上限件数. 村番号の範囲とは別物. */
+  static final int MAX_VILLAGE_COUNT = 50;
+
+  /** 通常村の番号の最小値. */
+  public static final int MIN_VILLAGE_NUMBER = 1000;
+  /** 通常村の番号の最大値. */
+  public static final int MAX_VILLAGE_NUMBER = 9999;
+
   private static final ArrayList<Village> villageList = new ArrayList<Village>();
 
   private VillageList() {
@@ -50,7 +57,7 @@ public final class VillageList {
     village.setVillageNum(nextVillageNumber(random));
     villageList.add(village);
 
-    if (villageList.size() > MAX_VILLAGE_NUM) {
+    if (villageList.size() > MAX_VILLAGE_COUNT) {
       // FIFO eviction is intentional runtime behavior.
       villageList.remove(0);
     }
@@ -88,12 +95,14 @@ public final class VillageList {
   /** 呼び出し元がクラスロックを保持している前提で、未使用の4桁村番号を返す. */
   private static int nextVillageNumber(Random random) {
     for (int attempt = 0; attempt < 100; attempt++) {
-      int candidate = random.nextInt(8999) + 1000;
+      // 抽選の範囲は最大値の1つ手前まで。最大値は総当たりでのみ採番される
+      int candidate =
+          random.nextInt(MAX_VILLAGE_NUMBER - MIN_VILLAGE_NUMBER) + MIN_VILLAGE_NUMBER;
       if (getVillage(candidate) == null) {
         return candidate;
       }
     }
-    for (int candidate = 1000; candidate <= 9999; candidate++) {
+    for (int candidate = MIN_VILLAGE_NUMBER; candidate <= MAX_VILLAGE_NUMBER; candidate++) {
       if (getVillage(candidate) == null) {
         return candidate;
       }

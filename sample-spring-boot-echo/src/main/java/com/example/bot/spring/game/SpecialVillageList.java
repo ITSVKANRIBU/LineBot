@@ -22,12 +22,19 @@ import java.util.Random;
 /**
  * 特殊村のプロセス内レジストリ.
  *
- * <p>状態はプロセスメモリだけで保持し、{@link #MAX_VILLAGE_NUM}件を超えると
+ * <p>状態はプロセスメモリだけで保持し、{@link #MAX_VILLAGE_COUNT}件を超えると
  * 古い村からFIFOで削除する。再起動で失われる。
  */
 public final class SpecialVillageList {
 
-  static final int MAX_VILLAGE_NUM = 30;
+  /** レジストリが保持する村の上限件数. 村番号の範囲とは別物. */
+  static final int MAX_VILLAGE_COUNT = 30;
+
+  /** 特殊村の番号の最小値. */
+  public static final int MIN_VILLAGE_NUMBER = 10000;
+  /** 特殊村の番号の最大値. */
+  public static final int MAX_VILLAGE_NUMBER = 99998;
+
   private static final ArrayList<SpecialVillage> villageList = new ArrayList<SpecialVillage>();
 
   private SpecialVillageList() {
@@ -46,7 +53,7 @@ public final class SpecialVillageList {
     village.setVillageNum(nextVillageNumber(random));
     villageList.add(village);
 
-    if (villageList.size() > MAX_VILLAGE_NUM) {
+    if (villageList.size() > MAX_VILLAGE_COUNT) {
       // FIFO eviction is intentional runtime behavior.
       villageList.remove(0);
     }
@@ -67,12 +74,13 @@ public final class SpecialVillageList {
   /** 呼び出し元がクラスロックを保持している前提で、未使用の5桁村番号を返す. */
   private static int nextVillageNumber(Random random) {
     for (int attempt = 0; attempt < 100; attempt++) {
-      int candidate = random.nextInt(89999) + 10000;
+      int candidate =
+          random.nextInt(MAX_VILLAGE_NUMBER - MIN_VILLAGE_NUMBER + 1) + MIN_VILLAGE_NUMBER;
       if (getVillage(candidate) == null) {
         return candidate;
       }
     }
-    for (int candidate = 10000; candidate <= 99998; candidate++) {
+    for (int candidate = MIN_VILLAGE_NUMBER; candidate <= MAX_VILLAGE_NUMBER; candidate++) {
       if (getVillage(candidate) == null) {
         return candidate;
       }

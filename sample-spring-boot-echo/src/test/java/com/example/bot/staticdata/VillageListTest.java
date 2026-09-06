@@ -42,13 +42,13 @@ public class VillageListTest {
   public void assignsUniqueFourDigitNumbers() {
     Set<Integer> numbers = new HashSet<Integer>();
 
-    for (int i = 0; i < VillageList.MAX_VILLAGE_NUM; i++) {
+    for (int i = 0; i < VillageList.MAX_VILLAGE_COUNT; i++) {
       int villageNum = VillageList.addVillage(newVillage("owner"), new Random());
       assertTrue("村番号が4桁ではない: " + villageNum, villageNum >= 1000 && villageNum <= 9999);
       numbers.add(villageNum);
     }
 
-    assertEquals(VillageList.MAX_VILLAGE_NUM, numbers.size());
+    assertEquals(VillageList.MAX_VILLAGE_COUNT, numbers.size());
   }
 
   @Test
@@ -56,7 +56,7 @@ public class VillageListTest {
     int oldest = VillageList.addVillage(newVillage("owner"), new Random());
     int second = VillageList.addVillage(newVillage("owner"), new Random());
 
-    for (int i = 0; i < VillageList.MAX_VILLAGE_NUM - 1; i++) {
+    for (int i = 0; i < VillageList.MAX_VILLAGE_COUNT - 1; i++) {
       VillageList.addVillage(newVillage("owner"), new Random());
     }
 
