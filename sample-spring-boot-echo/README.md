@@ -88,7 +88,7 @@ LINEは101以上、`/callapi`は1000以上を村番号として扱い、それ�
 
 - `common/CommonModule.java`
   Google Apps Scriptから役職イラストの一覧を取得し、ファイル名の重み付けに従って抽選します。
-  取得に失敗した場合は`MessageConst`のGitHub Raw画像へfallbackします。
+  取得に失敗した場合は前回取得した一覧を保持し、一度も取得できていない役職は`MessageConst`のGitHub Raw画像へfallbackします。
   URLは必ずApps Scriptのデプロイ URL（`/macros/s/<デプロイID>/exec`）を指定してください。
 - `common/WordGetter.java` — `word.csv`から難易度別にお題候補を1件選ぶ。
 - `staticdata/MessageConst.java` — 定型文と既定イラストのURL。
