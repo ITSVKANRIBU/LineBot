@@ -1,6 +1,6 @@
 {
-    "name": "echo bot - LINE Messaging API",
-    "description": "This is a sample application for the LINE Messaging API",
+    "name": "インサイダーゲーム Bot",
+    "description": "インサイダーゲームと Werewords の役職・お題を LINE で配る Bot",
     "keywords": ["chatbot", "line", "java"],
     "env": {
         "LINE_BOT_CHANNEL_TOKEN": {

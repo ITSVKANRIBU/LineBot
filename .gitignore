@@ -52,13 +52,6 @@ local.properties
 # PDT-specific
 
 .buildpath
-.gitignore
-*.json
-*.class
-*.kt
-*.bin
-*.script
-*.yaml
 *.prefs
 */bin/*
 *.lock
