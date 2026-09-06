@@ -16,6 +16,7 @@
 
 package com.example.bot.common;
 
+import static com.example.bot.common.WordGetter.BEGINNER_RANK;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -52,7 +53,8 @@ public class WordGetterTest {
 
   @Test
   public void everyDifficultyDrawsAWord() {
-    for (int rank = 1; rank <= 4; rank++) {
+    // UIから送られる難易度は2（初心者）・3（上級者）・4（変態）
+    for (int rank = BEGINNER_RANK; rank <= 4; rank++) {
       assertNotNull("難易度" + rank + "のお題を引けない", WordGetter.getWord(rank));
     }
   }

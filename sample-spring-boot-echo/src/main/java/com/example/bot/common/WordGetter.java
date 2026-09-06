@@ -54,7 +54,7 @@ public class WordGetter {
   /**
    * 指定した難易度のお題を1つ返す.
    *
-   * @param rank 難易度。1、{@link #BEGINNER_RANK}（初心者）、3（上級者）、4（変態）
+   * @param rank 難易度。{@link #BEGINNER_RANK}（初心者）、3（上級者）、4（変態）
    * @return お題。お題CSVを読み込めなかった場合はnull
    */
   public static String getWord(int rank) {
@@ -64,9 +64,7 @@ public class WordGetter {
 
     Random rand = new Random();
     int line;
-    if (1 == rank) {
-      line = rand.nextInt(SECOND_LINE) + 1;
-    } else if (BEGINNER_RANK == rank) {
+    if (BEGINNER_RANK == rank) {
       line = rand.nextInt(THIRD_LINE) + 1;
     } else if (3 == rank) {
       line = rand.nextInt(FOURTH_LINE - SECOND_LINE) + SECOND_LINE + 1;
