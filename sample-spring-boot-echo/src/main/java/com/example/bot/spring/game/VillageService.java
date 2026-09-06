@@ -234,7 +234,7 @@ public final class VillageService {
     // GMがいる村ではGMが役掛けで入室しないため、参加人数ぶんだけ配る
     boolean godMode = village.hasGameMaster();
 
-    int villageNum = new CreatWereWordsLogic()
+    int villageNum = new CreateWereWordsLogic()
         .createWereWords(godMode, village.getVillageSize(), odai);
 
     String message = "お題を『" + odai + "』として新たにワーワーズの『" + villageNum + "』村を作成しました。";

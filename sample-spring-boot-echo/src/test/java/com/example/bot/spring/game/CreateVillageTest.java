@@ -27,9 +27,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 /** 特殊村の作成が、呼び出し元から渡されたメッセージ列をどう扱うかを固定する. */
-public class CreatVillageTest {
+public class CreateVillageTest {
 
-  private final CreatVillage creatVillage = new CreatVillage();
+  private final CreateVillage creatVillage = new CreateVillage();
 
   @Before
   public void resetRegistry() {

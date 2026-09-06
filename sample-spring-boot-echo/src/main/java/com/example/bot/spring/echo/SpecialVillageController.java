@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.bot.spring.game.CreatVillage;
+import com.example.bot.spring.game.CreateVillage;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -82,7 +82,7 @@ public class SpecialVillageController {
         return ResponseEntity.badRequest().build();
       }
 
-      int villageNumber = new CreatVillage().createNewVillage(messages);
+      int villageNumber = new CreateVillage().createNewVillage(messages);
       return ResponseEntity.ok(Collections.singletonMap(
           "data", String.valueOf(villageNumber)));
     } catch (Exception e) {

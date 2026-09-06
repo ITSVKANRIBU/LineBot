@@ -32,9 +32,9 @@ import org.junit.Test;
  * <p>配役はshuffleされるため個々の割り当ては検証しない。
  * 配布数と「欠け」の扱いという、人数に対する不変条件だけを固定する。
  */
-public class CreatWereWordsLogicTest {
+public class CreateWereWordsLogicTest {
 
-  private final CreatWereWordsLogic logic = new CreatWereWordsLogic();
+  private final CreateWereWordsLogic logic = new CreateWereWordsLogic();
 
   @Before
   public void resetRegistry() {

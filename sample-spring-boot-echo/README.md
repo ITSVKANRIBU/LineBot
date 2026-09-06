@@ -73,11 +73,11 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
   LINEと`/callapi`の共通層。
   対象の村が見つからない場合はすべて`null`を返し、呼び出し側が
   「村が作成されていません」相当の応答へ変換します。
-- `spring/game/CreatVillage.java` — 特殊村の作成。
+- `spring/game/CreateVillage.java` — 特殊村の作成。
 - `spring/game/SpecialVillage.java` / `SpecialVillageList.java`
   特殊村の状態とレジストリ。配布メッセージは生成時に確定し、以降は参加者が増えるだけ。
   「i番目の参加者にi番目のメッセージが対応する」不変条件はクラスの中で閉じています。
-- `spring/game/CreatWereWordsLogic.java`
+- `spring/game/CreateWereWordsLogic.java`
   Werewords村の役職（占師・インサイダー・村人・GM）を抽選し、特殊村として登録する。
   先頭の役職は「欠け」として扱う。
 - `spring/game/CommonSubLogic.java` — Werewordsの役職メッセージの組み立て。

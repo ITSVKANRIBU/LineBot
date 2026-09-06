@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CreatWereWordsLogic {
+public class CreateWereWordsLogic {
 
   /**
    * Werewords村を作成する.
@@ -31,7 +31,7 @@ public class CreatWereWordsLogic {
    * @return 採番された村番号
    */
   public int createWereWords(boolean godMode, int num, String theme) {
-    return new CreatVillage().createNewVillage(getMessages(godMode, num, theme));
+    return new CreateVillage().createNewVillage(getMessages(godMode, num, theme));
   }
 
   /**

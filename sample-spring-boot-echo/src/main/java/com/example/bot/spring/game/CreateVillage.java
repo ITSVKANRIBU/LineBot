@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class CreatVillage {
+public class CreateVillage {
 
   /**
    * メッセージをランダムに並び替えて特殊村を作成する.

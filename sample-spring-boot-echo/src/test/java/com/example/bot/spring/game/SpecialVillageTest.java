@@ -75,7 +75,7 @@ public class SpecialVillageTest {
   public void werewordsMessagesStayDeliverableWithALongTopic() {
     // お題はLINEのテキストメッセージ由来で長さの上限がない
     String longTopic = repeat("長いお題", 40);
-    List<String> messages = new CreatWereWordsLogic().getMessages(true, 3, longTopic);
+    List<String> messages = new CreateWereWordsLogic().getMessages(true, 3, longTopic);
 
     SpecialVillage village = new SpecialVillage(messages);
     assertTrue(village.join("user"));
