@@ -10,6 +10,7 @@
 
 ## Patterns That Work
 （効いたやり方・型）
+- 2026-09-07: Gradleのモジュール名を変えるときは、ディレクトリと `settings.gradle` だけでなく成果物名の消費者を必ず洗う。このリポジトリでは `Procfile` のjarワイルドカードと `.github/workflows/ci.yml` のタスク名が該当し、どちらもビルドは通るのに本番だけ壊れる種類の参照だった。
 - 2026-09-07: 「待たないこと」をテストで固定するには、完了させない `CompletableFuture` を返すmockと `@Test(timeout = ...)` を組み合わせる。待つ実装に戻すとハングではなくタイムアウト失敗になるため、CIでも回収できる。
 - 2026-09-07: 非同期化を実機で確かめるには、応答しないTCPリスナーを立てて外部APIのエンドポイントをそこへ向ける。外部へ一切出さずに「相手が固まっている」状況を作れる。LINE SDKは `line.bot.api-end-point` で差し替えられる。
 - 2026-09-07: 挙動不変のリファクタリングでは、先に「応答を丸ごと捕捉して固定するテスト」を1本入れてから構造を動かすと、以降の全コミットで挙動不変を機械的に確認できる。LINE経路は `LineMessagingClient` をmockして `ArgumentCaptor` で `ReplyMessage` を捕まえ、altText・ボタン構成・通数まで固定した。
@@ -30,6 +31,8 @@
 
 ## Domain Knowledge
 （業務・仕様に関する事実）
+- 2026-09-07: Bot本体のモジュールは `insider-game-bot`（旧 `sample-spring-boot-echo`）。起動クラスは `InsiderGameBotApplication`、jarは `insider-game-bot-2.7.0-SNAPSHOT.jar`。2026-09-07時点のベースラインは `check` が4モジュール計259テスト、`:insider-game-bot:test` が136テスト。
+- 2026-09-07: パッケージは `com.example.bot.spring.echo` のまま残っている。モジュールとクラスからEcho由来の名前は消したが、`com.example` と `echo` というパッケージ名はオーナーが今回の範囲外と判断した。
 - 2026-09-07: `LineEventHandler.reply` は返信APIの完了を待たない。送信失敗はログにだけ残り、利用者からは「Botが黙った」ように見える。復帰手段は同じ入力を送り直すこと。この判断は `docs/architecture.md`「返信の完了を待たない」に記載。
 - 2026-09-07: `word.csv` の2列目から難易度境界を導出すると、途中で読み込みが途切れた辞書の境界が不整合になり `Random.nextInt` が負の上限で例外になる。読み込み後に全難易度の境界が揃っているか検証し、揃わなければ辞書を捨てる必要がある。これは `docs/interfaces.md` の「読み込みに失敗した場合、お題の自動取得は何も返しません」と一致する。
 - 2026-09-07: `@LineMessageHandler` は `@Component` のメタannotationを持つため、受け口クラスをコンポーネントスキャン範囲に置くだけでBean登録される。`@Bean` メソッドは不要。
