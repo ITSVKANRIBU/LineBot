@@ -61,7 +61,7 @@ public final class VillageService {
     village.setOwnerId(userId);
 
     if (godMode) {
-      village.setGmNum(MessageConst.DEFAULT_GMNUM);
+      village.markGodMode();
     }
 
     int villageNum = VillageList.addVillage(village, new Random());
@@ -88,7 +88,7 @@ public final class VillageService {
     Village village = new Village();
     village.setOwnerId(userId);
     // GMも抽選対象にする
-    village.setGmNum(MessageConst.DEFAULT_GMNUM);
+    village.markGodMode();
     village.setRandomMode(true);
     village.applyOdai(WordGetter.getWord(WordGetter.BEGINNER_RANK));
 
@@ -122,7 +122,7 @@ public final class VillageService {
     }
 
     // 神モードかどうかは人数確定で上書きされるため、先に控える
-    boolean godMode = village.getGmNum() == MessageConst.DEFAULT_GMNUM;
+    boolean godMode = village.isGodModeAwaitingSize();
     boolean randomMode = village.isRandomMode();
 
     // 人数確定と配役抽選は村側で原子的に行う
@@ -175,7 +175,7 @@ public final class VillageService {
     }
 
     String message = village.getVillageNum() + "村 のお題を『" + odai + "』に設定しました。\n";
-    if (village.getGmNum() == MessageConst.DEFAULT_GMNUM) {
+    if (village.isGodModeAwaitingSize()) {
       message = message + MessageConst.GOD_NUMSETMESSAGE;
     } else {
       message = message + MessageConst.OWNER_NUMSETMESSAGE;
@@ -231,8 +231,8 @@ public final class VillageService {
     }
 
     String odai = village.getOdai();
-    // 神モードで作った村ではGMの席が抽選済み。GMは役掛けで入室しない
-    boolean godMode = village.getGmNum() != 0;
+    // GMがいる村ではGMが役掛けで入室しないため、参加人数ぶんだけ配る
+    boolean godMode = village.hasGameMaster();
 
     int villageNum = new CreatWereWordsLogic()
         .createWereWords(godMode, village.getVillageSize(), odai);

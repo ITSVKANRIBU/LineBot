@@ -176,6 +176,27 @@ public class Village {
     this.gmNum = gmNum;
   }
 
+  /**
+   * 神モードとして印を付ける.
+   *
+   * <p>人数が確定するまでは席番号が決まらないため、席番号としてはあり得ない
+   * {@link MessageConst#DEFAULT_GMNUM}を「GMを立てる村」の印に使う。
+   * {@link #configure(int, Random)}が抽選した席番号でこの印を上書きする。
+   */
+  public synchronized void markGodMode() {
+    gmNum = MessageConst.DEFAULT_GMNUM;
+  }
+
+  /** 神モードとして作られ、まだ人数が確定していない（GMの席が未抽選）か. */
+  public synchronized boolean isGodModeAwaitingSize() {
+    return gmNum == MessageConst.DEFAULT_GMNUM;
+  }
+
+  /** GMの席があるか。神モードとランダム村で真になる. */
+  public synchronized boolean hasGameMaster() {
+    return gmNum != 0;
+  }
+
   public synchronized int getVillageSize() {
     return villageSize;
   }
