@@ -145,7 +145,7 @@ task codeCoverageReport(type: JacocoReport) {
     onlyIf = { true }
     executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
 
-    [':line-bot-api-client', ':line-bot-model', ':line-bot-servlet', ':line-bot-spring-boot', ':line-bot-cli'].each {
+    [':line-bot-api-client', ':line-bot-model', ':line-bot-servlet', ':line-bot-spring-boot'].each {
         sourceSets(project(it).sourceSets.main)
     }
 

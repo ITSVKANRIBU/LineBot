@@ -35,7 +35,7 @@ Java 8 が必要です。
 
 ## リポジトリの構成
 
-Gradle のマルチプロジェクトビルドです。`sample-spring-boot-echo` が Bot 本体、`line-bot-*` が LINE Messaging API SDK（line-bot-sdk-java 由来。同梱）、`line-bot-cli` はリッチメニューなどの運用ツールです。詳細は [architecture.md](docs/architecture.md) を参照してください。
+Gradle のマルチプロジェクトビルドです。`sample-spring-boot-echo` が Bot 本体、`line-bot-*` が LINE Messaging API SDK（line-bot-sdk-java 由来。同梱）です。詳細は [architecture.md](docs/architecture.md) を参照してください。
 
 ## ライセンス
 
