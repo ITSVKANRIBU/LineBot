@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.Random;
 
 import org.junit.Test;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
 import com.example.bot.common.CommonModule.CatalogFile;
 import com.example.bot.common.CommonModule.WeightedUrl;
@@ -56,6 +59,27 @@ public class CommonModuleTest {
         CommonModule.URL.endsWith("/exec"));
     assertFalse("転送先URLはuser_content_keyが失効するため使えない: " + CommonModule.URL,
         CommonModule.URL.contains("googleusercontent.com"));
+  }
+
+/**
+   * カタログ取得にタイムアウトが設定されている.
+   *
+   * <p>Apps Scriptが無応答のとき、タイムアウトがないと定期取得のスレッドが
+   * 永久に固まり、以降カタログが更新されなくなる。
+   */
+  @Test
+  public void theCatalogFetchIsBoundedByTimeouts() {
+    assertEquals(15000, CommonModule.CONNECT_TIMEOUT_MILLIS);
+    assertEquals(30000, CommonModule.READ_TIMEOUT_MILLIS);
+
+    RestTemplate restTemplate =
+        (RestTemplate) ReflectionTestUtils.getField(CommonModule.class, "restTemplate");
+    ClientHttpRequestFactory factory = restTemplate.getRequestFactory();
+
+    assertEquals(CommonModule.CONNECT_TIMEOUT_MILLIS,
+        ReflectionTestUtils.getField(factory, "connectTimeout"));
+    assertEquals(CommonModule.READ_TIMEOUT_MILLIS,
+        ReflectionTestUtils.getField(factory, "readTimeout"));
   }
 
   /** カタログを取得できていない間は、MessageConstの固定画像へ落とす. */

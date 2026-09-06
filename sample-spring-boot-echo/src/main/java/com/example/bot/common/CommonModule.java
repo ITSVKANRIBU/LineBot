@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.bot.staticdata.MessageConst;
@@ -41,7 +42,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CommonModule {
 
-  private static final RestTemplate restTemplate = new RestTemplate();
+  /**
+   * 接続タイムアウト（ミリ秒）.
+   *
+   * <p>Apps Scriptが無応答のとき、定期取得のスレッドが永久に固まるのを防ぐ。
+   */
+  static final int CONNECT_TIMEOUT_MILLIS = 15000;
+
+  /**
+   * 読み取りタイムアウト（ミリ秒）.
+   *
+   * <p>1回の読み取り待ちに対する上限で、通信全体の上限ではない。
+   */
+  static final int READ_TIMEOUT_MILLIS = 30000;
+
+  private static final RestTemplate restTemplate = timeoutBoundRestTemplate();
 
   /**
    * イラスト一覧を返すGoogle Apps ScriptのウェブアプリURL.
@@ -118,7 +133,20 @@ public class CommonModule {
     return null;
   }
 
-  /** カタログを取り直して差し替える。失敗した場合は前回のカタログを使い続ける. */
+  private static RestTemplate timeoutBoundRestTemplate() {
+    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+    factory.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
+    factory.setReadTimeout(READ_TIMEOUT_MILLIS);
+    return new RestTemplate(factory);
+  }
+
+  /**
+   * カタログを取り直して差し替える。失敗した場合は前回のカタログを使い続ける.
+   *
+   * <p>タイムアウトした場合もWARNを残して前回のカタログを維持し、次回の
+   * 再取得に進む。{@code @Scheduled(fixedDelay)}は前回の完了から数えるため、
+   * 固まった取得が次の取得と重なることはない。
+   */
   public static void createMap() {
     try {
       CatalogResponse body = restTemplate.getForEntity(URL, CatalogResponse.class).getBody();
