@@ -19,13 +19,18 @@ package com.example.bot.spring.game;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.springframework.stereotype.Component;
+
 /**
  * 特殊村のプロセス内レジストリ.
  *
  * <p>状態はプロセスメモリだけで保持し、{@link #MAX_VILLAGE_COUNT}件を超えると
  * 古い村からFIFOで削除する。再起動で失われる。
+ *
+ * <p>本番ではsingletonのBeanが1つだけ存在する。テストは{@code new}で隔離する。
  */
-public final class SpecialVillageList {
+@Component
+public final class SpecialVillageRegistry {
 
   /** レジストリが保持する村の上限件数. 村番号の範囲とは別物. */
   static final int MAX_VILLAGE_COUNT = 30;
@@ -35,10 +40,7 @@ public final class SpecialVillageList {
   /** 特殊村の番号の最大値. */
   public static final int MAX_VILLAGE_NUMBER = 99998;
 
-  private static final ArrayList<SpecialVillage> villageList = new ArrayList<SpecialVillage>();
-
-  private SpecialVillageList() {
-  }
+  private final ArrayList<SpecialVillage> villageList = new ArrayList<SpecialVillage>();
 
   /**
    * 空き番号を採番して特殊村を登録する.
@@ -49,7 +51,7 @@ public final class SpecialVillageList {
    * @param random 番号抽選に使う乱数
    * @return 採番された村番号
    */
-  public static synchronized int addVillage(SpecialVillage village, Random random) {
+  public synchronized int addVillage(SpecialVillage village, Random random) {
     village.setVillageNum(nextVillageNumber(random));
     villageList.add(village);
 
@@ -61,18 +63,13 @@ public final class SpecialVillageList {
     return village.getVillageNum();
   }
 
-  public static synchronized SpecialVillage getVillage(int villageNum) {
+  public synchronized SpecialVillage getVillage(int villageNum) {
     return villageList.stream()
         .filter(village -> villageNum == village.getVillageNum()).findFirst().orElse(null);
   }
 
-  /** テスト専用。レジストリを空にする. */
-  public static synchronized void clear() {
-    villageList.clear();
-  }
-
-  /** 呼び出し元がクラスロックを保持している前提で、未使用の5桁村番号を返す. */
-  private static int nextVillageNumber(Random random) {
+  /** 呼び出し元がこのインスタンスのモニタを保持している前提で、未使用の5桁村番号を返す. */
+  private int nextVillageNumber(Random random) {
     for (int attempt = 0; attempt < 100; attempt++) {
       int candidate =
           random.nextInt(MAX_VILLAGE_NUMBER - MIN_VILLAGE_NUMBER + 1) + MIN_VILLAGE_NUMBER;

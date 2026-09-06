@@ -20,14 +20,20 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.function.Predicate;
 
+import org.springframework.stereotype.Component;
+
 /**
  * 通常村のプロセス内レジストリ.
  *
  * <p>状態はプロセスメモリだけで保持し、{@link #MAX_VILLAGE_COUNT}件を超えると
  * 古い村からFIFOで削除する。再起動で失われる。
- * 参照・更新はすべてクラスロック上で行うため、外部へ可変コレクションを公開しない。
+ * 参照・更新はすべてこのインスタンスのモニタ上で行うため、
+ * 外部へ可変コレクションを公開しない。
+ *
+ * <p>本番ではsingletonのBeanが1つだけ存在する。テストは{@code new}で隔離する。
  */
-public final class VillageList {
+@Component
+public final class VillageRegistry {
 
   /** レジストリが保持する村の上限件数. 村番号の範囲とは別物. */
   static final int MAX_VILLAGE_COUNT = 50;
@@ -37,10 +43,7 @@ public final class VillageList {
   /** 通常村の番号の最大値. */
   public static final int MAX_VILLAGE_NUMBER = 9999;
 
-  private static final ArrayList<Village> villageList = new ArrayList<Village>();
-
-  private VillageList() {
-  }
+  private final ArrayList<Village> villageList = new ArrayList<Village>();
 
   /**
    * 空き番号を採番して村を登録する.
@@ -51,7 +54,7 @@ public final class VillageList {
    * @param random 番号抽選に使う乱数
    * @return 採番された村番号
    */
-  public static synchronized int addVillage(Village village, Random random) {
+  public synchronized int addVillage(Village village, Random random) {
     village.setVillageNum(nextVillageNumber(random));
     villageList.add(village);
 
@@ -63,7 +66,7 @@ public final class VillageList {
     return village.getVillageNum();
   }
 
-  public static synchronized Village getVillage(int villageNum) {
+  public synchronized Village getVillage(int villageNum) {
     return villageList.stream()
         .filter(dao -> villageNum == dao.getVillageNum()).findFirst().orElse(null);
   }
@@ -75,7 +78,7 @@ public final class VillageList {
    * @param predicate 村の追加条件
    * @return 該当する最新の村。なければnull
    */
-  public static synchronized Village findLatestOwned(String userId, Predicate<Village> predicate) {
+  public synchronized Village findLatestOwned(String userId, Predicate<Village> predicate) {
     for (int i = villageList.size() - 1; i >= 0; i--) {
       Village village = villageList.get(i);
       if (userId.equals(village.getOwnerId()) && predicate.test(village)) {
@@ -85,13 +88,8 @@ public final class VillageList {
     return null;
   }
 
-  /** テスト専用。レジストリを空にする. */
-  public static synchronized void clear() {
-    villageList.clear();
-  }
-
-  /** 呼び出し元がクラスロックを保持している前提で、未使用の4桁村番号を返す. */
-  private static int nextVillageNumber(Random random) {
+  /** 呼び出し元がこのインスタンスのモニタを保持している前提で、未使用の4桁村番号を返す. */
+  private int nextVillageNumber(Random random) {
     for (int attempt = 0; attempt < 100; attempt++) {
       // 抽選の範囲は最大値の1つ手前まで。最大値は総当たりでのみ採番される
       int candidate =

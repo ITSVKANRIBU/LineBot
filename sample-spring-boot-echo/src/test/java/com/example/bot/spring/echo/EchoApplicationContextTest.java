@@ -38,8 +38,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.VillageList;
+import com.example.bot.spring.game.SpecialVillageRegistry;
+import com.example.bot.spring.game.VillageRegistry;
+import com.example.bot.spring.game.VillageService;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
@@ -88,11 +89,17 @@ public class EchoApplicationContextTest {
   @Autowired
   private LineEventHandler lineEventHandler;
 
+  @Autowired
+  private VillageRegistry villages;
+
+  @Autowired
+  private SpecialVillageRegistry specialVillages;
+
+  @Autowired
+  private VillageService villageService;
+
   @Before
   public void setUp() {
-    VillageList.clear();
-    SpecialVillageList.clear();
-
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
   }

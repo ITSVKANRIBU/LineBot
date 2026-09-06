@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.springframework.stereotype.Service;
+
 import com.example.bot.common.CommonModule;
 import com.example.bot.common.WordGetter;
 import com.example.bot.staticdata.MessageConst;
@@ -39,12 +41,26 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
  * <p>対象の村が見つからない場合はいずれのメソッドも{@code null}を返す。
  * 呼び出し側は{@code null}を「村が作成されていません」相当の応答へ変換する。
  */
-public final class VillageService {
+@Service
+public class VillageService {
 
   /** Werewordsへ変換できる最小人数. 占師・インサイダー・村人で3人必要. */
   private static final int MIN_WEREWORDS_VILLAGE_SIZE = 3;
 
-  private VillageService() {
+  private final VillageRegistry villages;
+  private final SpecialVillageRegistry specialVillages;
+  private final CreateWereWordsLogic createWereWords;
+
+  /**
+   * @param villages 通常村のレジストリ
+   * @param specialVillages 特殊村のレジストリ
+   * @param createWereWords Werewords村の作成
+   */
+  public VillageService(VillageRegistry villages, SpecialVillageRegistry specialVillages,
+      CreateWereWordsLogic createWereWords) {
+    this.villages = villages;
+    this.specialVillages = specialVillages;
+    this.createWereWords = createWereWords;
   }
 
   /**
@@ -54,7 +70,7 @@ public final class VillageService {
    * @param godMode GM（神）モードで作成する場合true
    * @return 作成完了メッセージ
    */
-  public static List<Message> createVillage(String userId, boolean godMode) {
+  public List<Message> createVillage(String userId, boolean godMode) {
     Village village = new Village();
     village.setOwnerId(userId);
 
@@ -62,7 +78,7 @@ public final class VillageService {
       village.markGodMode();
     }
 
-    int villageNum = VillageList.addVillage(village, new Random());
+    int villageNum = villages.addVillage(village, new Random());
 
     String message = villageNum + "村 を新しく作成しました。" + MessageConst.OWNER_ODAIMESSAGE;
 
@@ -82,7 +98,7 @@ public final class VillageService {
    * @param userId オーナーのユーザーID
    * @return 作成完了メッセージ
    */
-  public static List<Message> createRandomVillage(String userId) {
+  public List<Message> createRandomVillage(String userId) {
     Village village = new Village();
     village.setOwnerId(userId);
     // GMも抽選対象にする
@@ -90,7 +106,7 @@ public final class VillageService {
     village.setRandomMode(true);
     village.applyOdai(WordGetter.getWord(WordGetter.BEGINNER_RANK));
 
-    int villageNum = VillageList.addVillage(village, new Random());
+    int villageNum = villages.addVillage(village, new Random());
 
     return Collections.singletonList(new TextMessage(
         villageNum + "村 を新しく作成しました。" + MessageConst.RANDOM_NUMSETMESSAGE));
@@ -103,13 +119,13 @@ public final class VillageService {
    * @param number 参加人数
    * @return 設定完了メッセージ。人数未設定の自分の村がない場合はnull
    */
-  public static List<Message> setVillageSize(String userId, int number) {
+  public List<Message> setVillageSize(String userId, int number) {
     return setVillageSize(userId, number, new Random());
   }
 
   /** 乱数を差し替えられる{@link #setVillageSize(String, int)}。テスト用のseam. */
-  static List<Message> setVillageSize(String userId, int number, Random random) {
-    Village village = VillageList.findLatestOwned(userId, target -> 0 == target.getVillageSize());
+  List<Message> setVillageSize(String userId, int number, Random random) {
+    Village village = villages.findLatestOwned(userId, target -> 0 == target.getVillageSize());
 
     if (village == null) {
       return null;
@@ -160,8 +176,8 @@ public final class VillageService {
    * @param odai お題
    * @return 設定完了メッセージ。お題未設定の自分の村がない場合はnull
    */
-  public static List<Message> setOdai(String userId, String odai) {
-    Village village = VillageList.findLatestOwned(userId, target -> null == target.getOdai());
+  public List<Message> setOdai(String userId, String odai) {
+    Village village = villages.findLatestOwned(userId, target -> null == target.getOdai());
 
     if (village == null) {
       return null;
@@ -188,9 +204,9 @@ public final class VillageService {
    * @param userId オーナーのユーザーID
    * @return 設定完了メッセージ。参加者のいない自分の村がない場合はnull
    */
-  public static List<Message> setReverseVillage(String userId) {
+  public List<Message> setReverseVillage(String userId) {
     // ランダム村はGMとインサイダーを1人ずつ配るため、逆村へは切り替えない
-    Village village = VillageList.findLatestOwned(
+    Village village = villages.findLatestOwned(
         userId, target -> !target.hasMembers() && !target.isRandomMode());
 
     if (village == null) {
@@ -218,8 +234,8 @@ public final class VillageService {
    * @param userId オーナーのユーザーID
    * @return 案内メッセージ。変換できる自分の村がない場合はnull
    */
-  public static List<Message> convertToWerewords(String userId) {
-    Village village = VillageList.findLatestOwned(userId, target -> !target.hasMembers());
+  public List<Message> convertToWerewords(String userId) {
+    Village village = villages.findLatestOwned(userId, target -> !target.hasMembers());
 
     // 人数とお題が揃っていない村は変換できない。より古い村へは遡らない
     if (village == null
@@ -232,8 +248,8 @@ public final class VillageService {
     // GMがいる村ではGMが役掛けで入室しないため、参加人数ぶんだけ配る
     boolean godMode = village.hasGameMaster();
 
-    int villageNum = new CreateWereWordsLogic()
-        .createWereWords(godMode, village.getVillageSize(), odai);
+    int villageNum =
+        createWereWords.createWereWords(godMode, village.getVillageSize(), odai);
 
     String message = "お題を『" + odai + "』として新たにワーワーズの『" + villageNum + "』村を作成しました。";
     if (godMode) {
@@ -256,8 +272,8 @@ public final class VillageService {
    * @param villageNum 村番号
    * @return 役職メッセージまたは配布状況。村がない場合はnull
    */
-  public static List<Message> joinVillage(String userId, int villageNum) {
-    Village village = VillageList.getVillage(villageNum);
+  public List<Message> joinVillage(String userId, int villageNum) {
+    Village village = villages.getVillage(villageNum);
 
     if (village == null) {
       return null;
@@ -283,14 +299,38 @@ public final class VillageService {
   }
 
   /**
+   * 通常村の入室状況を返す.
+   *
+   * @param userId ユーザーID
+   * @param villageNum 村番号
+   * @return 入室状況。村がない場合はnull
+   */
+  public List<Message> villageStatus(String userId, int villageNum) {
+    Village village = villages.getVillage(villageNum);
+    return village == null ? null : village.getStatusMessage(userId);
+  }
+
+  /**
+   * 特殊村の入室状況を返す.
+   *
+   * @param userId ユーザーID
+   * @param villageNum 村番号
+   * @return 入室状況。村がない場合はnull
+   */
+  public List<Message> specialVillageStatus(String userId, int villageNum) {
+    SpecialVillage village = specialVillages.getVillage(villageNum);
+    return village == null ? null : village.getStatusMessage(userId);
+  }
+
+  /**
    * 特殊村へ参加する.
    *
    * @param userId ユーザーID
    * @param villageNum 村番号
    * @return 役職メッセージ。村がない場合はnull
    */
-  public static List<Message> joinSpecialVillage(String userId, int villageNum) {
-    SpecialVillage village = SpecialVillageList.getVillage(villageNum);
+  public List<Message> joinSpecialVillage(String userId, int villageNum) {
+    SpecialVillage village = specialVillages.getVillage(villageNum);
 
     if (village == null) {
       return null;

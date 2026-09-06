@@ -36,9 +36,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.VillageList;
 import com.example.bot.staticdata.MessageConst;
+import com.example.bot.testing.GameFixture;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
@@ -72,20 +71,21 @@ public class LineEventHandlerTextCommandTest {
   private static final String OWNER = "owner-user";
   private static final String MEMBER = "member-user";
 
+  private GameFixture fixture;
   private LineEventHandler handler;
   private LineMessagingClient lineMessagingClient;
 
   @Before
   public void setUp() {
-    VillageList.clear();
-    SpecialVillageList.clear();
+    fixture = new GameFixture();
 
     // BotApiResponseはfinal（Lombok @Value）のためmockではなく実インスタンスを使う
     lineMessagingClient = mock(LineMessagingClient.class);
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
 
-    handler = new LineEventHandler(lineMessagingClient);
+    handler = new LineEventHandler(
+        lineMessagingClient, fixture.textCommandHandler, fixture.villageService);
   }
 
   // ---------- 村の作成 ----------
@@ -299,7 +299,7 @@ public class LineEventHandlerTextCommandTest {
         + "参加者へ『" + specialNum + "』を伝えてください。", text);
 
     // 配布順はシャッフル済みのため、通数とGM向けの有無だけを固定する
-    List<String> distributed = SpecialVillageList.getVillage(specialNum).getMessageList();
+    List<String> distributed = fixture.specialVillages.getVillage(specialNum).getMessageList();
     assertEquals(3, distributed.size());
     assertEquals(1, countStartingWith(distributed, "あなたの役職はGMです。"));
   }
@@ -318,7 +318,7 @@ public class LineEventHandlerTextCommandTest {
         + "\n■注意\n"
         + "あなたはGMです。入室時に表示された役職が欠けた役職となります。", text);
 
-    List<String> distributed = SpecialVillageList.getVillage(specialNum).getMessageList();
+    List<String> distributed = fixture.specialVillages.getVillage(specialNum).getMessageList();
     assertEquals(4, distributed.size());
     assertEquals(0, countStartingWith(distributed, "あなたの役職はGMです。"));
   }
@@ -330,7 +330,7 @@ public class LineEventHandlerTextCommandTest {
 
     send(OWNER, "@わーわーず");
 
-    assertNotNull(VillageList.getVillage(villageNum));
+    assertNotNull(fixture.villages.getVillage(villageNum));
   }
 
   @Test
@@ -452,7 +452,7 @@ public class LineEventHandlerTextCommandTest {
   }
 
   private int villageNumberOf(String ownerId) {
-    return VillageList.findLatestOwned(ownerId, village -> true).getVillageNum();
+    return fixture.villages.findLatestOwned(ownerId, village -> true).getVillageNum();
   }
 
   private List<Message> send(String userId, String text) {

@@ -26,9 +26,8 @@ import org.junit.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.VillageList;
 import com.example.bot.staticdata.MessageConst;
+import com.example.bot.testing.GameFixture;
 
 import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.message.Message;
@@ -46,12 +45,13 @@ public class MainControllerTest {
   private static final String OWNER = "owner-user";
   private static final String MEMBER = "member-user";
 
-  private final MainController controller = new MainController();
+  private GameFixture fixture;
+  private MainController controller;
 
   @Before
-  public void resetRegistries() {
-    VillageList.clear();
-    SpecialVillageList.clear();
+  public void setUp() {
+    fixture = new GameFixture();
+    controller = new MainController(fixture.textCommandHandler);
   }
 
   @Test
@@ -240,7 +240,7 @@ public class MainControllerTest {
   }
 
   private int villageNumberOf(String ownerId) {
-    return VillageList.findLatestOwned(ownerId, village -> true).getVillageNum();
+    return fixture.villages.findLatestOwned(ownerId, village -> true).getVillageNum();
   }
 
   private boolean isRoleMessage(List<Message> messages) {

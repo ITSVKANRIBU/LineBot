@@ -30,58 +30,60 @@ import org.junit.Test;
 
 
 /** 通常村レジストリの採番・FIFO eviction・検索を固定する. */
-public class VillageListTest {
+public class VillageRegistryTest {
+
+  private VillageRegistry registry;
 
   @Before
-  public void resetRegistry() {
-    VillageList.clear();
+  public void setUp() {
+    registry = new VillageRegistry();
   }
 
   @Test
   public void assignsUniqueFourDigitNumbers() {
     Set<Integer> numbers = new HashSet<Integer>();
 
-    for (int i = 0; i < VillageList.MAX_VILLAGE_COUNT; i++) {
-      int villageNum = VillageList.addVillage(newVillage("owner"), new Random());
+    for (int i = 0; i < VillageRegistry.MAX_VILLAGE_COUNT; i++) {
+      int villageNum = registry.addVillage(newVillage("owner"), new Random());
       assertTrue("村番号が4桁ではない: " + villageNum, villageNum >= 1000 && villageNum <= 9999);
       numbers.add(villageNum);
     }
 
-    assertEquals(VillageList.MAX_VILLAGE_COUNT, numbers.size());
+    assertEquals(VillageRegistry.MAX_VILLAGE_COUNT, numbers.size());
   }
 
   @Test
   public void evictsTheOldestVillageBeyondTheLimit() {
-    int oldest = VillageList.addVillage(newVillage("owner"), new Random());
-    int second = VillageList.addVillage(newVillage("owner"), new Random());
+    int oldest = registry.addVillage(newVillage("owner"), new Random());
+    int second = registry.addVillage(newVillage("owner"), new Random());
 
-    for (int i = 0; i < VillageList.MAX_VILLAGE_COUNT - 1; i++) {
-      VillageList.addVillage(newVillage("owner"), new Random());
+    for (int i = 0; i < VillageRegistry.MAX_VILLAGE_COUNT - 1; i++) {
+      registry.addVillage(newVillage("owner"), new Random());
     }
 
-    assertNull("上限超過で最古の村がFIFOで削除される", VillageList.getVillage(oldest));
-    assertNotNull(VillageList.getVillage(second));
+    assertNull("上限超過で最古の村がFIFOで削除される", registry.getVillage(oldest));
+    assertNotNull(registry.getVillage(second));
   }
 
   @Test
   public void findLatestOwnedReturnsTheNewestMatchOfThatOwner() {
-    VillageList.addVillage(newVillage("other"), new Random());
-    int older = VillageList.addVillage(newVillage("owner"), new Random());
-    int newer = VillageList.addVillage(newVillage("owner"), new Random());
+    registry.addVillage(newVillage("other"), new Random());
+    int older = registry.addVillage(newVillage("owner"), new Random());
+    int newer = registry.addVillage(newVillage("owner"), new Random());
 
-    assertEquals(newer, VillageList.findLatestOwned("owner", village -> true).getVillageNum());
+    assertEquals(newer, registry.findLatestOwned("owner", village -> true).getVillageNum());
 
     // 新しい方を条件から外すと、次に新しい自分の村が返る
     assertEquals(older,
-        VillageList.findLatestOwned("owner", village -> village.getVillageNum() != newer)
+        registry.findLatestOwned("owner", village -> village.getVillageNum() != newer)
             .getVillageNum());
   }
 
   @Test
   public void findLatestOwnedIgnoresOtherOwners() {
-    VillageList.addVillage(newVillage("other"), new Random());
+    registry.addVillage(newVillage("other"), new Random());
 
-    assertNull(VillageList.findLatestOwned("owner", village -> true));
+    assertNull(registry.findLatestOwned("owner", village -> true));
   }
 
   private Village newVillage(String ownerId) {

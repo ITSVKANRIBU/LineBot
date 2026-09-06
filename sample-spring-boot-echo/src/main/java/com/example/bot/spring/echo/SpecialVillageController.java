@@ -52,6 +52,12 @@ public class SpecialVillageController {
   private final ObjectMapper objectMapper = new ObjectMapper()
       .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
+  private final CreateVillage createVillage;
+
+  public SpecialVillageController(CreateVillage createVillage) {
+    this.createVillage = createVillage;
+  }
+
   /**
    * リクエスト本文の{@code message}配列から特殊村を作成する.
    *
@@ -82,7 +88,7 @@ public class SpecialVillageController {
         return ResponseEntity.badRequest().build();
       }
 
-      int villageNumber = new CreateVillage().createNewVillage(messages);
+      int villageNumber = createVillage.createNewVillage(messages);
       return ResponseEntity.ok(Collections.singletonMap(
           "data", String.valueOf(villageNumber)));
     } catch (Exception e) {

@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
 import com.example.bot.common.WordGetter;
 import com.example.bot.staticdata.MessageConst;
 
@@ -43,7 +45,8 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
  * <p>対象の村が見つからない場合は{@code null}を返す。呼び出し側が経路に応じた応答
  * （LINEは村の作成を促す確認テンプレート、APIは「村が作成されていません」）へ変換する。
  */
-public final class TextCommandHandler {
+@Component
+public class TextCommandHandler {
 
   /** これを超える数値は特殊村の番号として扱う. */
   private static final int MAX_VILLAGE_NUMBER = 9999;
@@ -54,7 +57,10 @@ public final class TextCommandHandler {
   /** 「お題の自動取得」から引くときの難易度。難易度を指定しない区間になる. */
   private static final int UNSPECIFIED_RANK = 10;
 
-  private TextCommandHandler() {
+  private final VillageService villageService;
+
+  public TextCommandHandler(VillageService villageService) {
+    this.villageService = villageService;
   }
 
   /**
@@ -64,7 +70,7 @@ public final class TextCommandHandler {
    * @param text 入力されたテキスト
    * @return 返すメッセージ。対象の村がない場合はnull
    */
-  public static List<Message> handle(String userId, String text) {
+  public List<Message> handle(String userId, String text) {
     String command = text.trim();
 
     int number;
@@ -75,12 +81,12 @@ public final class TextCommandHandler {
     }
 
     if (number > MAX_VILLAGE_NUMBER) {
-      return VillageService.joinSpecialVillage(userId, number);
+      return villageService.joinSpecialVillage(userId, number);
     }
     if (number > MAX_SIZE_INPUT) {
-      return VillageService.joinVillage(userId, number);
+      return villageService.joinVillage(userId, number);
     }
-    return VillageService.setVillageSize(userId, number);
+    return villageService.setVillageSize(userId, number);
   }
 
   /**
@@ -91,7 +97,7 @@ public final class TextCommandHandler {
    * @param rank 難易度
    * @return 候補1件と「確定」「初心者」「上級者」「変態」のボタンを持つテンプレート
    */
-  public static List<Message> odaiCandidate(int rank) {
+  public List<Message> odaiCandidate(int rank) {
     String odai = WordGetter.getWord(rank);
     String message = "お題は「" + odai + "」です。確定しますか？";
 
@@ -105,12 +111,12 @@ public final class TextCommandHandler {
         new TemplateMessage(message, new ButtonsTemplateNonURL(message, actionList)));
   }
 
-  private static List<Message> nonNumberCommand(String userId, String text, String command) {
+  private List<Message> nonNumberCommand(String userId, String text, String command) {
     if ("お題".equals(command) || "題".equals(command) || "神".equals(command)) {
-      return VillageService.createVillage(userId, "神".equals(command));
+      return villageService.createVillage(userId, "神".equals(command));
     }
     if ("ランダム".equals(command)) {
-      return VillageService.createRandomVillage(userId);
+      return villageService.createRandomVillage(userId);
     }
     if ("@配布".equals(command) || "＠配布".equals(command)) {
       return officialAccountInvitation();
@@ -123,18 +129,18 @@ public final class TextCommandHandler {
       return odaiCandidate(UNSPECIFIED_RANK);
     }
     if ("@逆村".equals(command) || "＠逆村".equals(command)) {
-      return VillageService.setReverseVillage(userId);
+      return villageService.setReverseVillage(userId);
     }
     if ("@わーわーず".equals(command) || "＠わーわーず".equals(command)) {
-      return VillageService.convertToWerewords(userId);
+      return villageService.convertToWerewords(userId);
     }
 
     // 残りはお題。前後の空白は利用者が入力したお題の一部として保つ
-    return VillageService.setOdai(userId, text);
+    return villageService.setOdai(userId, text);
   }
 
   /** 公式アカウントの友だち追加案内. */
-  private static List<Message> officialAccountInvitation() {
+  private List<Message> officialAccountInvitation() {
     String imageUrl = MessageConst.ILLUSTRATION_URL_PREFIX + "966mpnqz.png";
 
     List<Message> messages = new ArrayList<Message>();

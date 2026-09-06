@@ -21,7 +21,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.springframework.stereotype.Component;
+
+/** 配布メッセージの集合から特殊村を作り、レジストリへ登録する. */
+@Component
 public class CreateVillage {
+
+  private final SpecialVillageRegistry specialVillages;
+
+  public CreateVillage(SpecialVillageRegistry specialVillages) {
+    this.specialVillages = specialVillages;
+  }
 
   /**
    * メッセージをランダムに並び替えて特殊村を作成する.
@@ -34,6 +44,6 @@ public class CreateVillage {
     List<String> shuffled = new ArrayList<String>(messageList);
     Collections.shuffle(shuffled);
 
-    return SpecialVillageList.addVillage(new SpecialVillage(shuffled), new Random());
+    return specialVillages.addVillage(new SpecialVillage(shuffled), new Random());
   }
 }

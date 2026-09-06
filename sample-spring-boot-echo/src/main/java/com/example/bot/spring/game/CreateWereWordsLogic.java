@@ -20,7 +20,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+/** Werewordsの役職メッセージ列を組み立て、特殊村として登録する. */
+@Component
 public class CreateWereWordsLogic {
+
+  private final CreateVillage createVillage;
+
+  public CreateWereWordsLogic(CreateVillage createVillage) {
+    this.createVillage = createVillage;
+  }
 
   /**
    * Werewords村を作成する.
@@ -31,7 +41,7 @@ public class CreateWereWordsLogic {
    * @return 採番された村番号
    */
   public int createWereWords(boolean godMode, int num, String theme) {
-    return new CreateVillage().createNewVillage(getMessages(godMode, num, theme));
+    return createVillage.createNewVillage(getMessages(godMode, num, theme));
   }
 
   /**

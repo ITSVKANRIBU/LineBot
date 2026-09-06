@@ -47,6 +47,12 @@ public class MainController {
    */
   private static final String NO_VILLAGE_MESSAGE = "村が作成されていません";
 
+  private final TextCommandHandler textCommandHandler;
+
+  public MainController(TextCommandHandler textCommandHandler) {
+    this.textCommandHandler = textCommandHandler;
+  }
+
   /**
    * 村への参加・作成・設定をLINEメッセージ形式のJSONで返す.
    *
@@ -64,7 +70,7 @@ public class MainController {
       return ResponseEntity.badRequest().build();
     }
 
-    List<Message> messages = TextCommandHandler.handle(userId, message);
+    List<Message> messages = textCommandHandler.handle(userId, message);
     if (messages == null) {
       messages = Collections.<Message>singletonList(new TextMessage(NO_VILLAGE_MESSAGE));
     }

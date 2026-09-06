@@ -29,9 +29,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.VillageList;
 import com.example.bot.staticdata.MessageConst;
+import com.example.bot.testing.GameFixture;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
@@ -51,20 +50,21 @@ import com.linecorp.bot.model.response.BotApiResponse;
  */
 public class LineEventHandlerPostbackTest {
 
+  private GameFixture fixture;
   private LineEventHandler handler;
   private LineMessagingClient lineMessagingClient;
 
   @Before
   public void setUp() {
-    VillageList.clear();
-    SpecialVillageList.clear();
+    fixture = new GameFixture();
 
     // BotApiResponseはfinal（Lombok @Value）のためmockではなく実インスタンスを使う
     lineMessagingClient = mock(LineMessagingClient.class);
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
 
-    handler = new LineEventHandler(lineMessagingClient);
+    handler = new LineEventHandler(
+        lineMessagingClient, fixture.textCommandHandler, fixture.villageService);
   }
 
   @Test

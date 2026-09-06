@@ -26,6 +26,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.example.bot.testing.GameFixture;
+
 /**
  * Werewordsの配布メッセージを固定する.
  *
@@ -34,11 +36,13 @@ import org.junit.Test;
  */
 public class CreateWereWordsLogicTest {
 
-  private final CreateWereWordsLogic logic = new CreateWereWordsLogic();
+  private GameFixture fixture;
+  private CreateWereWordsLogic logic;
 
   @Before
-  public void resetRegistry() {
-    SpecialVillageList.clear();
+  public void setUp() {
+    fixture = new GameFixture();
+    logic = fixture.createWereWords;
   }
 
   @Test
@@ -95,7 +99,7 @@ public class CreateWereWordsLogicTest {
   public void createWereWordsRegistersASpecialVillage() {
     int villageNum = logic.createWereWords(true, 4, "すいか");
 
-    SpecialVillage village = SpecialVillageList.getVillage(villageNum);
+    SpecialVillage village = fixture.specialVillages.getVillage(villageNum);
     assertNotNull(village);
     assertEquals(4, village.getMessageList().size());
     assertTrue(villageNum >= 10000 && villageNum <= 99998);

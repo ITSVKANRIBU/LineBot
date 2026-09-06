@@ -26,14 +26,18 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.example.bot.testing.GameFixture;
+
 /** 特殊村の作成が、呼び出し元から渡されたメッセージ列をどう扱うかを固定する. */
 public class CreateVillageTest {
 
-  private final CreateVillage creatVillage = new CreateVillage();
+  private GameFixture fixture;
+  private CreateVillage createVillage;
 
   @Before
-  public void resetRegistry() {
-    SpecialVillageList.clear();
+  public void setUp() {
+    fixture = new GameFixture();
+    createVillage = fixture.createVillage;
   }
 
   /**
@@ -47,7 +51,7 @@ public class CreateVillageTest {
     List<String> original = Arrays.asList("1人目", "2人目", "3人目", "4人目", "5人目");
     List<String> messages = new ArrayList<String>(original);
 
-    creatVillage.createNewVillage(messages);
+    createVillage.createNewVillage(messages);
 
     assertEquals(original, messages);
   }
@@ -56,9 +60,9 @@ public class CreateVillageTest {
   public void everyMessageIsRegisteredForDistribution() {
     List<String> messages = Arrays.asList("1人目", "2人目", "3人目");
 
-    int villageNum = creatVillage.createNewVillage(messages);
+    int villageNum = createVillage.createNewVillage(messages);
 
-    SpecialVillage village = SpecialVillageList.getVillage(villageNum);
+    SpecialVillage village = fixture.specialVillages.getVillage(villageNum);
     assertTrue(village.getMessageList().containsAll(messages));
     assertEquals(messages.size(), village.getMessageList().size());
     assertTrue(villageNum >= 10000 && villageNum <= 99998);

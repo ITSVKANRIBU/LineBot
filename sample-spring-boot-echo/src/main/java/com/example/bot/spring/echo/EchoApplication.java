@@ -27,7 +27,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * {@code TextCommandHandler}、イラストカタログの定期取得は
  * {@link IllustrationCatalogJob}が持つ。ここにあるのは起動の配線だけ。
  */
-@SpringBootApplication
+// spring.game配下のレジストリとサービスもBeanにするため、スキャン範囲を広げる
+@SpringBootApplication(scanBasePackages = "com.example.bot")
 @EnableScheduling
 public class EchoApplication {
 

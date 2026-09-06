@@ -33,9 +33,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.VillageList;
 import com.example.bot.staticdata.MessageConst;
+import com.example.bot.testing.GameFixture;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
@@ -89,9 +88,10 @@ public class RouteParityTest {
       "知らない文字列",
   };
 
+  private GameFixture fixture;
   private LineEventHandler handler;
   private LineMessagingClient lineMessagingClient;
-  private final MainController controller = new MainController();
+  private MainController controller;
 
   @Before
   public void setUp() {
@@ -99,7 +99,7 @@ public class RouteParityTest {
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
 
-    handler = new LineEventHandler(lineMessagingClient);
+    resetRegistries();
   }
 
   @Test
@@ -209,16 +209,19 @@ public class RouteParityTest {
   }
 
   private int currentVillageNumber() {
-    return VillageList.findLatestOwned(OWNER, village -> true).getVillageNum();
+    return fixture.villages.findLatestOwned(OWNER, village -> true).getVillageNum();
   }
 
   private String altTextOf(List<Message> messages) {
     return ((TemplateMessage) messages.get(0)).getAltText();
   }
 
+  /** 新しいレジストリ一式で両経路のアダプタを組み直す. */
   private void resetRegistries() {
-    VillageList.clear();
-    SpecialVillageList.clear();
+    fixture = new GameFixture();
+    controller = new MainController(fixture.textCommandHandler);
+    handler = new LineEventHandler(
+        lineMessagingClient, fixture.textCommandHandler, fixture.villageService);
   }
 
   /** 経路ごとの送信手段. */

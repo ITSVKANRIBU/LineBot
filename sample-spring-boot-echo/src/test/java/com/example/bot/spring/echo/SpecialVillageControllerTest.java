@@ -33,17 +33,19 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.example.bot.spring.game.SpecialVillage;
-import com.example.bot.spring.game.SpecialVillageList;
+import com.example.bot.testing.GameFixture;
 
 /** {@code POST /specialvillage}の契約テスト. */
 public class SpecialVillageControllerTest {
 
   private MockMvc mockMvc;
 
+  private GameFixture fixture;
+
   @Before
   public void setUp() {
-    SpecialVillageList.clear();
-    mockMvc = MockMvcBuilders.standaloneSetup(new SpecialVillageController())
+    fixture = new GameFixture();
+    mockMvc = MockMvcBuilders.standaloneSetup(new SpecialVillageController(fixture.createVillage))
         .setControllerAdvice(new ApiExceptionHandler())
         .build();
   }
@@ -62,7 +64,7 @@ public class SpecialVillageControllerTest {
         result.getResponse().getContentAsString().replaceAll("\\D", ""));
     assertTrue(villageNum >= 10000 && villageNum <= 99998);
 
-    SpecialVillage village = SpecialVillageList.getVillage(villageNum);
+    SpecialVillage village = fixture.specialVillages.getVillage(villageNum);
     assertNotNull(village);
     assertEquals(2, village.getMessageList().size());
   }
@@ -166,7 +168,7 @@ public class SpecialVillageControllerTest {
         .andExpect(status().isOk())
         .andReturn();
 
-    SpecialVillage village = SpecialVillageList.getVillage(
+    SpecialVillage village = fixture.specialVillages.getVillage(
         Integer.parseInt(result.getResponse().getContentAsString().replaceAll("\\D", "")));
     assertTrue(village.join("user"));
     assertNotNull(village.getRoleMessage("user"));

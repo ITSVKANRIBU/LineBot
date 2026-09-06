@@ -20,11 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import com.example.bot.spring.game.SpecialVillage;
-import com.example.bot.spring.game.SpecialVillageList;
 import com.example.bot.spring.game.TextCommandHandler;
-import com.example.bot.spring.game.Village;
-import com.example.bot.spring.game.VillageList;
+import com.example.bot.spring.game.VillageService;
 import com.example.bot.staticdata.MessageConst;
 
 import com.linecorp.bot.client.LineMessagingClient;
@@ -66,9 +63,19 @@ public class LineEventHandler {
   private static final int MIN_SPECIAL_VILLAGE_NUMBER = 10000;
 
   private final LineMessagingClient lineMessagingClient;
+  private final TextCommandHandler textCommandHandler;
+  private final VillageService villageService;
 
-  public LineEventHandler(LineMessagingClient lineMessagingClient) {
+  /**
+   * @param lineMessagingClient 返信APIのクライアント
+   * @param textCommandHandler テキスト入力の解釈
+   * @param villageService 入室状況の参照
+   */
+  public LineEventHandler(LineMessagingClient lineMessagingClient,
+      TextCommandHandler textCommandHandler, VillageService villageService) {
     this.lineMessagingClient = lineMessagingClient;
+    this.textCommandHandler = textCommandHandler;
+    this.villageService = villageService;
   }
 
   @EventMapping
@@ -81,7 +88,7 @@ public class LineEventHandler {
       return;
     }
     replyOrDefault(event.getReplyToken(),
-        TextCommandHandler.handle(userId, event.getMessage().getText()));
+        textCommandHandler.handle(userId, event.getMessage().getText()));
   }
 
   @EventMapping
@@ -95,21 +102,18 @@ public class LineEventHandler {
       int dataInt = Integer.parseInt(data);
       if (dataInt >= 0 && dataInt < ODAI_RANK_DATA_LIMIT) {
         // お題詳細取得。userIdを使わないため識別できなくても応答する
-        reply(event.getReplyToken(), TextCommandHandler.odaiCandidate(dataInt));
+        reply(event.getReplyToken(), textCommandHandler.odaiCandidate(dataInt));
 
       } else if (userId == null) {
         replyUnidentifiedUser(event.getReplyToken());
 
       } else if (dataInt < MIN_SPECIAL_VILLAGE_NUMBER) {
         // 村番号の場合
-        Village village = VillageList.getVillage(dataInt);
-        replyOrDefault(event.getReplyToken(),
-            village == null ? null : village.getStatusMessage(userId));
+        replyOrDefault(event.getReplyToken(), villageService.villageStatus(userId, dataInt));
       } else {
         // 特殊村番号の場合
-        SpecialVillage village = SpecialVillageList.getVillage(dataInt);
         replyOrDefault(event.getReplyToken(),
-            village == null ? null : village.getStatusMessage(userId));
+            villageService.specialVillageStatus(userId, dataInt));
       }
 
     } catch (NumberFormatException e) {
