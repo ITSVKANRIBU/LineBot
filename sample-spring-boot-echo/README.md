@@ -69,12 +69,12 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
   ここへ集約します。対象の村がない場合は`null`を返し、呼び出し側が経路に応じた
   応答へ変換します。
 - `spring/game/VillageService.java`
-  村の作成・人数設定・お題設定・逆村化・参加・Werewords変換を担う、
-  LINEと`/callapi`の共通層。
+  村の作成・人数設定・お題設定・逆村化・参加・Werewords変換・入室状況の参照を担う、
+  LINEと`/callapi`の共通層。レジストリをコンストラクタで受け取ります。
   対象の村が見つからない場合はすべて`null`を返し、呼び出し側が
   「村が作成されていません」相当の応答へ変換します。
 - `spring/game/CreateVillage.java` — 特殊村の作成。
-- `spring/game/SpecialVillage.java` / `SpecialVillageList.java`
+- `spring/game/SpecialVillage.java` / `SpecialVillageRegistry.java`
   特殊村の状態とレジストリ。配布メッセージは生成時に確定し、以降は参加者が増えるだけ。
   「i番目の参加者にi番目のメッセージが対応する」不変条件はクラスの中で閉じています。
 - `spring/game/CreateWereWordsLogic.java`
@@ -86,8 +86,8 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 
 - `spring/game/Village.java` — 通常村の状態、役職の割り当て、メッセージ生成。
 - `spring/game/InsiderRole.java` — 役職の定義。
-- `spring/game/VillageList.java` — 通常村のstaticレジストリ。上限50件、超過分はFIFOで削除。
-- `spring/game/SpecialVillageList.java` — 特殊村のstaticレジストリ。上限30件。
+- `spring/game/VillageRegistry.java` — 通常村のレジストリ。上限50件、超過分はFIFOで削除。
+- `spring/game/SpecialVillageRegistry.java` — 特殊村のレジストリ。上限30件。
 
 状態とレジストリは`spring/game`にまとめてあります。通常村と特殊村で
 置き場所が分かれていると、対になる不変条件を追うのに2箇所を見る必要があるためです。
@@ -114,9 +114,9 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 テストのヘルパ（乱数を固定する`FixedRandom`、長い文字列を作る`Texts.repeat`）は
 `src/test/java/com/example/bot/testing/`にまとめてあります。
 
-ゲーム状態は`VillageList` / `SpecialVillageList`のstaticレジストリで共有されるため、
-各テストは`@Before`の`clear()`に依存しています。`build.gradle`で`maxParallelForks = 1`を指定し、
-同一JVMでの逐次実行を前提にしています。並列化するにはレジストリをインスタンス化してDIする必要があります。
+レジストリとサービスはSpringのBeanで、本番ではsingletonが1つだけ存在します。
+テストは`com.example.bot.testing.GameFixture`が本番と同じ依存関係で組み立てた
+一式を`new`するだけで隔離されるため、逐次実行の前提はありません。
 
 ## ログ
 
