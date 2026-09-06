@@ -1,18 +1,9 @@
 # AGENTS.md
-- Do not preserve backward compatibility. Remove obsolete paths instead of
-  adding compatibility layers, fallbacks, or migrations.
-- Choose the simplest implementation that fully meets the current
-  requirements. Avoid speculative abstractions, configuration, and
-  indirection.
-- Grow the system in layers. Start from the smallest version that works end
-  to end, and add each new capability on top of a product that already
-  works. Never trade a working product for unfinished complexity.
-- Keep components modular and concerns clearly separated.
-- Prefer established, well-maintained libraries when they reduce overall
-  complexity or improve reliability. Do not reimplement common
-  functionality without a clear reason.
-- Lean on the dependencies already in the project before writing your own
-  implementation or adding packages. Do not assume a library lacks a
-  capability without checking its documentation and types.
-- Make architectural decisions for the long term. Do not accept a stopgap
-  that only works for now and is meant to be replaced later.
+
+- 後方互換は保たない。互換レイヤー・フォールバック・移行処理を足さず、不要になった経路は削除する。
+- 現在の要件を満たす最も単純な実装を選ぶ。将来を見越した抽象化・設定・間接化はしない。
+- 層を重ねて育てる。動く最小構成から始め、動く状態を保ったまま機能を追加する。未完成の複雑さのために動く製品を壊さない。
+- コンポーネントはモジュール化し、関心を明確に分離する。
+- 全体の複雑さが減る、または信頼性が上がるなら、実績あるライブラリを使う。理由なく一般的な機能を再実装しない。
+- 自作や新規パッケージ追加の前に、既存の依存を活用する。ドキュメントと型を確認せずに「その機能はない」と決めつけない。
+- アーキテクチャは長期視点で決める。後で置き換える前提の暫定対応は採らない。
