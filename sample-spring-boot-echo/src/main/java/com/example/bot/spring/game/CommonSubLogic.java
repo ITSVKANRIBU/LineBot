@@ -40,11 +40,11 @@ public final class CommonSubLogic {
    * 役職メッセージを組み立てる.
    *
    * @param roleNum 役職番号
-   * @param umeji 埋め字
+   * @param placeholders 埋め字
    * @return 役職メッセージ
    */
-  public static String getWereMesse(int roleNum, String[] umeji) {
-    return new MessageFormat(WEREWORDS_MESSAGE_MAP[roleNum]).format(umeji);
+  public static String getWereMessage(int roleNum, String[] placeholders) {
+    return new MessageFormat(WEREWORDS_MESSAGE_MAP[roleNum]).format(placeholders);
   }
 
   public static String getWereRole(int roleNum) {

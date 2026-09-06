@@ -71,14 +71,14 @@ public class LineEventHandlerPostbackTest {
   public void postbackForEvictedSpecialVillageRepliesWithTheDefaultMessage() {
     handler.handlePostbackEvent(postback("99999"));
 
-    assertEquals(MessageConst.DEFAILT_MESSAGE, repliedAltText());
+    assertEquals(MessageConst.DEFAULT_MESSAGE, repliedAltText());
   }
 
   @Test
   public void postbackForEvictedVillageRepliesWithTheDefaultMessage() {
     handler.handlePostbackEvent(postback("1234"));
 
-    assertEquals(MessageConst.DEFAILT_MESSAGE, repliedAltText());
+    assertEquals(MessageConst.DEFAULT_MESSAGE, repliedAltText());
   }
 
   @Test
@@ -86,7 +86,7 @@ public class LineEventHandlerPostbackTest {
     // 旧DBのお題登録用ポストバックが古い端末から届いた場合
     handler.handlePostbackEvent(postback("すいか"));
 
-    assertEquals(MessageConst.DEFAILT_MESSAGE, repliedAltText());
+    assertEquals(MessageConst.DEFAULT_MESSAGE, repliedAltText());
   }
 
   @Test

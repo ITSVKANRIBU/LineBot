@@ -18,7 +18,7 @@ package com.example.bot.staticdata;
 
 public class MessageConst {
 
-  public static final String DEFAILT_MESSAGE = "お題を配りたい方は「お題」または「神」を、\n"
+  public static final String DEFAULT_MESSAGE = "お題を配りたい方は「お題」または「神」を、\n"
       + "お題及び役職を確認したい場合は村番号（数字4桁）を入力してください。";
 
   public static final String OWNER_ODAIMESSAGE = "お題を入力してください。";

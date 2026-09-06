@@ -25,24 +25,24 @@ public class CreatWereWordsLogic {
   /**
    * Werewords村を作成する.
    *
-   * @param godFlg GMを立てる場合true
+   * @param godMode GMを立てる場合true
    * @param num 参加人数
    * @param theme お題
    * @return 採番された村番号
    */
-  public int createWereWords(boolean godFlg, int num, String theme) {
-    return new CreatVillage().createNewVillage(getMessages(godFlg, num, theme));
+  public int createWereWords(boolean godMode, int num, String theme) {
+    return new CreatVillage().createNewVillage(getMessages(godMode, num, theme));
   }
 
   /**
    * 配布順のメッセージを組み立てる。先頭の役職を「欠け」として扱う.
    *
-   * @param godFlg GMを立てる場合true
+   * @param godMode GMを立てる場合true
    * @param num 参加人数
    * @param theme お題
    * @return 参加順に配るメッセージ
    */
-  public List<String> getMessages(boolean godFlg, int num, String theme) {
+  public List<String> getMessages(boolean godMode, int num, String theme) {
     List<String> messages = new ArrayList<String>();
 
     // 役職判定リスト生成
@@ -60,17 +60,17 @@ public class CreatWereWordsLogic {
 
     // 先頭の役職を欠けとしてメッセージ設定
     String[] placeholders = { theme, CommonSubLogic.getWereRole(roleList.get(0)) };
-    if (godFlg) {
+    if (godMode) {
       //GM追加
-      messages.add(CommonSubLogic.getWereMesse(4, placeholders));
+      messages.add(CommonSubLogic.getWereMessage(4, placeholders));
       for (int i = 1; i < roleList.size(); i++) {
-        messages.add(CommonSubLogic.getWereMesse(roleList.get(i), placeholders));
+        messages.add(CommonSubLogic.getWereMessage(roleList.get(i), placeholders));
       }
     } else {
       // 村人追加（GMの役掛け用）
-      messages.add(CommonSubLogic.getWereMesse(3, placeholders));
+      messages.add(CommonSubLogic.getWereMessage(3, placeholders));
       for (Integer role : roleList) {
-        messages.add(CommonSubLogic.getWereMesse(role, placeholders));
+        messages.add(CommonSubLogic.getWereMessage(role, placeholders));
       }
     }
 

@@ -114,7 +114,7 @@ public class LineEventHandler {
 
     } catch (NumberFormatException e) {
       // 旧DBのお題登録用ポストバックは廃止済み。安全な既定応答だけ返す。
-      replyDefoltMessage(event.getReplyToken());
+      replyDefaultMessage(event.getReplyToken());
     }
 
   }
@@ -148,20 +148,20 @@ public class LineEventHandler {
   /** メッセージがあれば返信し、なければ村の作成を促す既定の応答を返す. */
   private void replyOrDefault(@NonNull String replyToken, List<Message> messages) {
     if (messages == null) {
-      replyDefoltMessage(replyToken);
+      replyDefaultMessage(replyToken);
     } else {
       reply(replyToken, messages);
     }
   }
 
   /** 村の作成を促す既定の応答. 対象の村がない操作はすべてここへ落ちる. */
-  private void replyDefoltMessage(@NonNull String replyToken) {
+  private void replyDefaultMessage(@NonNull String replyToken) {
     ConfirmTemplate confirmTemplate = new ConfirmTemplate("村の作成をしますか？",
         new MessageAction("GM", "お題"),
         new MessageAction("神", "神"));
 
     reply(replyToken, Collections.<Message>singletonList(
-        new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)));
+        new TemplateMessage(MessageConst.DEFAULT_MESSAGE, confirmTemplate)));
   }
 
   /** 返信APIの唯一の送信口. 送信の失敗はログに残すだけで、呼び出し元へは伝えない. */

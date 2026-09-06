@@ -483,7 +483,7 @@ public class LineEventHandlerTextCommandTest {
 
   private void assertDefaultReply(List<Message> messages) {
     assertEquals(1, messages.size());
-    assertEquals(MessageConst.DEFAILT_MESSAGE, altTextOf(messages));
+    assertEquals(MessageConst.DEFAULT_MESSAGE, altTextOf(messages));
 
     ConfirmTemplate confirm = (ConfirmTemplate) ((TemplateMessage) messages.get(0)).getTemplate();
     assertEquals(2, confirm.getActions().size());

@@ -332,7 +332,7 @@ public class Village {
         messages.add(getStatusMessage(userId).get(0));
       }
     } else {
-      messages = Collections.singletonList(new TextMessage(MessageConst.DEFAILT_MESSAGE));
+      messages = Collections.singletonList(new TextMessage(MessageConst.DEFAULT_MESSAGE));
     }
 
     return messages;

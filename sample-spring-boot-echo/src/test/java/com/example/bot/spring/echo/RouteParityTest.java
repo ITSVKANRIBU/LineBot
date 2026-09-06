@@ -205,7 +205,7 @@ public class RouteParityTest {
       return MISSING_VILLAGE_TEXT.equals(((TextMessage) message).getText());
     }
     return message instanceof TemplateMessage
-        && MessageConst.DEFAILT_MESSAGE.equals(((TemplateMessage) message).getAltText());
+        && MessageConst.DEFAULT_MESSAGE.equals(((TemplateMessage) message).getAltText());
   }
 
   private int currentVillageNumber() {

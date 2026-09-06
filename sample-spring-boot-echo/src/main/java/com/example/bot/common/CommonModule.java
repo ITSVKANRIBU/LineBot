@@ -97,13 +97,13 @@ public class CommonModule {
       Map<String, List<WeightedUrl>> from, Random random) {
     List<WeightedUrl> candidates = from.get(roleName);
     if (candidates == null || candidates.isEmpty()) {
-      return defoltIllustUrl(roleName);
+      return defaultIllustUrl(roleName);
     }
 
     int totalWeight = candidates.get(candidates.size() - 1).cumulativeWeight;
     if (totalWeight <= 0) {
       // 重みが正のファイルが1つもない役職。抽選できないので既定画像へ落とす
-      return defoltIllustUrl(roleName);
+      return defaultIllustUrl(roleName);
     }
 
     int draw = random.nextInt(totalWeight);
@@ -112,10 +112,10 @@ public class CommonModule {
         return candidate.url;
       }
     }
-    return defoltIllustUrl(roleName);
+    return defaultIllustUrl(roleName);
   }
 
-  private static String defoltIllustUrl(String roleName) {
+  private static String defaultIllustUrl(String roleName) {
     switch (roleName) {
     case "INSIDER":
       return MessageConst.INSIDER_URL;
