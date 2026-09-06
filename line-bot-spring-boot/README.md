@@ -36,8 +36,8 @@ public class LineEventHandler {
 検出されたhandlerは起動時にlogへ出力されます。
 
 ```text
-c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[MessageEvent<TextMessageContent>]" onto public com.linecorp.bot.model.message.TextMessage com.example.bot.spring.echo.LineEventHandler.handleTextMessageEvent(...)
-c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void com.example.bot.spring.echo.LineEventHandler.handleDefaultMessageEvent(...)
+c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[MessageEvent<TextMessageContent>]" onto public com.linecorp.bot.model.message.TextMessage insidergame.adapter.LineEventHandler.handleTextMessageEvent(...)
+c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void insidergame.adapter.LineEventHandler.handleDefaultMessageEvent(...)
 ```
 
 ## 設定

@@ -21,7 +21,7 @@
 | `LINE_BOT_CHANNEL_TOKEN` | ○ | チャネルアクセストークン |
 | `LINE_BOT_CHANNEL_SECRET` | ○ | チャネルシークレット。webhook の署名検証に使う |
 | `PORT` | Heroku が設定 | 待ち受けポート |
-| `LOGGING_LEVEL_COM_EXAMPLE_BOT` | | ログレベル。既定は INFO |
+| `LOGGING_LEVEL_INSIDERGAME` | | ログレベル。既定は INFO |
 
 LINE Developers コンソール側では、Webhook URL を `https://<アプリのホスト>/callback` に設定します。
 
@@ -65,7 +65,7 @@ CI は GitHub Actions で、`3.0` と `develop` への push、およびプルリ
 イベント種別を追う必要がある場合は DEBUG へ引き上げます。**引き上げてもユーザー ID とお題は出力されません。**
 
 ```bash
-LOGGING_LEVEL_COM_EXAMPLE_BOT=DEBUG
+LOGGING_LEVEL_INSIDERGAME=DEBUG
 ```
 
 ## 障害時の挙動

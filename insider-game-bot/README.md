@@ -46,63 +46,69 @@ Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動�
 
 ## 構成
 
-### イベントの受け口
+パッケージは`insidergame`をルートに、[architecture.md](../docs/architecture.md)の層と
+対応させています。`adapter`が入力アダプタ、`game`がゲーム操作と状態、
+`common`と`message`が補助データです。
 
-- `spring/echo/InsiderGameBotApplication.java` — Spring Bootの起動クラス。配線だけを持ちます。
-- `spring/echo/LineEventHandler.java`
+### イベントの受け口（`adapter`）
+
+- `InsiderGameBotApplication.java`
+  Spring Bootの起動クラス。ルートパッケージに置いてあるため、
+  コンポーネントスキャンが`insidergame`配下すべてに及びます。
+- `adapter/LineEventHandler.java`
   LINEイベントのentry point。テキスト・ポストバック・スタンプを受け取り、
   `TextCommandHandler`が組み立てたメッセージを返信します。
   `LineMessagingClient`はコンストラクタで受け取ります。
-- `spring/echo/IllustrationCatalogJob.java`
+- `adapter/IllustrationCatalogJob.java`
   5分間隔の`@Scheduled`でイラスト一覧を再取得します。
-- `spring/echo/MainController.java`
+- `adapter/MainController.java`
   `/callapi`のHTTP adapter。入力の解釈は`TextCommandHandler`に任せ、
   この経路が固有に持つのはパラメータの取り出しと「村が作成されていません」の応答だけ。
-- `spring/echo/SpecialVillageController.java` — `/specialvillage`のHTTP adapter。
-- `spring/echo/ApiExceptionHandler.java` — 公開APIの内部エラーをHTTP 500へ丸める。
-- `spring/echo/StickerReplyEvent.java` — スタンプへの応答（問い合わせ先とホームページの案内）。
+- `adapter/SpecialVillageController.java` — `/specialvillage`のHTTP adapter。
+- `adapter/ApiExceptionHandler.java` — 公開APIの内部エラーをHTTP 500へ丸める。
+- `adapter/StickerReplyEvent.java` — スタンプへの応答（問い合わせ先とホームページの案内）。
 
-### ゲームロジック
+### ゲームロジック（`game`）
 
-- `spring/game/TextCommandHandler.java`
+- `game/TextCommandHandler.java`
   テキスト入力の解釈を1組だけ持つ共通入口。数値の境界、コマンド表、trimの扱いを
   ここへ集約します。対象の村がない場合は`null`を返し、呼び出し側が経路に応じた
   応答へ変換します。
-- `spring/game/VillageService.java`
+- `game/VillageService.java`
   村の作成・人数設定・お題設定・逆村化・参加・Werewords変換・入室状況の参照を担う、
   LINEと`/callapi`の共通層。レジストリをコンストラクタで受け取ります。
   対象の村が見つからない場合はすべて`null`を返し、呼び出し側が
   「村が作成されていません」相当の応答へ変換します。
-- `spring/game/CreateVillage.java` — 特殊村の作成。
-- `spring/game/SpecialVillage.java` / `SpecialVillageRegistry.java`
+- `game/CreateVillage.java` — 特殊村の作成。
+- `game/SpecialVillage.java` / `SpecialVillageRegistry.java`
   特殊村の状態とレジストリ。配布メッセージは生成時に確定し、以降は参加者が増えるだけ。
   「i番目の参加者にi番目のメッセージが対応する」不変条件はクラスの中で閉じています。
-- `spring/game/CreateWereWordsLogic.java`
+- `game/CreateWereWordsLogic.java`
   Werewords村の役職（占師・インサイダー・村人・GM）を抽選し、特殊村として登録する。
   先頭の役職は「欠け」として扱う。
-- `spring/game/CommonSubLogic.java` — Werewordsの役職メッセージの組み立て。
+- `game/CommonSubLogic.java` — Werewordsの役職メッセージの組み立て。
 
-### 状態
+### 状態（`game`）
 
-- `spring/game/Village.java` — 通常村の状態、役職の割り当て、メッセージ生成。
-- `spring/game/InsiderRole.java` — 役職の定義。
-- `spring/game/VillageRegistry.java` — 通常村のレジストリ。上限50件、超過分はFIFOで削除。
-- `spring/game/SpecialVillageRegistry.java` — 特殊村のレジストリ。上限30件。
+- `game/Village.java` — 通常村の状態、役職の割り当て、メッセージ生成。
+- `game/InsiderRole.java` — 役職の定義。
+- `game/VillageRegistry.java` — 通常村のレジストリ。上限50件、超過分はFIFOで削除。
+- `game/SpecialVillageRegistry.java` — 特殊村のレジストリ。上限30件。
 
-状態とレジストリは`spring/game`にまとめてあります。通常村と特殊村で
+状態とレジストリは`game`にまとめてあります。通常村と特殊村で
 置き場所が分かれていると、対になる不変条件を追うのに2箇所を見る必要があるためです。
 
 ゲーム状態はDBに保存せず、プロセスのメモリだけで管理します。
 再起動・再デプロイで作成中の村は失われ、複数インスタンスでの共有もできません。
 
-### 共通処理とデータ
+### 共通処理とデータ（`common` / `message`）
 
 - `common/CommonModule.java`
   Google Apps Scriptから役職イラストの一覧を取得し、ファイル名の重み付けに従って抽選します。
   取得に失敗した場合は前回取得した一覧を保持し、一度も取得できていない役職は`MessageConst`のGitHub Raw画像へfallbackします。
   URLは必ずApps Scriptのデプロイ URL（`/macros/s/<デプロイID>/exec`）を指定してください。
 - `common/WordGetter.java` — `word.csv`から難易度別にお題候補を1件選ぶ。
-- `staticdata/MessageConst.java` — 定型文と既定イラストのURL。
+- `message/MessageConst.java` — 定型文と既定イラストのURL。
 - `src/main/resources/word.csv` — お題データ。
 
 ## テスト
@@ -115,7 +121,7 @@ Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動�
 `src/test/java/com/example/bot/testing/`にまとめてあります。
 
 レジストリとサービスはSpringのBeanで、本番ではsingletonが1つだけ存在します。
-テストは`com.example.bot.testing.GameFixture`が本番と同じ依存関係で組み立てた
+テストは`insidergame.testing.GameFixture`が本番と同じ依存関係で組み立てた
 一式を`new`するだけで隔離されるため、逐次実行の前提はありません。
 
 ## ログ
@@ -125,5 +131,5 @@ webhook eventにはLINEユーザーIDとユーザーが入力したお題が含�
 次の環境変数でDEBUGへ引き上げます。個人情報そのものは引き上げても出力されません。
 
 ```bash
-LOGGING_LEVEL_COM_EXAMPLE_BOT=DEBUG
+LOGGING_LEVEL_INSIDERGAME=DEBUG
 ```
