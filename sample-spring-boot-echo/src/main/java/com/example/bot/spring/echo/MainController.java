@@ -66,7 +66,8 @@ public class MainController {
   private List<Message> messageController(String message, String userId) {
     int number;
     try {
-      number = Integer.parseInt(message);
+      // 数値判定はLINE経由と同じく、前後の空白を除いてから行う
+      number = Integer.parseInt(message.trim());
     } catch (NumberFormatException e) {
       return nonNumberMessage(message, userId);
     }

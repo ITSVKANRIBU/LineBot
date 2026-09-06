@@ -117,6 +117,18 @@ public class MainControllerTest {
         .contains("人数を『5人』に設定しました。"));
   }
 
+  /** 数値の前後の空白は、LINE経由と同じくtrimしてから判定する. */
+  @Test
+  public void aNumberWithSurroundingSpacesIsStillAParticipantCount() {
+    controller.index("お題", OWNER);
+
+    ResponseEntity<List<Message>> response = controller.index(" 5", OWNER);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertTrue(((TemplateMessage) response.getBody().get(0)).getAltText()
+        .contains("人数を『5人』に設定しました。"));
+  }
+
   @Test
   public void villageSizeBelowTwoIsRejectedWithGuidance() {
     controller.index("お題", OWNER);
