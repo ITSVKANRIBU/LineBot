@@ -46,8 +46,12 @@ public class CommonModule {
   static final String URL =
       "https://script.google.com/macros/s/"
       + "AKfycbyy5RZiz_11ylnVV4NB4kToZv6Qv9ecXkxRgnWo9yvE_AxNLvM/exec";
-  private static Map<String, ArrayList<Integer>> illustrationRtioMap;
-  private static Map<String, ArrayList<String>> illustrationUrlMap;
+  /** 役職名 → URLリストの添字を重みぶん並べたリスト。カタログ取得のたびに差し替える. */
+  private static Map<String, ArrayList<Integer>> illustrationRtioMap =
+      new HashMap<String, ArrayList<Integer>>();
+  /** 役職名 → URLリスト。{@link #illustrationRtioMap}と同時に差し替える. */
+  private static Map<String, ArrayList<String>> illustrationUrlMap =
+      new HashMap<String, ArrayList<String>>();
 
   public static String getIllustUrl(String roleName) {
 
@@ -62,6 +66,7 @@ public class CommonModule {
         return defoltIllustUrl(roleName);
       }
     } catch (Exception e) {
+      // 総重みが0の役職ではnextInt(0)が例外になる。既定画像へ落とす
       return defoltIllustUrl(roleName);
     }
     return returnPath;
