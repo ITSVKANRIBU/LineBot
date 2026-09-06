@@ -21,6 +21,7 @@
 
 ## Domain Knowledge
 （業務・仕様に関する事実）
+- 2026-09-07: オーナー確認済み: LINE と `/callapi` の処理は LINE を正として共通化する（数値境界 100、`@` コマンドの解釈を API にも適用）。経路差として残すのは「対象の村がないときの応答」だけで、API は `村が作成されていません` テキストを維持する。
 - 2026-09-07: `EchoApplication` の `@SpringBootApplication` は `com.example.bot.spring.echo` 配下しかスキャンしない。`common`/`spring.game`/`staticdata` に Bean を置くなら `scanBasePackages = "com.example.bot"` が必要。
 - 2026-09-07: `SpecialVillageController` は村作成を含む全体を `catch (Exception)` で 400 に丸めるため、`docs/interfaces.md` の「内部エラー 500」は `/callapi` にしか当たらない。`CreatVillage` は登録時に全メッセージをシャッフルするので、`getMessages` の先頭役職は配布順を意味しない。
 - 2026-09-06: `word.csv` の 2 列目（難易度 1〜5）の切り替わり行は `WordGetter` の行番号定数（954/5084/7646/8436）と完全に一致する。難易度境界は 2 列目から導出できる。
