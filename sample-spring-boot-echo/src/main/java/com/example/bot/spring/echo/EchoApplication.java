@@ -177,25 +177,17 @@ public class EchoApplication {
         new TextMessage(MessageConst.ERR_UNIDENTIFIED_USER)));
   }
 
+  /** 村の作成を促す既定の応答. 対象の村がない操作はすべてここへ落ちる. */
   private void replyDefoltMessage(@NonNull String replyToken) {
     ConfirmTemplate confirmTemplate = new ConfirmTemplate("村の作成をしますか？",
         new MessageAction("GM", "お題"),
         new MessageAction("神", "神"));
 
-    try {
-      lineMessagingClient
-          .replyMessage(new ReplyMessage(replyToken,
-              new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)))
-          .get();
-    } catch (InterruptedException | ExecutionException e) {
-      if (e instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
-      log.error("Failed to send the default reply", e);
-    }
-
+    reply(replyToken, Collections.<Message>singletonList(
+        new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)));
   }
 
+  /** 返信APIの唯一の送信口. 送信の失敗はログに残すだけで、呼び出し元へは伝えない. */
   private void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
     try {
       lineMessagingClient
