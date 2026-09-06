@@ -101,44 +101,7 @@ public class CommonModule {
       Map<String, ArrayList<Integer>> tmpdataMap = new HashMap<String, ArrayList<Integer>>();
       Map<String, ArrayList<String>> tmpUrlMap = new HashMap<String, ArrayList<String>>();
 
-      for (Object object : dataList) {
-        @SuppressWarnings("unchecked")
-        Map<String, String> map = (Map<String, String>) object;
-
-        String name = map.get("name");
-        String[] fileNameArray = name.split("_");
-
-        // エラーチェック
-        if (fileNameArray.length != 3) {
-          continue;
-        }
-
-        // ある場合
-        if (tmpdataMap.containsKey(fileNameArray[0])) {
-
-          //urlListに追加
-          int urlListindex = tmpUrlMap.get(fileNameArray[0]).size();
-          tmpUrlMap.get(fileNameArray[0]).add(map.get("url"));
-
-          for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
-            tmpdataMap.get(fileNameArray[0]).add(urlListindex);
-          }
-        } else {
-
-          ArrayList<Integer> newIntList = new ArrayList<Integer>();
-
-          for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
-            newIntList.add(0);
-          }
-          // 追加
-          tmpdataMap.put(fileNameArray[0], newIntList);
-
-          ArrayList<String> newStrList = new ArrayList<String>();
-          newStrList.add(map.get("url"));
-          tmpUrlMap.put(fileNameArray[0], newStrList);
-
-        }
-      }
+      parseCatalog(dataList, tmpdataMap, tmpUrlMap);
 
       illustrationRtioMap = tmpdataMap;
       illustrationUrlMap = tmpUrlMap;
@@ -148,5 +111,58 @@ public class CommonModule {
       log.warn("Failed to refresh the illustration catalog", e);
     }
 
+  }
+
+  /**
+   * カタログ応答の{@code files}要素を、役職ごとの重みリストとURLリストへ展開する.
+   *
+   * <p>HTTPから切り離してあるため、解析だけを単体テストできる。
+   * 呼び出し元が渡すmapへ書き込むだけで、staticなカタログには触れない。
+   *
+   * @param dataList {@code files}配列。各要素は{@code name}と{@code url}を持つmap
+   * @param ratioMap 役職名 → URLリストの添字を重みぶん並べたリスト
+   * @param urlMap 役職名 → URLリスト
+   */
+  @SuppressWarnings("rawtypes")
+  static void parseCatalog(List dataList,
+      Map<String, ArrayList<Integer>> ratioMap, Map<String, ArrayList<String>> urlMap) {
+    for (Object object : dataList) {
+      @SuppressWarnings("unchecked")
+      Map<String, String> map = (Map<String, String>) object;
+
+      String name = map.get("name");
+      String[] fileNameArray = name.split("_");
+
+      // エラーチェック
+      if (fileNameArray.length != 3) {
+        continue;
+      }
+
+      // ある場合
+      if (ratioMap.containsKey(fileNameArray[0])) {
+
+        //urlListに追加
+        int urlListindex = urlMap.get(fileNameArray[0]).size();
+        urlMap.get(fileNameArray[0]).add(map.get("url"));
+
+        for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
+          ratioMap.get(fileNameArray[0]).add(urlListindex);
+        }
+      } else {
+
+        ArrayList<Integer> newIntList = new ArrayList<Integer>();
+
+        for (int i = 0; i < Integer.parseInt(fileNameArray[1]); i++) {
+          newIntList.add(0);
+        }
+        // 追加
+        ratioMap.put(fileNameArray[0], newIntList);
+
+        ArrayList<String> newStrList = new ArrayList<String>();
+        newStrList.add(map.get("url"));
+        urlMap.put(fileNameArray[0], newStrList);
+
+      }
+    }
   }
 }
