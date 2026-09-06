@@ -28,7 +28,7 @@ LINE Developers コンソール側では、Webhook URL を `https://<アプリ�
 ## ローカルでの起動
 
 ```bash
-./gradlew :sample-spring-boot-echo:bootRun
+./gradlew :insider-game-bot:bootRun
 ```
 
 環境変数 `LINE_BOT_CHANNEL_TOKEN` と `LINE_BOT_CHANNEL_SECRET` が必要です。webhook を受けるには、ローカルのポートを外部へ公開する必要があります。

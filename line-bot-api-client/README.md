@@ -7,7 +7,7 @@ LINE Messaging APIを呼び出すHTTPクライアントです。Java 8以降で�
 このリポジトリのモジュール依存は次のとおりです。
 
 ```text
-sample-spring-boot-echo（インサイダーゲームBot本体）
+insider-game-bot（インサイダーゲームBot本体）
   └─ line-bot-spring-boot（Spring Bootへの組み込み）
        ├─ line-bot-api-client  ← このモジュール
        ├─ line-bot-servlet（webhookの署名検証とparse）

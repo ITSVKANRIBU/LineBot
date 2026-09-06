@@ -19,5 +19,5 @@ include 'line-bot-spring-boot'
  * under the License.
  */
 
-// samples
-include 'sample-spring-boot-echo'
+// Bot本体
+include 'insider-game-bot'

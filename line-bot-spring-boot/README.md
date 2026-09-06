@@ -55,7 +55,7 @@ c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void com
 | `line.bot.handler.enabled` | `@EventMapping`の仕組みを有効にする（既定: true） |
 | `line.bot.handler.path` | webhookを待ち受けるpath（既定: `/callback`） |
 
-このリポジトリのBot本体（`sample-spring-boot-echo`）では、
+このリポジトリのBot本体（`insider-game-bot`）では、
 `src/main/resources/application.yml`で次のように設定しています。
 秘密情報はソースへ書かず、環境変数から注入します。
 

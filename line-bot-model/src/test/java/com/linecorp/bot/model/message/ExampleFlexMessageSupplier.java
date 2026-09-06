@@ -41,7 +41,7 @@ import com.linecorp.bot.model.message.flex.unit.FlexFontSize;
 import com.linecorp.bot.model.message.flex.unit.FlexLayout;
 import com.linecorp.bot.model.message.flex.unit.FlexMarginSize;
 
-// TODO: Extract (commonalize) this with sample-spring-boot-echo's
+// TODO: Extract (commonalize) this with insider-game-bot's
 public class ExampleFlexMessageSupplier implements Supplier<FlexMessage> {
     @Override
     public FlexMessage get() {

@@ -32,7 +32,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 
 group = 'com.linecorp.bot'
-// Procfileはbuild/libs/sample-spring-boot-echo-*.jarをワイルドカードで拾う
+// Procfileはbuild/libs/insider-game-bot-*.jarをワイルドカードで拾う
 version = '2.7.0-SNAPSHOT'
 
 allprojects {

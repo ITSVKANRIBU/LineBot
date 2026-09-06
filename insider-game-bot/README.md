@@ -1,4 +1,4 @@
-# sample-spring-boot-echo
+# insider-game-bot
 
 インサイダーゲームBotの本体です。Spring Bootアプリとして動作し、
 LINE webhookの受信、ゲーム状態の保持、外部フォーム向けHTTP APIの提供をすべてこのモジュールで行います。
@@ -11,7 +11,7 @@ LINE webhookの受信、ゲーム状態の保持、外部フォーム向けHTTP 
 Java 8が必要です。リポジトリルートから次のコマンドで起動します。
 
 ```bash
-./gradlew :sample-spring-boot-echo:bootRun
+./gradlew :insider-game-bot:bootRun
 ```
 
 チャネル情報は`src/main/resources/application.yml`から環境変数として読み込みます。
@@ -31,7 +31,7 @@ export LINE_BOT_CHANNEL_SECRET='チャネルシークレット'
 トークンとシークレットはLINE Developersのチャネル設定画面から取得します。
 ソースコードには書かず、環境変数（Herokuの場合はConfig Vars）で渡します。
 
-Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が起動します。
+Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動します。
 デプロイ後、LINEチャネルのWebhook URLに`https://<アプリのホスト>/callback`を設定してください。
 
 ## エンドポイント
@@ -108,7 +108,7 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 ## テスト
 
 ```bash
-./gradlew :sample-spring-boot-echo:test
+./gradlew :insider-game-bot:test
 ```
 
 テストのヘルパ（乱数を固定する`FixedRandom`、長い文字列を作る`Texts.repeat`）は
