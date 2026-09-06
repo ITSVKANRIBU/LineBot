@@ -43,6 +43,9 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
  */
 public final class VillageService {
 
+  /** Werewordsへ変換できる最小人数. 占師・インサイダー・村人で3人必要. */
+  private static final int MIN_WEREWORDS_VILLAGE_SIZE = 3;
+
   private VillageService() {
   }
 
@@ -204,6 +207,44 @@ public final class VillageService {
 
     String message = village.getVillageNum() + "村 を『逆村』に設定しました。\n"
         + "お題を知らない村人が1人となります。";
+
+    return Collections.singletonList(new TextMessage(message));
+  }
+
+  /**
+   * 自分の村をWerewords村へ変換する.
+   *
+   * <p>元の通常村は残る。変換で作るのは配布メッセージだけを持つ新しい特殊村で、
+   * 配布順は登録時にシャッフルされる。
+   *
+   * @param userId オーナーのユーザーID
+   * @return 案内メッセージ。変換できる自分の村がない場合はnull
+   */
+  public static List<Message> convertToWerewords(String userId) {
+    Village village = VillageList.findLatestOwned(userId, target -> !target.hasMembers());
+
+    // 人数とお題が揃っていない村は変換できない。より古い村へは遡らない
+    if (village == null
+        || village.getVillageSize() < MIN_WEREWORDS_VILLAGE_SIZE
+        || village.getOdai() == null) {
+      return null;
+    }
+
+    String odai = village.getOdai();
+    // 神モードで作った村ではGMの席が抽選済み。GMは役掛けで入室しない
+    boolean godMode = village.getGmNum() != 0;
+
+    int villageNum = new CreatWereWordsLogic()
+        .createWereWords(godMode, village.getVillageSize(), odai);
+
+    String message = "お題を『" + odai + "』として新たにワーワーズの『" + villageNum + "』村を作成しました。";
+    if (godMode) {
+      message = message + "参加者へ『" + villageNum + "』を伝えてください。";
+    } else {
+      message = message + "参加者へ『" + villageNum + "』を伝え、あなたも入室してください。\n"
+          + "\n■注意\n"
+          + "あなたはGMです。入室時に表示された役職が欠けた役職となります。";
+    }
 
     return Collections.singletonList(new TextMessage(message));
   }

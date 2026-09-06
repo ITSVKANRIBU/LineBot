@@ -56,7 +56,6 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 - `spring/echo/SpecialVillageController.java` — `/specialvillage`のHTTP adapter。
 - `spring/echo/ApiExceptionHandler.java` — 公開APIの内部エラーをHTTP 500へ丸める。
 - `spring/echo/EchoImageEvent.java` — スタンプへの応答（問い合わせ先とホームページの案内）。
-- `spring/echo/WereWordEvent.java` — Werewords村の作成イベント。
 
 LINEと`/callapi`で村番号の判定基準が異なる点に注意してください。
 LINEは101以上、`/callapi`は1000以上を村番号として扱い、それ未満は参加人数の設定になります。
@@ -64,7 +63,8 @@ LINEは101以上、`/callapi`は1000以上を村番号として扱い、それ�
 ### ゲームロジック
 
 - `spring/game/VillageService.java`
-  村の作成・人数設定・お題設定・参加を担う、LINEと`/callapi`の共通層。
+  村の作成・人数設定・お題設定・逆村化・参加・Werewords変換を担う、
+  LINEと`/callapi`の共通層。
   対象の村が見つからない場合はすべて`null`を返し、呼び出し側が
   「村が作成されていません」相当の応答へ変換します。
 - `spring/game/CreatVillage.java` — 特殊村の作成。

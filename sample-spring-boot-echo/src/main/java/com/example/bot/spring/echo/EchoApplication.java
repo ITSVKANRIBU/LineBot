@@ -274,12 +274,7 @@ public class EchoApplication {
         messages = VillageService.setReverseVillage(userId);
 
       } else if ("@わーわーず".equals(userMessage.trim()) || "＠わーわーず".equals(userMessage.trim())) {
-        Village village = VillageList.findLatestOwned(userId, target -> !target.hasMembers());
-        // 人数、お題チェック
-        if (village != null && village.getVillageSize() > 2 && village.getOdai() != null) {
-          WereWordEvent logic = new WereWordEvent();
-          messages = logic.branch(village);
-        }
+        messages = VillageService.convertToWerewords(userId);
 
       } else {
         messages = VillageService.setOdai(userId, userMessage);
