@@ -16,6 +16,7 @@
 
 package com.example.bot.spring.game;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -26,15 +27,16 @@ public class CreatVillage {
   /**
    * メッセージをランダムに並び替えて特殊村を作成する.
    *
-   * @param messageList 参加者へ配るメッセージ。呼び出し元のリストを並び替える
+   * @param messageList 参加者へ配るメッセージ。呼び出し元のリストは変更しない
    * @return 採番された村番号
    */
   public int createNewVillage(List<String> messageList) {
     SpecialVillage village = new SpecialVillage();
 
-    // メッセージをランダムに並び替え
-    Collections.shuffle(messageList);
-    village.setMessageList(messageList);
+    // 呼び出し元のリストを壊さないよう、複製してから並び替える
+    List<String> shuffled = new ArrayList<String>(messageList);
+    Collections.shuffle(shuffled);
+    village.setMessageList(shuffled);
     village.setUserList(new CopyOnWriteArrayList<String>());
 
     return SpecialVillageList.addVillage(village, new Random());
