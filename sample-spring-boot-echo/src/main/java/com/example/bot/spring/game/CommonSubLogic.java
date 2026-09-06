@@ -28,8 +28,9 @@ public final class CommonSubLogic {
       "あなたの役職はGMです。お題は「{0}」です。\n役職は「{1}」が欠けています。"
   };
 
+  /** 「欠け」として名指しする役職名。添字は{@link #WEREWORDS_MESSAGE_MAP}と共通. */
   private static final String[] WEREWORDS_ROLE_MAP = {
-      "", "占師", "インサイダー", "あなたの役職は村人です", "村人", "GM"
+      "", "占師", "インサイダー", "村人"
   };
 
   private CommonSubLogic() {

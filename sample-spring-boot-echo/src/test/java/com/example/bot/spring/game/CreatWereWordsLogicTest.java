@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+
 import java.util.List;
 
 import org.junit.Before;
@@ -66,6 +67,30 @@ public class CreatWereWordsLogicTest {
     }
   }
 
+  /**
+   * 欠けた役職が村人のとき、GM向け文言は役職名で「村人」と伝える.
+   *
+   * <p>役職テーブルの添字3に文章がそのまま入っていたため、GM向けメッセージが
+   * 『役職は「あなたの役職は村人です」が欠けています。』になっていた。
+   */
+  @Test
+  public void theMissingRoleIsNamedRatherThanDescribed() {
+    assertEquals("村人", CommonSubLogic.getWereRole(3));
+
+    // 欠けの役職はシャッフルで決まるため、村人が先頭に来るまで繰り返す
+    boolean sawAMissingVillager = false;
+    for (int attempt = 0; attempt < 100; attempt++) {
+      String gmMessage = logic.getMessages(true, 5, "すいか").get(0);
+
+      assertEquals("『あなたの役職は』が二重に現れる: " + gmMessage,
+          1, countOccurrences(gmMessage, "あなたの役職は"));
+      if (gmMessage.contains("役職は「村人」が欠けています。")) {
+        sawAMissingVillager = true;
+      }
+    }
+    assertTrue("村人が欠けるケースを引けなかった", sawAMissingVillager);
+  }
+
   @Test
   public void createWereWordsRegistersASpecialVillage() {
     int villageNum = logic.createWereWords(true, 4, "すいか");
@@ -74,5 +99,13 @@ public class CreatWereWordsLogicTest {
     assertNotNull(village);
     assertEquals(4, village.getMessageList().size());
     assertTrue(villageNum >= 10000 && villageNum <= 99998);
+  }
+
+  private static int countOccurrences(String text, String part) {
+    int count = 0;
+    for (int from = text.indexOf(part); from >= 0; from = text.indexOf(part, from + 1)) {
+      count++;
+    }
+    return count;
   }
 }
