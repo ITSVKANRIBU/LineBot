@@ -23,16 +23,17 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * Botの起動クラス.
  *
- * <p>LINEイベントの受け口は{@link LineEventHandler}、入力の解釈は
+ * <p>インサイダーゲームとWerewordsの役職・お題をLINEで配るBot。
+ * LINEイベントの受け口は{@link LineEventHandler}、入力の解釈は
  * {@code TextCommandHandler}、イラストカタログの定期取得は
  * {@link IllustrationCatalogJob}が持つ。ここにあるのは起動の配線だけ。
  */
 // spring.game配下のレジストリとサービスもBeanにするため、スキャン範囲を広げる
 @SpringBootApplication(scanBasePackages = "com.example.bot")
 @EnableScheduling
-public class EchoApplication {
+public class InsiderGameBotApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(EchoApplication.class, args);
+    SpringApplication.run(InsiderGameBotApplication.class, args);
   }
 }

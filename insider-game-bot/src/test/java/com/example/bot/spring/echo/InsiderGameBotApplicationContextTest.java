@@ -72,7 +72,7 @@ import com.linecorp.bot.spring.boot.support.LineMessageHandlerSupport;
     "line.bot.channel-token=dummy-channel-token",
     "line.bot.channel-secret=dummy-channel-secret",
 })
-public class EchoApplicationContextTest {
+public class InsiderGameBotApplicationContextTest {
 
   /** テキスト・ポストバック・スタンプ・既定の4つ. */
   private static final int EXPECTED_HANDLER_COUNT = 4;

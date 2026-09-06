@@ -125,8 +125,8 @@ public class LineEventHandler {
   @EventMapping
   public void handleStickerMessageEvent(MessageEvent<StickerMessageContent> event) {
     log.debug("Received sticker message event");
-    EchoImageEvent logic = new EchoImageEvent();
-    reply(event.getReplyToken(), logic.echo());
+    StickerReplyEvent logic = new StickerReplyEvent();
+    reply(event.getReplyToken(), logic.messages());
   }
 
   @EventMapping

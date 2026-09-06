@@ -48,7 +48,7 @@ Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動�
 
 ### イベントの受け口
 
-- `spring/echo/EchoApplication.java` — Spring Bootの起動クラス。配線だけを持ちます。
+- `spring/echo/InsiderGameBotApplication.java` — Spring Bootの起動クラス。配線だけを持ちます。
 - `spring/echo/LineEventHandler.java`
   LINEイベントのentry point。テキスト・ポストバック・スタンプを受け取り、
   `TextCommandHandler`が組み立てたメッセージを返信します。
@@ -60,7 +60,7 @@ Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動�
   この経路が固有に持つのはパラメータの取り出しと「村が作成されていません」の応答だけ。
 - `spring/echo/SpecialVillageController.java` — `/specialvillage`のHTTP adapter。
 - `spring/echo/ApiExceptionHandler.java` — 公開APIの内部エラーをHTTP 500へ丸める。
-- `spring/echo/EchoImageEvent.java` — スタンプへの応答（問い合わせ先とホームページの案内）。
+- `spring/echo/StickerReplyEvent.java` — スタンプへの応答（問い合わせ先とホームページの案内）。
 
 ### ゲームロジック
 

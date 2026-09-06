@@ -27,9 +27,14 @@ import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.template.ButtonsTemplateNonTitle;
 
-public class EchoImageEvent {
+/**
+ * スタンプを受け取ったときの応答.
+ *
+ * <p>ゲームの操作ではないため、製作者への連絡先とホームページを案内するだけ。
+ */
+public class StickerReplyEvent {
 
-	public List<Message> echo() {
+	public List<Message> messages() {
 
 		String message = "ご利用ありがとうございます。" + "要望・報告は以下にご連絡ください。";
 
