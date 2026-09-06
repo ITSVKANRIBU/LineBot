@@ -35,7 +35,6 @@ import java.util.regex.Pattern;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.bot.spring.game.SpecialVillageList;
 import com.example.bot.staticdata.MessageConst;
@@ -68,12 +67,12 @@ import com.linecorp.bot.model.response.BotApiResponse;
  * 応答文・ボタンの構成・返信の通数は外部から観測できる契約のため、
  * 責務分離や経路の共通化で変わっていないことをここで検知する。
  */
-public class EchoApplicationTextCommandTest {
+public class LineEventHandlerTextCommandTest {
 
   private static final String OWNER = "owner-user";
   private static final String MEMBER = "member-user";
 
-  private EchoApplication application;
+  private LineEventHandler handler;
   private LineMessagingClient lineMessagingClient;
 
   @Before
@@ -86,8 +85,7 @@ public class EchoApplicationTextCommandTest {
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
 
-    application = new EchoApplication();
-    ReflectionTestUtils.setField(application, "lineMessagingClient", lineMessagingClient);
+    handler = new LineEventHandler(lineMessagingClient);
   }
 
   // ---------- 村の作成 ----------
@@ -393,7 +391,7 @@ public class EchoApplicationTextCommandTest {
 
   @Test
   public void aStickerRepliesWithTheAuthorInformation() {
-    application.handleStickerMessageEvent(new MessageEvent<StickerMessageContent>(
+    handler.handleStickerMessageEvent(new MessageEvent<StickerMessageContent>(
         "reply-token", new UserSource(OWNER),
         new StickerMessageContent("message-id", "1", "1"), Instant.now()));
 
@@ -424,7 +422,7 @@ public class EchoApplicationTextCommandTest {
     String villageNum = normalVillage("すいか", 3);
     send(MEMBER, villageNum);
 
-    application.handlePostbackEvent(postback(MEMBER, villageNum));
+    handler.handlePostbackEvent(postback(MEMBER, villageNum));
 
     assertEquals(new TextMessage("あなたは1番目の参加者です。\n　入室状況：1/3人"),
         lastReply().get(0));
@@ -437,7 +435,7 @@ public class EchoApplicationTextCommandTest {
         ((TextMessage) send(OWNER, "@わーわーず").get(0)).getText()));
     send(MEMBER, specialNum);
 
-    application.handlePostbackEvent(postback(MEMBER, specialNum));
+    handler.handlePostbackEvent(postback(MEMBER, specialNum));
 
     assertEquals(new TextMessage("あなたは1番目の参加者です。\n　入室状況：1/4人"),
         lastReply().get(0));
@@ -458,7 +456,7 @@ public class EchoApplicationTextCommandTest {
   }
 
   private List<Message> send(String userId, String text) {
-    application.handleTextMessageEvent(new MessageEvent<TextMessageContent>("reply-token",
+    handler.handleTextMessageEvent(new MessageEvent<TextMessageContent>("reply-token",
         new UserSource(userId), new TextMessageContent("message-id", text), Instant.now()));
     return lastReply();
   }

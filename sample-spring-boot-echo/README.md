@@ -38,7 +38,7 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 
 | path | 実装 | 用途 |
 | --- | --- | --- |
-| `POST /callback` | `EchoApplication`（`@LineMessageHandler`） | LINE webhook。署名検証は`line-bot-spring-boot`が行う |
+| `POST /callback` | `LineEventHandler`（`@LineMessageHandler`） | LINE webhook。署名検証は`line-bot-spring-boot`が行う |
 | `GET /callapi` | `MainController` | 外部フォームから村を操作する。応答はLINE Message API形式のJSON配列 |
 | `POST /specialvillage` | `SpecialVillageController` | 特殊村を作成し、村番号を返す |
 
@@ -48,10 +48,13 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 
 ### イベントの受け口
 
-- `spring/echo/EchoApplication.java`
+- `spring/echo/EchoApplication.java` — Spring Bootの起動クラス。配線だけを持ちます。
+- `spring/echo/LineEventHandler.java`
   LINEイベントのentry point。テキスト・ポストバック・スタンプを受け取り、
   `TextCommandHandler`が組み立てたメッセージを返信します。
-  5分間隔の`@Scheduled`でイラスト一覧の再取得も行います。
+  `LineMessagingClient`はコンストラクタで受け取ります。
+- `spring/echo/IllustrationCatalogJob.java`
+  5分間隔の`@Scheduled`でイラスト一覧を再取得します。
 - `spring/echo/MainController.java`
   `/callapi`のHTTP adapter。入力の解釈は`TextCommandHandler`に任せ、
   この経路が固有に持つのはパラメータの取り出しと「村が作成されていません」の応答だけ。

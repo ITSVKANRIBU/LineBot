@@ -28,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.bot.spring.entity.Village;
 import com.example.bot.spring.game.SpecialVillageList;
@@ -52,9 +51,9 @@ import com.linecorp.bot.model.response.BotApiResponse;
  * 同意していない場合nullになる。userIdは村の所有者・参加者の同一性判定に使うため、
  * nullのまま状態を変更すると以降の操作がNPEになり、ユーザーへ返信できなくなる。
  */
-public class EchoApplicationGroupEventTest {
+public class LineEventHandlerGroupEventTest {
 
-  private EchoApplication application;
+  private LineEventHandler handler;
   private LineMessagingClient lineMessagingClient;
 
   @Before
@@ -66,34 +65,33 @@ public class EchoApplicationGroupEventTest {
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
 
-    application = new EchoApplication();
-    ReflectionTestUtils.setField(application, "lineMessagingClient", lineMessagingClient);
+    handler = new LineEventHandler(lineMessagingClient);
   }
 
   @Test
   public void villageCreationWithoutUserIdIsRejectedInsteadOfCreatingANullOwnerVillage() {
-    application.handleTextMessageEvent(textEvent("お題"));
+    handler.handleTextMessageEvent(textEvent("お題"));
 
     assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
   }
 
   @Test
   public void randomVillageCreationWithoutUserIdIsRejectedInsteadOfCreatingANullOwnerVillage() {
-    application.handleTextMessageEvent(textEvent("ランダム"));
+    handler.handleTextMessageEvent(textEvent("ランダム"));
 
     assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
   }
 
   @Test
   public void villageSizeWithoutUserIdIsRejectedInsteadOfFailing() {
-    application.handleTextMessageEvent(textEvent("5"));
+    handler.handleTextMessageEvent(textEvent("5"));
 
     assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
   }
 
   @Test
   public void odaiWithoutUserIdIsRejectedInsteadOfFailing() {
-    application.handleTextMessageEvent(textEvent("すいか"));
+    handler.handleTextMessageEvent(textEvent("すいか"));
 
     assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
   }
@@ -102,14 +100,14 @@ public class EchoApplicationGroupEventTest {
   public void joiningAnExistingVillageWithoutUserIdIsRejectedInsteadOfFailing() {
     int villageNum = existingVillageNumber();
 
-    application.handleTextMessageEvent(textEvent(String.valueOf(villageNum)));
+    handler.handleTextMessageEvent(textEvent(String.valueOf(villageNum)));
 
     assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
   }
 
   @Test
   public void reverseVillageWithoutUserIdIsRejectedInsteadOfFailing() {
-    application.handleTextMessageEvent(textEvent("@逆村"));
+    handler.handleTextMessageEvent(textEvent("@逆村"));
 
     assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
   }
@@ -118,7 +116,7 @@ public class EchoApplicationGroupEventTest {
   public void statusPostbackWithoutUserIdIsRejectedInsteadOfFailing() {
     int villageNum = existingVillageNumber();
 
-    application.handlePostbackEvent(postback(String.valueOf(villageNum)));
+    handler.handlePostbackEvent(postback(String.valueOf(villageNum)));
 
     assertEquals(MessageConst.ERR_UNIDENTIFIED_USER, repliedText());
   }
@@ -126,7 +124,7 @@ public class EchoApplicationGroupEventTest {
   /** お題取得のpostbackはuserIdを使わないため、識別できなくても応答する. */
   @Test
   public void odaiLookupPostbackStillWorksWithoutUserId() {
-    application.handlePostbackEvent(postback("0"));
+    handler.handlePostbackEvent(postback("0"));
 
     verify(lineMessagingClient).replyMessage(any(ReplyMessage.class));
   }

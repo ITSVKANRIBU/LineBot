@@ -32,7 +32,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.bot.spring.game.SpecialVillageList;
 import com.example.bot.staticdata.MessageConst;
@@ -90,7 +89,7 @@ public class RouteParityTest {
       "知らない文字列",
   };
 
-  private EchoApplication application;
+  private LineEventHandler handler;
   private LineMessagingClient lineMessagingClient;
   private final MainController controller = new MainController();
 
@@ -100,8 +99,7 @@ public class RouteParityTest {
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
 
-    application = new EchoApplication();
-    ReflectionTestUtils.setField(application, "lineMessagingClient", lineMessagingClient);
+    handler = new LineEventHandler(lineMessagingClient);
   }
 
   @Test
@@ -172,7 +170,7 @@ public class RouteParityTest {
   }
 
   private List<Message> sendThroughLine(String userId, String text) {
-    application.handleTextMessageEvent(new MessageEvent<TextMessageContent>("reply-token",
+    handler.handleTextMessageEvent(new MessageEvent<TextMessageContent>("reply-token",
         new UserSource(userId), new TextMessageContent("message-id", text), Instant.now()));
 
     ArgumentCaptor<ReplyMessage> captor = ArgumentCaptor.forClass(ReplyMessage.class);

@@ -27,7 +27,7 @@ client.replyMessage(new ReplyMessage(replyToken, new TextMessage("hello")))
 ```
 
 APIはすべて`CompletableFuture`を返す非同期形式です。同期的に結果が必要な場合は
-`get()`で待ち合わせます（Bot本体の`EchoApplication#reply`もこの形です）。
+`get()`で待ち合わせます（Bot本体の`LineEventHandler#reply`もこの形です）。
 
 ## 主なクラス
 

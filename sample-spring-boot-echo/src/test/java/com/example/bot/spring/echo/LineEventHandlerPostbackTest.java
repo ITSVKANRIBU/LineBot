@@ -28,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.bot.spring.game.SpecialVillageList;
 import com.example.bot.staticdata.MessageConst;
@@ -50,9 +49,9 @@ import com.linecorp.bot.model.response.BotApiResponse;
  * <p>村はFIFOで削除されるため、既に存在しない村番号のpostbackが届き得る。
  * 通常村・特殊村のどちらでもNPEにせず、既定メッセージを返すこと。
  */
-public class EchoApplicationPostbackTest {
+public class LineEventHandlerPostbackTest {
 
-  private EchoApplication application;
+  private LineEventHandler handler;
   private LineMessagingClient lineMessagingClient;
 
   @Before
@@ -65,20 +64,19 @@ public class EchoApplicationPostbackTest {
     when(lineMessagingClient.replyMessage(any(ReplyMessage.class)))
         .thenReturn(CompletableFuture.completedFuture(new BotApiResponse("ok", null)));
 
-    application = new EchoApplication();
-    ReflectionTestUtils.setField(application, "lineMessagingClient", lineMessagingClient);
+    handler = new LineEventHandler(lineMessagingClient);
   }
 
   @Test
   public void postbackForEvictedSpecialVillageRepliesWithTheDefaultMessage() {
-    application.handlePostbackEvent(postback("99999"));
+    handler.handlePostbackEvent(postback("99999"));
 
     assertEquals(MessageConst.DEFAILT_MESSAGE, repliedAltText());
   }
 
   @Test
   public void postbackForEvictedVillageRepliesWithTheDefaultMessage() {
-    application.handlePostbackEvent(postback("1234"));
+    handler.handlePostbackEvent(postback("1234"));
 
     assertEquals(MessageConst.DEFAILT_MESSAGE, repliedAltText());
   }
@@ -86,14 +84,14 @@ public class EchoApplicationPostbackTest {
   @Test
   public void postbackWithRetiredNonNumericDataRepliesWithTheDefaultMessage() {
     // 旧DBのお題登録用ポストバックが古い端末から届いた場合
-    application.handlePostbackEvent(postback("すいか"));
+    handler.handlePostbackEvent(postback("すいか"));
 
     assertEquals(MessageConst.DEFAILT_MESSAGE, repliedAltText());
   }
 
   @Test
   public void defaultMessageShowsOnlyTheTwoStandardVillageCommands() {
-    application.handlePostbackEvent(postback("1234"));
+    handler.handlePostbackEvent(postback("1234"));
 
     ConfirmTemplate confirm = (ConfirmTemplate) repliedTemplate().getTemplate();
     assertEquals(2, confirm.getActions().size());

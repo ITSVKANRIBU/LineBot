@@ -16,177 +16,22 @@
 
 package com.example.bot.spring.echo;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-
-import com.example.bot.common.CommonModule;
-import com.example.bot.spring.entity.Village;
-import com.example.bot.spring.game.SpecialVillage;
-import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.TextCommandHandler;
-import com.example.bot.staticdata.MessageConst;
-import com.example.bot.staticdata.VillageList;
-
-import com.linecorp.bot.client.LineMessagingClient;
-import com.linecorp.bot.model.ReplyMessage;
-import com.linecorp.bot.model.action.MessageAction;
-import com.linecorp.bot.model.event.Event;
-import com.linecorp.bot.model.event.MessageEvent;
-import com.linecorp.bot.model.event.PostbackEvent;
-import com.linecorp.bot.model.event.message.StickerMessageContent;
-import com.linecorp.bot.model.event.message.TextMessageContent;
-import com.linecorp.bot.model.message.Message;
-import com.linecorp.bot.model.message.TemplateMessage;
-import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.model.message.template.ConfirmTemplate;
-import com.linecorp.bot.spring.boot.annotation.EventMapping;
-import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 /**
- * LINEイベントの受け口とコマンド判定.
+ * Botの起動クラス.
  *
- * <p>webhook eventにはLINE user IDとユーザーが入力したお題が含まれるため、
- * event自体をlogへ出さない。記録するのはevent種別と処理結果までとする。
+ * <p>LINEイベントの受け口は{@link LineEventHandler}、入力の解釈は
+ * {@code TextCommandHandler}、イラストカタログの定期取得は
+ * {@link IllustrationCatalogJob}が持つ。ここにあるのは起動の配線だけ。
  */
-@Slf4j
 @SpringBootApplication
 @EnableScheduling
-@LineMessageHandler
 public class EchoApplication {
-
-  /** ポストバックdataがこの値未満なら、村番号ではなくお題候補の難易度. */
-  private static final int ODAI_RANK_DATA_LIMIT = 10;
-
-  /** ポストバックdataがこの値以上なら特殊村の番号. */
-  private static final int MIN_SPECIAL_VILLAGE_NUMBER = 10000;
-
-  @Autowired
-  private LineMessagingClient lineMessagingClient;
 
   public static void main(String[] args) {
     SpringApplication.run(EchoApplication.class, args);
-  }
-
-  @Scheduled(fixedDelay = 300000)
-  public static void createMap() {
-    log.info("Refreshing illustration catalog");
-    CommonModule.createMap();
-  }
-
-  @EventMapping
-  public void handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
-    log.debug("Received text message event");
-
-    String userId = event.getSource().getUserId();
-    if (userId == null) {
-      replyUnidentifiedUser(event.getReplyToken());
-      return;
-    }
-    replyOrDefault(event.getReplyToken(),
-        TextCommandHandler.handle(userId, event.getMessage().getText()));
-  }
-
-  @EventMapping
-  public void handlePostbackEvent(PostbackEvent event) {
-    log.debug("Received postback event");
-
-    String userId = event.getSource().getUserId();
-    String data = event.getPostbackContent().getData();
-
-    try {
-      int dataInt = Integer.parseInt(data);
-      if (dataInt >= 0 && dataInt < ODAI_RANK_DATA_LIMIT) {
-        // お題詳細取得。userIdを使わないため識別できなくても応答する
-        reply(event.getReplyToken(), TextCommandHandler.odaiCandidate(dataInt));
-
-      } else if (userId == null) {
-        replyUnidentifiedUser(event.getReplyToken());
-
-      } else if (dataInt < MIN_SPECIAL_VILLAGE_NUMBER) {
-        // 村番号の場合
-        Village village = VillageList.getVillage(dataInt);
-        replyOrDefault(event.getReplyToken(),
-            village == null ? null : village.getStatusMessage(userId));
-      } else {
-        // 特殊村番号の場合
-        SpecialVillage village = SpecialVillageList.getVillage(dataInt);
-        replyOrDefault(event.getReplyToken(),
-            village == null ? null : village.getStatusMessage(userId));
-      }
-
-    } catch (NumberFormatException e) {
-      // 旧DBのお題登録用ポストバックは廃止済み。安全な既定応答だけ返す。
-      replyDefoltMessage(event.getReplyToken());
-    }
-
-  }
-
-  @EventMapping
-  public void handleStickerMessageEvent(MessageEvent<StickerMessageContent> event) {
-    log.debug("Received sticker message event");
-    EchoImageEvent logic = new EchoImageEvent();
-    reply(event.getReplyToken(), logic.echo());
-  }
-
-  @EventMapping
-  public void handleDefaultMessageEvent(Event event) {
-    log.debug("Received unhandled event: {}", event.getClass().getSimpleName());
-  }
-
-  /**
-   * LINE user IDが取れないイベントを、状態を変更せずに拒否する.
-   *
-   * <p>グループ・ルームのイベントは、利用者が公式アカウント利用規約に
-   * 同意していない場合userIdを含まない。userIdは村の所有者と参加者の
-   * 同一性判定に使うため、nullのまま処理を進めると以降の操作がNPEになり、
-   * ユーザーへ何も返信できなくなる。
-   */
-  private void replyUnidentifiedUser(@NonNull String replyToken) {
-    log.debug("Rejected an event without a LINE user ID");
-    reply(replyToken, Collections.<Message>singletonList(
-        new TextMessage(MessageConst.ERR_UNIDENTIFIED_USER)));
-  }
-
-  /** 村の作成を促す既定の応答. 対象の村がない操作はすべてここへ落ちる. */
-  private void replyDefoltMessage(@NonNull String replyToken) {
-    ConfirmTemplate confirmTemplate = new ConfirmTemplate("村の作成をしますか？",
-        new MessageAction("GM", "お題"),
-        new MessageAction("神", "神"));
-
-    reply(replyToken, Collections.<Message>singletonList(
-        new TemplateMessage(MessageConst.DEFAILT_MESSAGE, confirmTemplate)));
-  }
-
-  /** 返信APIの唯一の送信口. 送信の失敗はログに残すだけで、呼び出し元へは伝えない. */
-  private void reply(@NonNull String replyToken, @NonNull List<Message> messages) {
-    try {
-      lineMessagingClient
-          .replyMessage(new ReplyMessage(replyToken, messages))
-          .get();
-    } catch (InterruptedException | ExecutionException e) {
-      if (e instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
-      log.error("Failed to send a reply", e);
-    }
-  }
-
-  /** メッセージがあれば返信し、なければ村の作成を促す既定の応答を返す. */
-  private void replyOrDefault(@NonNull String replyToken, List<Message> messages) {
-    if (messages == null) {
-      replyDefoltMessage(replyToken);
-    } else {
-      reply(replyToken, messages);
-    }
   }
 }

@@ -12,13 +12,8 @@ webhookのエンドポイント、署名検証、イベントのparse、handler�
 イベントhandlerとして扱われます。
 
 ```java
-@SpringBootApplication
 @LineMessageHandler
-public class EchoApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(EchoApplication.class, args);
-    }
-
+public class LineEventHandler {
     @EventMapping
     public TextMessage handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
         return new TextMessage(event.getMessage().getText());
@@ -41,8 +36,8 @@ public class EchoApplication {
 検出されたhandlerは起動時にlogへ出力されます。
 
 ```text
-c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[MessageEvent<TextMessageContent>]" onto public com.linecorp.bot.model.message.TextMessage com.example.bot.spring.echo.EchoApplication.handleTextMessageEvent(...)
-c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void com.example.bot.spring.echo.EchoApplication.handleDefaultMessageEvent(...)
+c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[MessageEvent<TextMessageContent>]" onto public com.linecorp.bot.model.message.TextMessage com.example.bot.spring.echo.LineEventHandler.handleTextMessageEvent(...)
+c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void com.example.bot.spring.echo.LineEventHandler.handleDefaultMessageEvent(...)
 ```
 
 ## 設定
