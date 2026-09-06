@@ -29,6 +29,13 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 /**
  * 特殊村の状態.
  *
+ * <p>不変条件は「i番目の参加者にi番目のメッセージが対応する」ことと
+ * 「参加者数はメッセージ数を超えない」ことの2つ。どちらもこのクラスの中で閉じる。
+ * 配布メッセージは生成時に確定し、以降は参加者が増えるだけ。
+ *
+ * <p>可変状態へ触れるメソッドはすべてインスタンスのモニタ上で実行する。
+ * {@code Village}と同じ粒度で、村ごとに操作が直列化される。
+ *
  * <p>配布メッセージはフォーム入力とワーワーズのお題の双方に由来し、
  * どちらも長さの上限がない。{@code ButtonsTemplateNonURL}のtextは
  * 画像・タイトルなしで160文字までのため、超過分はテキストへ振り分ける。
@@ -39,17 +46,33 @@ public class SpecialVillage {
   private static final int BUTTONS_TEMPLATE_TEXT_MAX = 160;
 
   private int villageNum;
-  private List<String> userList;
-  private List<String> messageList;
+  private final List<String> messageList;
+  private final List<String> userList = new ArrayList<String>();
 
-  public int getVillageNum() { return villageNum; }
-  public void setVillageNum(int villageNum) { this.villageNum = villageNum; }
-  public List<String> getUserList() { return userList; }
-  public void setUserList(List<String> userList) { this.userList = userList; }
-  public List<String> getMessageList() { return messageList; }
-  public void setMessageList(List<String> messageList) { this.messageList = messageList; }
+  /**
+   * 配布メッセージを確定して特殊村を作る.
+   *
+   * @param messages 配布順のメッセージ。呼び出し元のリストとは切り離して保持する
+   */
+  public SpecialVillage(List<String> messages) {
+    this.messageList = Collections.unmodifiableList(new ArrayList<String>(messages));
+  }
 
-  public List<Message> getRoleMessage(String userId) {
+  public synchronized int getVillageNum() {
+    return villageNum;
+  }
+
+  /** 村番号を設定する。採番はレジストリが行う. */
+  public synchronized void setVillageNum(int villageNum) {
+    this.villageNum = villageNum;
+  }
+
+  /** 配布順のメッセージ。変更できない. */
+  public synchronized List<String> getMessageList() {
+    return messageList;
+  }
+
+  public synchronized List<Message> getRoleMessage(String userId) {
     String message = null;
     for (int i = 0; i < userList.size(); i++) {
       if (userId.equals(userList.get(i))) {
@@ -76,7 +99,7 @@ public class SpecialVillage {
     return Collections.singletonList(new TemplateMessage(message, buttons));
   }
 
-  public List<Message> getStatusMessage(String userId) {
+  public synchronized List<Message> getStatusMessage(String userId) {
     int inNum = 0;
     for (int i = 0; i < userList.size(); i++) {
       if (userId.equals(userList.get(i))) {
@@ -88,7 +111,7 @@ public class SpecialVillage {
     return Collections.singletonList(new TextMessage(message));
   }
 
-  public boolean hasMember(String userId) {
+  public synchronized boolean hasMember(String userId) {
     for (String member : userList) {
       if (userId.equals(member)) {
         return true;

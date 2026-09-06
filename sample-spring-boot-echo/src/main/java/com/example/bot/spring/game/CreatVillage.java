@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CreatVillage {
 
@@ -31,14 +30,10 @@ public class CreatVillage {
    * @return 採番された村番号
    */
   public int createNewVillage(List<String> messageList) {
-    SpecialVillage village = new SpecialVillage();
-
     // 呼び出し元のリストを壊さないよう、複製してから並び替える
     List<String> shuffled = new ArrayList<String>(messageList);
     Collections.shuffle(shuffled);
-    village.setMessageList(shuffled);
-    village.setUserList(new CopyOnWriteArrayList<String>());
 
-    return SpecialVillageList.addVillage(village, new Random());
+    return SpecialVillageList.addVillage(new SpecialVillage(shuffled), new Random());
   }
 }

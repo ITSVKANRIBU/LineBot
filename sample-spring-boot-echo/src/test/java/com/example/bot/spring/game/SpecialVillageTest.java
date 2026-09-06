@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.Test;
 
@@ -78,9 +77,7 @@ public class SpecialVillageTest {
     String longTopic = repeat("長いお題", 40);
     List<String> messages = new CreatWereWordsLogic().getMessages(true, 3, longTopic);
 
-    SpecialVillage village = new SpecialVillage();
-    village.setMessageList(messages);
-    village.setUserList(new CopyOnWriteArrayList<String>());
+    SpecialVillage village = new SpecialVillage(messages);
     assertTrue(village.join("user"));
 
     for (Message message : village.getRoleMessage("user")) {
@@ -93,10 +90,8 @@ public class SpecialVillageTest {
   }
 
   private SpecialVillage villageOf(String... messages) {
-    SpecialVillage village = new SpecialVillage();
+    SpecialVillage village = new SpecialVillage(Arrays.asList(messages));
     village.setVillageNum(12345);
-    village.setMessageList(Arrays.asList(messages));
-    village.setUserList(new CopyOnWriteArrayList<String>());
     assertTrue(village.join("user"));
     return village;
   }
