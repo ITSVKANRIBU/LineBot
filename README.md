@@ -1,17 +1,12 @@
 # インサイダーゲーム Bot
 
-会話ゲーム「インサイダーゲーム」と「Werewords」で、**参加者それぞれに
-異なる秘密情報（役職とお題）を配る**ための LINE Bot です。
+会話ゲーム「インサイダーゲーム」と「Werewords」で、**参加者それぞれに異なる秘密情報（役職とお題）を配る**ための LINE Bot です。
 
-対面で遊ぶゲームのうち、機械が必要なのは配役の瞬間だけです。LINE の
-1 対 1 トークを配布経路にすることで、各参加者は自分の情報だけを、いつでも
-自分の端末で確認できます。ゲームの進行と勝敗判定は対象外です。
+対面で遊ぶゲームのうち、機械が必要なのは配役の瞬間だけです。LINE の 1 対 1 トークを配布経路にすることで、各参加者は自分の情報だけを、いつでも自分の端末で確認できます。ゲームの進行と勝敗判定は対象外です。
 
 ## 使い方（利用者向け）
 
-Bot とのトークで `お題` と送ると 4 桁の村番号が返ります。お題と参加人数を
-設定し、参加者へ村番号を伝えてください。参加者がその番号を送ると、参加順に
-役職が配られます。
+Bot とのトークで `お題` と送ると 4 桁の村番号が返ります。お題と参加人数を設定し、参加者へ村番号を伝えてください。参加者がその番号を送ると、参加順に役職が配られます。
 
 詳細は [ゲームの外部仕様](docs/game-spec.md) を参照してください。
 
@@ -23,9 +18,7 @@ Java 8 が必要です。
 ./gradlew :sample-spring-boot-echo:bootRun
 ```
 
-環境変数 `LINE_BOT_CHANNEL_TOKEN` と `LINE_BOT_CHANNEL_SECRET` を設定して
-ください。LINE Developers コンソールでは、Webhook URL を
-`https://<アプリのホスト>/callback` に設定します。
+環境変数 `LINE_BOT_CHANNEL_TOKEN` と `LINE_BOT_CHANNEL_SECRET` を設定してください。LINE Developers コンソールでは、Webhook URL を `https://<アプリのホスト>/callback` に設定します。
 
 ## ドキュメント
 
@@ -42,10 +35,7 @@ Java 8 が必要です。
 
 ## リポジトリの構成
 
-Gradle のマルチプロジェクトビルドです。`sample-spring-boot-echo` が Bot 本体、
-`line-bot-*` が LINE Messaging API SDK（line-bot-sdk-java 由来。同梱）、
-`line-bot-cli` はリッチメニューなどの運用ツールです。詳細は
-[architecture.md](docs/architecture.md) を参照してください。
+Gradle のマルチプロジェクトビルドです。`sample-spring-boot-echo` が Bot 本体、`line-bot-*` が LINE Messaging API SDK（line-bot-sdk-java 由来。同梱）、`line-bot-cli` はリッチメニューなどの運用ツールです。詳細は [architecture.md](docs/architecture.md) を参照してください。
 
 ## ライセンス
 
