@@ -16,7 +16,6 @@
 
 package com.example.bot.spring.echo;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -28,29 +27,24 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import com.example.bot.common.CommonModule;
-import com.example.bot.common.WordGetter;
 import com.example.bot.spring.entity.Village;
 import com.example.bot.spring.game.SpecialVillage;
 import com.example.bot.spring.game.SpecialVillageList;
-import com.example.bot.spring.game.VillageService;
+import com.example.bot.spring.game.TextCommandHandler;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
 
 import com.linecorp.bot.client.LineMessagingClient;
 import com.linecorp.bot.model.ReplyMessage;
-import com.linecorp.bot.model.action.Action;
 import com.linecorp.bot.model.action.MessageAction;
-import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.event.Event;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.PostbackEvent;
 import com.linecorp.bot.model.event.message.StickerMessageContent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
-import com.linecorp.bot.model.message.ImageMessage;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
-import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
 import com.linecorp.bot.spring.boot.annotation.EventMapping;
 import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
@@ -69,12 +63,6 @@ import lombok.extern.slf4j.Slf4j;
 @EnableScheduling
 @LineMessageHandler
 public class EchoApplication {
-
-  /** これを超える数値は特殊村の番号として扱う. */
-  private static final int MAX_VILLAGE_NUMBER = 9999;
-
-  /** LINEから設定できる参加人数の上限。これを超える数値は通常村の番号として扱う. */
-  private static final int MAX_SIZE_INPUT = 100;
 
   /** ポストバックdataがこの値未満なら、村番号ではなくお題候補の難易度. */
   private static final int ODAI_RANK_DATA_LIMIT = 10;
@@ -104,10 +92,8 @@ public class EchoApplication {
       replyUnidentifiedUser(event.getReplyToken());
       return;
     }
-    String userMessage = event.getMessage().getText();
-
-    // messageの送信
-    replyMessage(event.getReplyToken(), userId, userMessage);
+    replyOrDefault(event.getReplyToken(),
+        TextCommandHandler.handle(userId, event.getMessage().getText()));
   }
 
   @EventMapping
@@ -121,7 +107,7 @@ public class EchoApplication {
       int dataInt = Integer.parseInt(data);
       if (dataInt >= 0 && dataInt < ODAI_RANK_DATA_LIMIT) {
         // お題詳細取得。userIdを使わないため識別できなくても応答する
-        getOdaiDetail(event.getReplyToken(), dataInt);
+        reply(event.getReplyToken(), TextCommandHandler.odaiCandidate(dataInt));
 
       } else if (userId == null) {
         replyUnidentifiedUser(event.getReplyToken());
@@ -129,19 +115,13 @@ public class EchoApplication {
       } else if (dataInt < MIN_SPECIAL_VILLAGE_NUMBER) {
         // 村番号の場合
         Village village = VillageList.getVillage(dataInt);
-        if (village == null) {
-          replyDefoltMessage(event.getReplyToken());
-        } else {
-          reply(event.getReplyToken(), village.getStatusMessage(userId));
-        }
+        replyOrDefault(event.getReplyToken(),
+            village == null ? null : village.getStatusMessage(userId));
       } else {
         // 特殊村番号の場合
         SpecialVillage village = SpecialVillageList.getVillage(dataInt);
-        if (village == null) {
-          replyDefoltMessage(event.getReplyToken());
-        } else {
-          reply(event.getReplyToken(), village.getStatusMessage(userId));
-        }
+        replyOrDefault(event.getReplyToken(),
+            village == null ? null : village.getStatusMessage(userId));
       }
 
     } catch (NumberFormatException e) {
@@ -201,115 +181,9 @@ public class EchoApplication {
     }
   }
 
-  private void getOdaiDetail(String replyToken, int difficulty) {
-    String odai = WordGetter.getWord(difficulty);
-
-    List<Message> messages = null;
-
-    String message = "お題は「" + odai + "」です。確定しますか？";
-
-    List<Action> actionList = new ArrayList<Action>();
-    actionList.add(new MessageAction("確定", odai));
-    actionList.add(new PostbackAction("初心者", String.valueOf(WordGetter.BEGINNER_RANK)));
-    actionList.add(new PostbackAction("上級者", String.valueOf(3)));
-    actionList.add(new PostbackAction("変態", String.valueOf(4)));
-
-    ButtonsTemplateNonURL buttons = new ButtonsTemplateNonURL(
-        message, actionList);
-    messages = Collections.singletonList(new TemplateMessage(message, buttons));
-
-    reply(replyToken, messages);
-  }
-
-  private void replyMessage(String replyToken, String userId, String userMessage) {
-
-    List<Message> messages = null;
-
-    try {
-      int number = Integer.parseInt(userMessage.trim());
-
-      // 特殊村の場合
-      if (number > MAX_VILLAGE_NUMBER) {
-        replyMessageSpecialVillage(replyToken, userId, number);
-        return;
-      }
-
-      if (number > MAX_SIZE_INPUT) {
-        // 村番号の場合
-        replyMessageVillageNum(replyToken, userId, number);
-        return;
-
-      } else {
-        // 人数設定
-        messages = VillageService.setVillageSize(userId, number);
-      }
-
-    } catch (NumberFormatException e) {
-      if ("お題".equals(userMessage.trim()) || "題".equals(userMessage.trim())
-          || "神".equals(userMessage.trim())) {
-        messages = VillageService.createVillage(userId, "神".equals(userMessage.trim()));
-
-      } else if ("ランダム".equals(userMessage.trim())) {
-        messages = VillageService.createRandomVillage(userId);
-
-      } else if ("@配布".equals(userMessage.trim()) || "＠配布".equals(userMessage.trim())) {
-        messages = new ArrayList<Message>();
-        String imageUrl = MessageConst.ILLUSTRATION_URL_PREFIX + "966mpnqz.png";
-        Message imageMessage = new ImageMessage(imageUrl, imageUrl);
-        messages.add(imageMessage);
-        Message textMessage = new TextMessage("https://line.me/R/ti/p/%40966mpnqz");
-        messages.add(textMessage);
-        Message textMessage2 = new TextMessage("お友達ID\n@966mpnqz");
-        messages.add(textMessage2);
-
-      } else if ("@特殊".equals(userMessage.trim()) || "＠特殊".equals(userMessage.trim())) {
-        messages = Collections
-            .singletonList(new TextMessage("https://insidergametool.netlify.app/form.html"));
-
-      } else if ("@取得".equals(userMessage.trim()) || "＠取得".equals(userMessage.trim())) {
-        getOdaiDetail(replyToken, 10);
-        return;
-
-      } else if ("@逆村".equals(userMessage.trim()) || "＠逆村".equals(userMessage.trim())) {
-        messages = VillageService.setReverseVillage(userId);
-
-      } else if ("@わーわーず".equals(userMessage.trim()) || "＠わーわーず".equals(userMessage.trim())) {
-        messages = VillageService.convertToWerewords(userId);
-
-      } else {
-        messages = VillageService.setOdai(userId, userMessage);
-        if (messages != null) {
-          // replyして処理終了とする。
-          reply(replyToken, messages);
-          return;
-        }
-      }
-
-    }
-    // メッセージの設定がない場合
-    if (null == messages) {
-      replyDefoltMessage(replyToken);
-    } else {
-      reply(replyToken, messages);
-    }
-  }
-
-  private void replyMessageVillageNum(String replyToken, String userId, int number) {
-    List<Message> messages = VillageService.joinVillage(userId, number);
-
-    // メッセージの設定がない場合
-    if (null == messages) {
-      replyDefoltMessage(replyToken);
-    } else {
-      reply(replyToken, messages);
-    }
-  }
-
-  private void replyMessageSpecialVillage(String replyToken, String userId, int number) {
-    List<Message> messages = VillageService.joinSpecialVillage(userId, number);
-
-    // メッセージの設定がない場合
-    if (null == messages) {
+  /** メッセージがあれば返信し、なければ村の作成を促す既定の応答を返す. */
+  private void replyOrDefault(@NonNull String replyToken, List<Message> messages) {
+    if (messages == null) {
       replyDefoltMessage(replyToken);
     } else {
       reply(replyToken, messages);

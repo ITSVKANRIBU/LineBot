@@ -49,8 +49,8 @@ Herokuでは`Procfile`に従って`build/libs/sample-spring-boot-echo-*.jar`が�
 ### イベントの受け口
 
 - `spring/echo/EchoApplication.java`
-  LINEイベントのentry point。テキスト・ポストバック・スタンプを処理し、
-  入力文字列からコマンドを判定して`VillageService`へ委譲します。
+  LINEイベントのentry point。テキスト・ポストバック・スタンプを受け取り、
+  `TextCommandHandler`が組み立てたメッセージを返信します。
   5分間隔の`@Scheduled`でイラスト一覧の再取得も行います。
 - `spring/echo/MainController.java` — `/callapi`のHTTP adapter。
 - `spring/echo/SpecialVillageController.java` — `/specialvillage`のHTTP adapter。
@@ -62,6 +62,10 @@ LINEは101以上、`/callapi`は1000以上を村番号として扱い、それ�
 
 ### ゲームロジック
 
+- `spring/game/TextCommandHandler.java`
+  テキスト入力の解釈を1組だけ持つ共通入口。数値の境界、コマンド表、trimの扱いを
+  ここへ集約します。対象の村がない場合は`null`を返し、呼び出し側が経路に応じた
+  応答へ変換します。
 - `spring/game/VillageService.java`
   村の作成・人数設定・お題設定・逆村化・参加・Werewords変換を担う、
   LINEと`/callapi`の共通層。
