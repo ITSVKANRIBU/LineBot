@@ -25,24 +25,32 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.bot.spring.game.VillageService;
+import com.example.bot.spring.game.TextCommandHandler;
 
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TextMessage;
 
+/**
+ * {@code /callapi}のHTTPアダプタ.
+ *
+ * <p>入力の解釈は{@link TextCommandHandler}が持つ。この経路が固有に持つのは、
+ * パラメータの取り出しと、対象の村がないときの応答だけ。
+ */
 @RestController
 public class MainController {
 
-  /** これを超える数値は特殊村の番号として扱う. */
-  private static final int MAX_VILLAGE_NUMBER = 9999;
-
-  /** このAPIから設定できる参加人数の上限。これを超える数値は通常村の番号として扱う. */
-  private static final int MAX_SIZE_INPUT = 999;
+  /**
+   * 対象の村がないときの応答.
+   *
+   * <p>LINEは村の作成を促す確認テンプレートを返すが、外部フォームが
+   * テンプレートを表示できるか分からないため、この経路だけテキストで返す。
+   */
+  private static final String NO_VILLAGE_MESSAGE = "村が作成されていません";
 
   /**
    * 村への参加・作成・設定をLINEメッセージ形式のJSONで返す.
    *
-   * @param message 村番号、または「お題」「題」「神」「ランダム」「人数」「お題文字列」
+   * @param message LINEのトークへ送るのと同じ内容。村番号、コマンド、人数、お題
    * @param userId 呼び出し元が指定する参加者識別子
    * @return LINE Message APIのJSON配列。必須parameter不足はHTTP 400
    */
@@ -56,43 +64,10 @@ public class MainController {
       return ResponseEntity.badRequest().build();
     }
 
-    List<Message> messages = messageController(message, userId);
+    List<Message> messages = TextCommandHandler.handle(userId, message);
     if (messages == null) {
-      messages = Collections.singletonList(new TextMessage("村が作成されていません"));
+      messages = Collections.<Message>singletonList(new TextMessage(NO_VILLAGE_MESSAGE));
     }
     return ResponseEntity.ok(messages);
-  }
-
-  private List<Message> messageController(String message, String userId) {
-    int number;
-    try {
-      // 数値判定はLINE経由と同じく、前後の空白を除いてから行う
-      number = Integer.parseInt(message.trim());
-    } catch (NumberFormatException e) {
-      return nonNumberMessage(message, userId);
-    }
-
-    if (number > MAX_VILLAGE_NUMBER) {
-      return VillageService.joinSpecialVillage(userId, number);
-    } else if (number > MAX_SIZE_INPUT) {
-      return VillageService.joinVillage(userId, number);
-    } else {
-      return VillageService.setVillageSize(userId, number);
-    }
-  }
-
-  private List<Message> nonNumberMessage(String message, String userId) {
-    String command = message.trim();
-
-    if ("お題".equals(command) || "題".equals(command) || "神".equals(command)) {
-      return VillageService.createVillage(userId, "神".equals(command));
-    }
-
-    if ("ランダム".equals(command)) {
-      return VillageService.createRandomVillage(userId);
-    }
-
-    // お題設定の場合
-    return VillageService.setOdai(userId, message);
   }
 }

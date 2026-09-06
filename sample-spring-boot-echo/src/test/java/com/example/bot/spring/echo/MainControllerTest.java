@@ -30,9 +30,11 @@ import com.example.bot.spring.game.SpecialVillageList;
 import com.example.bot.staticdata.MessageConst;
 import com.example.bot.staticdata.VillageList;
 
+import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.message.Message;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 
 /**
  * {@code GET /callapi}の契約テスト.
@@ -164,6 +166,77 @@ public class MainControllerTest {
     List<Message> second = controller.index(villageNum, MEMBER).getBody();
 
     assertEquals(first, second);
+  }
+
+  /** 101〜999はLINEと同じく村番号として扱う。その範囲の村は採番されない. */
+  @Test
+  public void aNumberAboveOneHundredIsTreatedAsAVillageNumber() {
+    controller.index("お題", OWNER);
+
+    ResponseEntity<List<Message>> response = controller.index("101", OWNER);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(new TextMessage("村が作成されていません"), response.getBody().get(0));
+  }
+
+  @Test
+  public void oneHundredIsStillAParticipantCount() {
+    controller.index("お題", OWNER);
+
+    ResponseEntity<List<Message>> response = controller.index("100", OWNER);
+
+    assertTrue(((TemplateMessage) response.getBody().get(0)).getAltText()
+        .contains("人数を『100人』に設定しました。"));
+  }
+
+  /** @逆村はLINEと同じくコマンドとして解釈される. お題の文字列にはならない. */
+  @Test
+  public void theReverseVillageCommandIsInterpretedThroughTheApi() {
+    controller.index("お題", OWNER);
+    controller.index("すいか", OWNER);
+    controller.index("3", OWNER);
+    int villageNum = villageNumberOf(OWNER);
+
+    ResponseEntity<List<Message>> response = controller.index("@逆村", OWNER);
+
+    assertEquals(new TextMessage(villageNum + "村 を『逆村』に設定しました。\n"
+        + "お題を知らない村人が1人となります。"), response.getBody().get(0));
+  }
+
+  @Test
+  public void theWerewordsCommandIsInterpretedThroughTheApi() {
+    controller.index("お題", OWNER);
+    controller.index("すいか", OWNER);
+    controller.index("3", OWNER);
+
+    ResponseEntity<List<Message>> response = controller.index("＠わーわーず", OWNER);
+
+    assertTrue(((TextMessage) response.getBody().get(0)).getText()
+        .startsWith("お題を『すいか』として新たにワーワーズの"));
+  }
+
+  /**
+   * @取得はポストバックボタン付きのテンプレートを返す.
+   *
+   * <p>このAPIにポストバックの入口はないが、「確定」ボタン相当の候補文字列は
+   * JSONから読み取れる。
+   */
+  @Test
+  public void theOdaiLookupCommandReturnsATemplateThroughTheApi() {
+    ResponseEntity<List<Message>> response = controller.index("@取得", OWNER);
+
+    TemplateMessage template = (TemplateMessage) response.getBody().get(0);
+    ButtonsTemplateNonURL buttons = (ButtonsTemplateNonURL) template.getTemplate();
+
+    assertEquals(4, buttons.getActions().size());
+    assertEquals(new PostbackAction("初心者", "2"), buttons.getActions().get(1));
+  }
+
+  @Test
+  public void theDistributionCommandIsInterpretedThroughTheApi() {
+    ResponseEntity<List<Message>> response = controller.index("@配布", OWNER);
+
+    assertEquals(3, response.getBody().size());
   }
 
   private int villageNumberOf(String ownerId) {
