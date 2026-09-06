@@ -143,17 +143,21 @@ public class CommonModule {
    * 重みは抽選枠の数を表し、その役職の総重みに対する比率で選ばれる。
    * 重みが0以下のファイルは枠を持たないため選ばれない。
    *
+   * <p>規約外の要素は<b>その要素だけ</b>読み飛ばし、残りは取り込む。カタログは
+   * Botのリリースと無関係に差し替えられるため、1件の書き間違いで全役職の
+   * イラストが既定画像へ戻ってしまうのは割に合わない。
+   *
    * @param files カタログの要素
    * @return 役職名 → 重み付きURLの不変map
    */
   static Map<String, List<WeightedUrl>> parseCatalog(List<CatalogFile> files) {
     Map<String, List<WeightedUrl>> parsed = new HashMap<String, List<WeightedUrl>>();
+    List<String> ignored = new ArrayList<String>();
 
     for (CatalogFile file : files) {
-      String[] fileNameArray = file.getName().split("_");
-
-      // 規約外のファイル名は取り込まない
-      if (fileNameArray.length != FILE_NAME_PART_COUNT) {
+      String[] fileNameArray = nameParts(file);
+      if (fileNameArray == null || file.getUrl() == null) {
+        ignored.add(String.valueOf(file.getName()));
         continue;
       }
 
@@ -170,10 +174,38 @@ public class CommonModule {
           file.getUrl(), totalWeightOf(candidates) + Math.max(weight, 0)));
     }
 
+    if (!ignored.isEmpty()) {
+      // ファイル名は画像の名前で、userIdやお題は含まれないためログに出せる
+      log.warn("Ignored {} illustration catalog entries: {}", ignored.size(), ignored);
+    }
+
     for (Map.Entry<String, List<WeightedUrl>> entry : parsed.entrySet()) {
       entry.setValue(Collections.unmodifiableList(entry.getValue()));
     }
     return Collections.unmodifiableMap(parsed);
+  }
+
+  /**
+   * {@code <役職名>_<重み>_<任意の文字列>}に分解する.
+   *
+   * @return 3つの要素。名前がないか、3部構成でないか、重みが整数でない場合はnull
+   */
+  private static String[] nameParts(CatalogFile file) {
+    if (file.getName() == null) {
+      return null;
+    }
+
+    String[] parts = file.getName().split("_");
+    if (parts.length != FILE_NAME_PART_COUNT) {
+      return null;
+    }
+
+    try {
+      Integer.parseInt(parts[1]);
+    } catch (NumberFormatException e) {
+      return null;
+    }
+    return parts;
   }
 
   private static int totalWeightOf(List<WeightedUrl> candidates) {

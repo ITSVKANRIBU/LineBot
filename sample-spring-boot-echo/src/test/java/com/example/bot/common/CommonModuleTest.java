@@ -87,6 +87,31 @@ public class CommonModuleTest {
         CommonModule.getIllustUrl("VILLAGERS", parsed, new FixedRandom(0)));
   }
 
+  /**
+   * 重みが整数でない要素、URLのない要素は、その要素だけ読み飛ばして残りを取り込む.
+   *
+   * <p>1件の書き間違いで全役職のイラストが既定画像へ戻ると、原因が分からないまま
+   * 見た目だけが変わる。カタログはBotのリリースと無関係に差し替えられるため、
+   * 書き間違いは起こりうるものとして扱う。
+   */
+  @Test
+  public void anUnusableEntryIsSkippedWithoutDroppingTheRestOfTheCatalog() {
+    Map<String, List<WeightedUrl>> parsed = CommonModule.parseCatalog(Arrays.asList(
+        catalogEntry("INSIDER_おおい_broken.png", "https://example.com/broken.png"),
+        catalogEntry("GM_1_no-url.png", null),
+        catalogEntry(null, "https://example.com/no-name.png"),
+        catalogEntry("VILLAGERS_1_ok.png", "https://example.com/villagers.png")));
+
+    assertEquals(Collections.singleton("VILLAGERS"), parsed.keySet());
+    assertEquals("https://example.com/villagers.png",
+        CommonModule.getIllustUrl("VILLAGERS", parsed, new FixedRandom(0)));
+    // 読み飛ばされた役職は既定画像へ落ちる
+    assertEquals(MessageConst.INSIDER_URL,
+        CommonModule.getIllustUrl("INSIDER", parsed, new FixedRandom(0)));
+    assertEquals(MessageConst.GM_URL,
+        CommonModule.getIllustUrl("GM", parsed, new FixedRandom(0)));
+  }
+
   /** 重み1と3のとき、抽選枠は1:3に分かれる. */
   @Test
   public void weightsDecideHowManyDrawSlotsAFileGets() {
