@@ -64,3 +64,63 @@ jobs:
           name: test-reports
           path: '**/build/reports/tests/test'
           if-no-files-found: ignore
+
+  deploy:
+    name: Deploy to OCI
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    # 連続 push で並走させない。実行中の job は cancel しない (VM 側の更新を途中で打ち切らせない)。
+    # GitHub は group 内の順序を保証しないので、排他を取った後に master の最新 SHA を再確認する。
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Confirm this commit is still the head of master
+        id: head
+        run: |
+          head="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/master | cut -f1)"
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "master is now $head; skipping deploy of $GITHUB_SHA"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download release
+        if: steps.head.outputs.skip != 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: insider-game-bot-jar
+          path: dist
+
+      # ホスト鍵を固定する。固定しないと DNS や経路を乗っ取られたときに jar を偽の VM へ送り込まれる。
+      - name: Configure SSH
+        if: steps.head.outputs.skip != 'true'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+        run: |
+          test -n "$DEPLOY_SSH_KEY" && test -n "$DEPLOY_HOST_KEY"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Upload release to the VM
+        if: steps.head.outputs.skip != 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          # 稼働中の jar (releases/) ではなく incoming/ へ置く。同じ commit の re-run でも本番の jar を上書きしない
+          target="linebot@${DEPLOY_HOST}"
+          ssh -o StrictHostKeyChecking=yes "$target" "rm -rf /opt/linebot/incoming/${GITHUB_SHA} && mkdir -p /opt/linebot/incoming/${GITHUB_SHA}"
+          scp -o StrictHostKeyChecking=yes dist/insider-game-bot.jar dist/insider-game-bot.jar.sha256 "$target:/opt/linebot/incoming/${GITHUB_SHA}/"
+
+      # 検証 → 昇格 → 再起動 → ヘルスチェック → 復旧 → 世代管理は VM 上の 1 本が flock 付きで完走する。
+      # この step の終了コードがそのまま job の成否になる。
+      - name: Release on the VM
+        if: steps.head.outputs.skip != 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: ssh -o StrictHostKeyChecking=yes "linebot@${DEPLOY_HOST}" "sudo /usr/local/bin/linebot-release.sh ${GITHUB_SHA}"
