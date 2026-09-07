@@ -157,6 +157,26 @@ assert_eq "previous の r6 が残る" "$(released r6)" "$(previous)"
 if [[ -d "$LINEBOT_HOME/releases/r1" ]]; then r1=kept; else r1=gone; fi
 assert_eq "最古の r1 は消える" gone "$r1"
 
+echo "# releases が既に 6 世代ある状態でのチェックサム不一致も世代管理と incoming の後始末を行う"
+fresh_home
+export LINEBOT_KEEP_RELEASES=100
+for sha in q1 q2 q3 q4 q5 q6; do
+  add_release "$sha" GOOD
+  run_release "$sha"
+done
+assert_eq "6 回目も成功" 0 "$status"
+assert_eq "prune を無効化した間は 6 世代とも残る" 6 "$(ls -1 "$LINEBOT_HOME/releases" | wc -l | tr -d ' ')"
+unset LINEBOT_KEEP_RELEASES
+before_log="$(systemctl_log)"
+add_release zzz GOOD
+printf '%064d  insider-game-bot.jar\n' 0 > "$LINEBOT_HOME/incoming/zzz/insider-game-bot.jar.sha256"
+run_release zzz
+assert_eq "失敗する" 1 "$status"
+assert_eq "current は q6 のまま (失敗した zzz にならない)" "$(released q6)" "$(current)"
+assert_eq "5 世代 + current/previous の例外まで刈られる" 5 "$(ls -1 "$LINEBOT_HOME/releases" | wc -l | tr -d ' ')"
+assert_eq "incoming の zzz は残留せず消える" 0 "$(incoming_count)"
+assert_eq "restart は呼ばれない (systemctl ログが変わらない)" "$before_log" "$(systemctl_log)"
+
 if [[ "$failures" -ne 0 ]]; then
   echo "$failures failure(s)"
   exit 1

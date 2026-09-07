@@ -95,7 +95,12 @@ exec 9>"$HOME_DIR/release.lock"
 flock 9
 
 log "verify $sha"
-(cd "$incoming_dir" && sha256sum -c --quiet insider-game-bot.jar.sha256)
+if ! (cd "$incoming_dir" && sha256sum -c --quiet insider-game-bot.jar.sha256); then
+  log "checksum verification failed for $sha"
+  rm -rf "$incoming_dir"
+  prune
+  exit 1
+fi
 
 # 検証済みの jar だけを releases へ移す。同じファイルシステム内の mv なので原子的。
 # 同じ commit の再実行なら、同一内容の jar で置き換わるだけ。
