@@ -1,0 +1,49 @@
+{
+	# caddy-ratelimit は非標準ディレクティブなので、標準ディレクティブとの順序を宣言しないと使えない
+	order rate_limit before basicauth
+}
+
+# /etc/caddy/Caddyfile に置くときに bot.example.com を取得したドメインへ置き換える (deploy/setup.md)
+bot.example.com {
+	# Spring Boot へ流すのはこの 4 パスだけ。他は Spring Boot に届かせず Caddy が 404 を返す
+	@app path /callback /callapi /specialvillage /actuator/health
+	@specialvillage path /specialvillage
+
+	# /callapi と /specialvillage は署名検証のない状態変更 API。
+	# 1 IP からの FIFO 追い出し (村レジストリ上限 50 / 30) を遅らせる。防止はできない。
+	# /callback は LINE の署名検証があるので制限しない。
+	# 閾値はブラウザのフォーム 1 人分の操作 (OPTIONS プリフライト込みで 1 操作 2 リクエスト) が届かない値。
+	rate_limit {
+		zone callapi {
+			match {
+				path /callapi
+			}
+			key {http.request.remote.host}
+			events 30
+			window 1m
+		}
+		zone specialvillage {
+			match {
+				path /specialvillage
+			}
+			key {http.request.remote.host}
+			events 10
+			window 1m
+		}
+	}
+
+	# 1 村 100 メッセージ × 5000 文字 (UTF-16 単位) が仕様上の最大。日本語は UTF-8 で 1 単位 3 バイトなので
+	# 本文は最大 1.5 MB になる (「あ」5000 文字 × 100 件の JSON は実測 1,500,313 バイト)。1 MB では既存 API が
+	# 受理する入力を Caddy が拒否してしまうため 2 MB。超過は 413
+	request_body @specialvillage {
+		max_size 2MB
+	}
+
+	handle @app {
+		reverse_proxy 127.0.0.1:8081
+	}
+
+	handle {
+		respond 404
+	}
+}
