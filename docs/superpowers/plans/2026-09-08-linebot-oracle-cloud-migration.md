@@ -41,7 +41,7 @@
 - ingress は **22 / 80 / 443** のみ、egress 443 は開けたまま (`api.line.me`、`script.google.com`)。SSH は公開鍵のみ、root ログイン禁止
 - Caddy が Spring Boot へ流すのは **`/callback` `/callapi` `/specialvillage` `/actuator/health` の 4 つ**、それ以外は 404
 - レート制限 (`mholt/caddy-ratelimit`): **`/callapi` 30 req/分/IP、`/specialvillage` 10 req/分/IP、超過は 429**。`/callback` には掛けない。閾値はフォーム実操作 (OPTIONS 込み) で確定する暫定値
-- ボディ上限: **`/specialvillage` のみ 2 MB、超過は 413** (レート超過の 429 とは別の契約。上の「逸脱」節)
+- ボディ上限: **全パス 2 MB** (レート超過の 429 とは別の契約。上の「逸脱」節)。`/callback` は署名検証より前に本文全体を `byte[]` へ読むので、公開・無認証のこのパスにも上限が要る。超過時の応答は **413 または 502**: Caddy の `request_body` は Content-Length で事前に弾かず、下流が本文を読んだ時点で打ち切り、その下流の `reverse_proxy` は本文の読み取りエラーも 502 に丸める。どちらでも Spring には届かない
 - ヘルスチェック契約: `GET http://127.0.0.1:8081/actuator/health` が **HTTP 200 かつボディ `{"status":"UP"}`** (HTTP ステータスと curl の成否も見る)。`systemctl restart` 後 **2 秒間隔で、restart から実時間で最長 60 秒**。`systemctl restart` 自体の失敗もヘルスチェック失敗として扱う。失敗時は `previous` へ戻して再確認、戻し先がなければ `systemctl stop linebot`
 - デプロイ: `concurrency` group で直列化 (**`cancel-in-progress: false`**)、排他後に `master` の最新 SHA と一致しなければ skip、jar は `/opt/linebot/incoming/<commit-sha>/` へ転送し `sha256sum -c` 後に `/opt/linebot/releases/<commit-sha>/` へ `mv` してから `current.jar` を原子的に差し替え、直近 **5 世代** (+ `current` / `previous` が指す世代) を保持、`StrictHostKeyChecking=yes`
 - GitHub Secrets には **SSH 秘密鍵・接続先ホスト・VM の SSH ホスト公開鍵のみ**。LINE の資格情報は置かない

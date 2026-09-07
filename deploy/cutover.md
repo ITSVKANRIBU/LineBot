@@ -76,7 +76,7 @@
 
 ### 7. レート制限と CORS プリフライト
 
-レート制限の窓は 1 分で、鍵は接続元 IP。1〜6 で消費した枠が残っているので、**各計測の前に 60 秒空ける**。サイズ超過の確認は `/specialvillage` の枠を使い切る前に行う (枠を使い切った後は 413 に到達せず 429 になる)。
+レート制限の窓は 1 分で、鍵は接続元 IP。1〜6 で消費した枠が残っているので、**各計測の前に 60 秒空ける**。サイズ超過の確認は `/specialvillage` の枠を使い切る前に行う (枠を使い切った後は本文の判定に到達せず 429 になる)。
 
 ```bash
 [Mac] sleep 60
@@ -85,11 +85,14 @@
 [Mac] bash deploy/verify/ratelimit_check.sh "$B" '/callapi?message=x&userId=verify' 35 OPTIONS
 [Mac] sleep 60
 [Mac] curl -s -o /dev/null -w '%{http_code}\n' -X POST "$B/specialvillage" -H 'Content-Type: application/json' --data-binary @<(head -c 2200000 /dev/zero | tr '\0' 'a')
+[VM]  sudo journalctl -u linebot --since '-2 min' --no-pager | tail -20
 [Mac] sleep 60
 [Mac] bash deploy/verify/ratelimit_check.sh "$B" '/specialvillage' 12 OPTIONS
 ```
 
-期待: `/callapi` は `30 200` + `5 429`、OPTIONS も同じ配分 (プリフライトも数えられている)、2 MB 超は `413`、`/specialvillage` は `429` が 2 件で残り 10 件は 429 以外 (OPTIONS への応答は Spring の CORS 処理が返す 200)。
+期待: `/callapi` は **概ね** 30 件が `200` で残りが `429`。OPTIONS も同じ配分 (プリフライトも数えられている)。`/specialvillage` は **概ね** 10 件が 429 以外で残り 2 件が `429` (OPTIONS への応答は Spring の CORS 処理が返す 200)。`caddy-ratelimit` はスライディングウィンドウなので、前の計測の残りで数件ずれる。**断定した件数ではなく実測値を記録表に残す。**
+
+2 MB 超は **`413` または `502`**。Caddy の `request_body` は Content-Length で事前に弾かず、下流が本文を読んだ時点で打ち切る。その下流の `reverse_proxy` は本文の読み取りエラーも含めて 502 に丸めるため、413 になるか 502 になるかは読み取りの進み方で決まる。**どちらでも Spring には届いていない**ことを journal で確かめる: 上の `journalctl` に、この時刻の例外もリクエストの記録も出ていないこと。届いていれば `SpecialVillageController` が JSON の解析に失敗して `400` を返すので、**応答が `400` なら上限が効いていない**。
 
 続けて **実際のブラウザ**で検証する。公開フォームのリポジトリでローカル起動し、API 接続先を `$B` に向けて、特殊村の作成 → `/callapi` の操作を普通の速さで一通り行う。DevTools の Network で `OPTIONS` と本リクエストの両方が **429 なし**で通ることを確認する。閾値 30 / 10 が窮屈なら `deploy/Caddyfile` の `events` を上げ、`/etc/caddy/Caddyfile` を差し替えて `sudo systemctl reload caddy`。確定値を記録表に書く。
 
@@ -105,6 +108,8 @@
 ### 9. OCI Monitoring に `MemoryUtilization` が出ていて 20% を上回る
 
 OCI コンソール → インスタンス → Metrics → `Memory Utilization`。期待: 直近 1 時間が **25% 以上**で安定 (3 GB / 12 GB = 25%、RSS 込みで 27〜28%)。
+
+2 つの数値の関係: **合否の境目は 20%** で、これはアイドル回収のメモリ条件を外すのに必要な水準 (C の監視と [setup.md](setup.md) §13 のアラームも 20%)。**25% は `-Xms3g` が 12 GB のうち 3 GB を先に確保することから来る期待値**。20〜25% に収まったときは回収条件は外れているが確保しきれていないので、下の `ps` で RSS が 3 GB に届いているかを確かめる。
 
 ```bash
 [VM] ps -o rss= -C java | awk '{printf "%.1f GB\n", $1/1024/1024}'
@@ -146,12 +151,12 @@ VM 上で壊れたリリースを直接置いて更新スクリプトを呼ぶ�
 `/opt/linebot` は `linebot` 所有で `ubuntu` からは入れないので、`sudo -u linebot` で操作する。
 
 ```bash
-[VM] sudo -u linebot bash -c 'mkdir -p /opt/linebot/incoming/broken && cd /opt/linebot/incoming/broken && printf BROKEN > insider-game-bot.jar && sha256sum insider-game-bot.jar > insider-game-bot.jar.sha256'
-[VM] sudo /usr/local/bin/linebot-release.sh broken; echo "exit=$?"
+[VM] sudo -u linebot bash -c 'mkdir -p /opt/linebot/incoming/0000000000000000000000000000000000000000 && cd /opt/linebot/incoming/0000000000000000000000000000000000000000 && printf BROKEN > insider-game-bot.jar && sha256sum insider-game-bot.jar > insider-game-bot.jar.sha256'
+[VM] sudo /usr/local/bin/linebot-release.sh 0000000000000000000000000000000000000000; echo "exit=$?"
 [VM] sudo readlink /opt/linebot/current.jar; curl -s http://127.0.0.1:8081/actuator/health
 ```
 
-期待: `rolling back to ...` のログ、`exit=1`、`current.jar` が元の commit の jar を指し、health が `UP`。restart から戻しの判断まで 60 秒強で終わる。後始末: `sudo rm -rf /opt/linebot/releases/broken`。
+期待: `rolling back to ...` のログ、`exit=1`、`current.jar` が元の commit の jar を指し、health が `UP`。restart から戻しの判断まで 60 秒強で終わる。後始末: `sudo rm -rf /opt/linebot/releases/0000000000000000000000000000000000000000`。偽 SHA が 40 桁の hex なのは、更新スクリプトが revision の形を検証していて、それ以外は何もせず終了コード 2 で拒否するため。
 
 ### 14. 古い commit の run を re-run すると deploy が skip する
 
@@ -161,11 +166,13 @@ GitHub Actions で `master` の 1 つ前の commit の run を `gh run rerun <ru
 
 ```bash
 [VM] sudo sed -i '/^LINE_BOT_API_END_POINT=/d' /etc/linebot.env
-[VM] sudo systemctl restart linebot && sleep 20 && curl -s http://127.0.0.1:8081/actuator/health
+[VM] sudo systemctl restart linebot
+[VM] deadline=$((SECONDS + 60)); while [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/actuator/health)" != 200 ] && [ "$SECONDS" -lt "$deadline" ]; do sleep 2; done
+[VM] curl -s http://127.0.0.1:8081/actuator/health
 [VM] sudo grep -c API_END_POINT /etc/linebot.env
 ```
 
-期待: `UP` と `0`。**これを忘れると切替後の返信がスタブへ吸われて利用者に何も届かない。**
+期待: `UP` と `0`。項目 11 と同じ「2 秒間隔で最長 60 秒」で待つ (固定の短い `sleep` だと起動途中を見て、スタブが外れたかどうかの判断を誤る)。**これを忘れると切替後の返信がスタブへ吸われて利用者に何も届かない。**
 
 ### 記録表
 
@@ -173,6 +180,7 @@ GitHub Actions で `master` の 1 つ前の commit の run を `gh run rerun <ru
 | --- | --- | --- |
 | 5. `/callback` 所要時間 (10 回の最大) | ms | |
 | 7. レート制限の確定値 (`/callapi` / `/specialvillage`) | / req/分/IP | |
+| 7. 200 / 429 の実測件数 (`/callapi` の 35 件) | 200 / 429 | |
 | 9. MemoryUtilization (直近 1 時間の最小) | % | |
 
 ## B. カットオーバー

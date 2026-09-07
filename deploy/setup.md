@@ -106,13 +106,15 @@ Ubuntu 24.04 に openjdk-8 のパッケージはない。Adoptium の tarball �
 [VM]  sudo install -o root -g root -m 0440 /tmp/sudoers-linebot /etc/sudoers.d/linebot
 [VM]  sudo visudo -cf /etc/sudoers.d/linebot
 [VM]  sudo install -o root -g root -m 0644 /tmp/linebot.service /etc/systemd/system/linebot.service
+[VM]  sudo systemctl daemon-reload
+[VM]  sudo systemctl enable linebot
 [VM]  sudo mkdir -p /etc/systemd/journald.conf.d
 [VM]  sudo install -o root -g root -m 0644 /tmp/journald-linebot.conf /etc/systemd/journald.conf.d/linebot.conf
 [VM]  sudo systemctl restart systemd-journald
 [VM]  sudo systemd-analyze verify /etc/systemd/system/linebot.service
 ```
 
-期待: `visudo -cf` が `parsed OK`、`systemd-analyze verify` が何も出力しない (jar がまだ無いことによる警告は出てよい)。
+期待: `visudo -cf` が `parsed OK`、`systemd-analyze verify` が何も出力しない (jar がまだ無いことによる警告は出てよい)。`enable` は jar が無くても成功する (VM 再起動時の自動起動を張るだけ)。ここで済ませておくのは、初回配備が失敗したときに未 enable のまま残さないため。
 
 ## 8. /etc/linebot.env
 
@@ -183,12 +185,11 @@ LINE の資格情報は GitHub に置かない。
 ```bash
 [Mac] git commit --allow-empty -m "chore: VM への初回配備" && git push
 [Mac] gh run watch
-[VM]  sudo systemctl enable linebot
 [VM]  sudo systemctl status linebot --no-pager
 [VM]  curl -s http://127.0.0.1:8081/actuator/health
 ```
 
-期待: deploy job が成功し、`status` が `active (running)`、health が `{"status":"UP"}`。`enable` は初回だけ (以降の再起動は更新スクリプトが行い、VM 再起動時は enable により自動起動する)。
+期待: deploy job が成功し、`status` が `active (running)`、health が `{"status":"UP"}`。以降の再起動は更新スクリプトが行い、VM 再起動時は §7 の `enable` により自動起動する。
 
 ## 12. Monitoring プラグインの確認
 
