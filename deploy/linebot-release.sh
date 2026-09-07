@@ -24,12 +24,17 @@ RELEASES="$HOME_DIR/releases"
 CURRENT="$HOME_DIR/current.jar"
 PREVIOUS="$HOME_DIR/previous.jar"
 
+log() { echo "[release] $*"; }
+
 sha="${1:?usage: $0 <commit-sha>}"
+# sudoers は引数を制限できないので、受け取る形をここで固定する。GITHUB_SHA は常に 40 桁の
+# 小文字 hex。これを確かめずに使うと ../../../etc のような引数で incoming_dir が任意の
+# ディレクトリを指し、検証失敗時の rm -rf がそこへ効く (root で実行するため被害が大きい)。
+[[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { log "invalid revision: $sha"; exit 2; }
+
 incoming_dir="$INCOMING/$sha"
 release_dir="$RELEASES/$sha"
 jar="$release_dir/insider-game-bot.jar"
-
-log() { echo "[release] $*"; }
 
 # 契約: HTTP 200 かつ本文が {"status":"UP"} (設計書「ヘルスチェックの契約」)。
 # 本文だけでなく HTTP ステータスと curl の成否も見る。
