@@ -50,11 +50,14 @@ Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動�
 対応させています。`adapter`が入力アダプタ、`game`がゲーム操作と状態、
 `common`と`message`が補助データです。
 
-### イベントの受け口（`adapter`）
+### 起動（ルートパッケージ）
 
 - `InsiderGameBotApplication.java`
   Spring Bootの起動クラス。ルートパッケージに置いてあるため、
   コンポーネントスキャンが`insidergame`配下すべてに及びます。
+
+### 入力アダプタ（`adapter`）
+
 - `adapter/LineEventHandler.java`
   LINEイベントのentry point。テキスト・ポストバック・スタンプを受け取り、
   `TextCommandHandler`が組み立てたメッセージを返信します。
@@ -65,7 +68,9 @@ Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動�
   `/callapi`のHTTP adapter。入力の解釈は`TextCommandHandler`に任せ、
   この経路が固有に持つのはパラメータの取り出しと「村が作成されていません」の応答だけ。
 - `adapter/SpecialVillageController.java` — `/specialvillage`のHTTP adapter。
-- `adapter/ApiExceptionHandler.java` — 公開APIの内部エラーをHTTP 500へ丸める。
+- `adapter/ApiExceptionHandler.java`
+  公開APIの内部エラーを、詳細を含まないHTTP 500へ丸める。`SpecialVillageController`は
+  例外を自身で400へ丸めるため、実際に500が出るのは`/callapi`だけ。
 - `adapter/StickerReplyEvent.java` — スタンプへの応答（問い合わせ先とホームページの案内）。
 
 ### ゲームロジック（`game`）
@@ -118,7 +123,7 @@ Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動�
 ```
 
 テストのヘルパ（乱数を固定する`FixedRandom`、長い文字列を作る`Texts.repeat`）は
-`src/test/java/com/example/bot/testing/`にまとめてあります。
+`src/test/java/insidergame/testing/`にまとめてあります。
 
 レジストリとサービスはSpringのBeanで、本番ではsingletonが1つだけ存在します。
 テストは`insidergame.testing.GameFixture`が本番と同じ依存関係で組み立てた
