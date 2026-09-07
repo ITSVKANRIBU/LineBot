@@ -40,6 +40,9 @@ jobs:
       - name: Test the release script
         run: bash deploy/test/release_test.sh
 
+      - name: Test the verification scripts
+        run: python3 -m unittest discover -s deploy/verify -p 'test_*.py'
+
       # deploy job と VM 上の更新スクリプトはこのファイル名に依存する
       - name: Package release
         run: |
