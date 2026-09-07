@@ -7,7 +7,6 @@
 bot.example.com {
 	# Spring Boot へ流すのはこの 4 パスだけ。他は Spring Boot に届かせず Caddy が 404 を返す
 	@app path /callback /callapi /specialvillage /actuator/health
-	@specialvillage path /specialvillage
 
 	# /callapi と /specialvillage は署名検証のない状態変更 API。
 	# 1 IP からの FIFO 追い出し (村レジストリ上限 50 / 30) を遅らせる。防止はできない。
@@ -32,10 +31,14 @@ bot.example.com {
 		}
 	}
 
-	# 1 村 100 メッセージ × 5000 文字 (UTF-16 単位) が仕様上の最大。日本語は UTF-8 で 1 単位 3 バイトなので
-	# 本文は最大 1.5 MB になる (「あ」5000 文字 × 100 件の JSON は実測 1,500,313 バイト)。1 MB では既存 API が
-	# 受理する入力を Caddy が拒否してしまうため 2 MB。超過は 413
-	request_body @specialvillage {
+	# 全パス共通の本文上限。/callback は署名検証より前に本文全体を byte[] へ読むため、上限が無いと
+	# 無認証の 1 リクエストでヒープを埋められる (実際の本文は数 KB なので 2 MB で足りる)。
+	# 2 MB の根拠は /specialvillage: 1 村 100 メッセージ × 5000 文字 (UTF-16 単位) が仕様上の最大で、
+	# 日本語は UTF-8 で 1 単位 3 バイトなので本文は最大 1.5 MB になる (「あ」5000 文字 × 100 件の JSON は
+	# 実測 1,500,313 バイト)。1 MB では既存 API が受理する入力を Caddy が拒否してしまう。
+	# 超過時の応答は 413 とは限らない。Caddy は Content-Length で事前に弾かず、上限は下流が本文を
+	# 読んだ時点で効く。下流の reverse_proxy は本文の読み取りエラーも含めて 502 に丸める
+	request_body {
 		max_size 2MB
 	}
 
