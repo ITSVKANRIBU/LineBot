@@ -99,7 +99,14 @@ jobs:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
         run: |
-          test -n "$DEPLOY_SSH_KEY" && test -n "$DEPLOY_HOST_KEY"
+          if [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "DEPLOY_SSH_KEY secret is not set" >&2
+            exit 1
+          fi
+          if [ -z "$DEPLOY_HOST_KEY" ]; then
+            echo "DEPLOY_HOST_KEY secret is not set" >&2
+            exit 1
+          fi
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
