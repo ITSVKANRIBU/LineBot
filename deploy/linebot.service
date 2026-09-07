@@ -1,0 +1,29 @@
+[Unit]
+Description=Insider Game LINE Bot (Spring Boot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=linebot
+Group=linebot
+EnvironmentFile=/etc/linebot.env
+WorkingDirectory=/opt/linebot
+# -Xms3g -XX:+AlwaysPreTouch: Always Free のアイドル回収 (メモリ 20% 未満) から外すため、
+# 起動時に 3 GB を実際に触って RSS を確保する。-Xms だけでは予約に留まり RSS が伸びない。
+# G1 + MaxGCPauseMillis: 不自然に大きいヒープの副作用 (フル GC のポーズ) を応答時間へ持ち込まない保険。
+# --server.address=127.0.0.1: Tomcat を loopback にだけ bind し、Caddy を経由しない直接アクセスを不可能にする。
+ExecStart=/opt/java/temurin8/bin/java \
+  -Xms3g -Xmx3g -XX:+AlwaysPreTouch -XX:+UseG1GC -XX:MaxGCPauseMillis=200 \
+  -jar /opt/linebot/current.jar \
+  --server.address=127.0.0.1 --server.port=8081
+SuccessExitStatus=143
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

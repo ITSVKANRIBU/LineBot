@@ -1,0 +1,4 @@
+# /etc/sudoers.d/linebot (root:root, 0440)
+# デプロイは linebot ユーザーで SSH し、更新スクリプトだけを root で実行する。
+# スクリプト本体は root 所有 0755 で /usr/local/bin に置く (linebot が書き換えられると権限昇格になる)。
+linebot ALL=(root) NOPASSWD: /usr/local/bin/linebot-release.sh
