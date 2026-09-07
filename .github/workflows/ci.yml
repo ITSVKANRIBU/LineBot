@@ -79,7 +79,12 @@ jobs:
       - name: Confirm this commit is still the head of master
         id: head
         run: |
+          # 既定のシェルは bash -e で pipefail が付かないため、pipefail を明示しないと
+          # git ls-remote の失敗が cut の 0 に隠れ、head が空 = skip=true になる。
+          # それでは job が緑のまま何も配備されない。解決できなければ明示的に失敗させる。
+          set -o pipefail
           head="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/master | cut -f1)"
+          [[ "$head" =~ ^[0-9a-f]{40}$ ]] || { echo "could not resolve master head" >&2; exit 1; }
           if [ "$head" != "$GITHUB_SHA" ]; then
             echo "master is now $head; skipping deploy of $GITHUB_SHA"
             echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -98,6 +103,7 @@ jobs:
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           if [ -z "$DEPLOY_SSH_KEY" ]; then
             echo "DEPLOY_SSH_KEY secret is not set" >&2
@@ -105,6 +111,10 @@ jobs:
           fi
           if [ -z "$DEPLOY_HOST_KEY" ]; then
             echo "DEPLOY_HOST_KEY secret is not set" >&2
+            exit 1
+          fi
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "DEPLOY_HOST secret is not set" >&2
             exit 1
           fi
           mkdir -p ~/.ssh
