@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ '3.0', develop ]
+    branches: [ master, develop ]
   pull_request:
 
 permissions:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # productionはHeroku上のJava 8で稼働している。
+      # 本番は Temurin 8 (aarch64) で稼働している。
       # ビルドJDKを揃えないと、sourceCompatibility=1.8でも実行時の差分を拾えない。
       - name: Set up JDK 8
         uses: actions/setup-java@v5
@@ -34,8 +34,22 @@ jobs:
       - name: Check
         run: ./gradlew --no-daemon check
 
-      - name: Build Heroku artifact
+      - name: Build executable jar
         run: ./gradlew --no-daemon :insider-game-bot:bootJar
+
+      # deploy job と VM 上の更新スクリプトはこのファイル名に依存する
+      - name: Package release
+        run: |
+          mkdir -p dist
+          cp insider-game-bot/build/libs/insider-game-bot-*.jar dist/insider-game-bot.jar
+          (cd dist && sha256sum insider-game-bot.jar > insider-game-bot.jar.sha256)
+
+      - name: Upload release
+        uses: actions/upload-artifact@v7
+        with:
+          name: insider-game-bot-jar
+          path: dist/
+          retention-days: 7
 
       - name: Upload test reports
         if: always()
