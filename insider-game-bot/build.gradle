@@ -18,4 +18,6 @@ apply plugin: 'org.springframework.boot'
 
 dependencies {
     implementation project(':line-bot-spring-boot')
+    // デプロイのヘルスチェック (GET /actuator/health) に使う。自前の endpoint は書かない
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
