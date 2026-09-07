@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 import insidergame.common.CommonModule;
+
 import com.linecorp.bot.model.action.Action;
 import com.linecorp.bot.model.action.URIActionNonAltUri;
 import com.linecorp.bot.model.message.Message;
@@ -34,22 +35,28 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonTitle;
  */
 public class StickerReplyEvent {
 
-	public List<Message> messages() {
+  private static final String HOMEPAGE_URL = "https://insidergametool.netlify.app";
 
-		String message = "ご利用ありがとうございます。" + "要望・報告は以下にご連絡ください。";
+  private static final String FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/"
+      + "1FAIpQLSf5pH-nC86Lb9L18dx9fBJv1ZUu-qdftS_PBkBRA5imjjFVgA/viewform";
 
-		List<Action> actionList = new ArrayList<Action>();
-		actionList.add(new URIActionNonAltUri("ご意見",
-				"https://docs.google.com/forms/d/e/1FAIpQLSf5pH-nC86Lb9L18dx9fBJv1ZUu-qdftS_PBkBRA5imjjFVgA/viewform"));
+  /**
+   * 製作者への連絡先とホームページを案内するメッセージを組み立てる.
+   *
+   * @return 「ご意見」「ホームぺージ」のボタンを持つテンプレート1通
+   */
+  public List<Message> messages() {
+    String message = "ご利用ありがとうございます。" + "要望・報告は以下にご連絡ください。";
 
-		actionList.add(new URIActionNonAltUri("ホームぺージ", "https://insidergametool.netlify.app"));
+    List<Action> actionList = new ArrayList<Action>();
+    actionList.add(new URIActionNonAltUri("ご意見", FEEDBACK_FORM_URL));
+    actionList.add(new URIActionNonAltUri("ホームぺージ", HOMEPAGE_URL));
 
-		ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(CommonModule.getIllustUrl("INSIDER"), message,
-				actionList);
+    ButtonsTemplateNonTitle buttons = new ButtonsTemplateNonTitle(
+        CommonModule.getIllustUrl("INSIDER"), message, actionList);
 
-		String titleMessage = "製作者の「白いフランです。」\n" + message + "\n Hp:  https://insidergametool.netlify.app";
+    String titleMessage = "製作者の「白いフランです。」\n" + message + "\n Hp:  " + HOMEPAGE_URL;
 
-		return Collections.singletonList(new TemplateMessage(titleMessage, buttons));
-
-	}
+    return Collections.<Message>singletonList(new TemplateMessage(titleMessage, buttons));
+  }
 }
