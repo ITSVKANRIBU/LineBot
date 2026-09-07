@@ -17,6 +17,12 @@ class ReplyRecorder(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length)
         print(f"--- {self.command} {self.path}")
+        if self.path != "/v2/bot/message/reply":
+            print(f"!!! 想定外のパスへの POST です (返信 API ではありません): {self.path}")
+            sys.stdout.flush()
+            self.send_response(404)
+            self.end_headers()
+            return
         try:
             print(json.dumps(json.loads(body), ensure_ascii=False, indent=2))
         except ValueError:
