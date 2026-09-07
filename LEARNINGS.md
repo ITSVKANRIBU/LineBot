@@ -28,6 +28,9 @@
 - 2026-09-06: リポジトリに checkstyle/spotbugs は適用されていない（`config/checkstyle/` は未参照の残骸）。実質的な lint は `compileJava` の `-Xlint:all -Werror`。
 - 2026-09-07: リファクタリング後に設計書の妥当性を検証するときは、設計書が引用しているコード参照を機械的に洗う。相対リンクを抜き出して `os.path.normpath` で実体の有無を確認すると、リンク切れが全件出る。リンクが生きていても行番号と主張の中身は別途読む必要があり、今回は「同期待ちがある」「/callapi は @ コマンドを解釈しない」という2つの主張がどちらも解消済みだった。
 - 2026-09-07: 設計書の「範囲外として記録する既存の問題」は、リファクタリングのたびに読み直す。解消済みの項目が残っていると、その項目を根拠にした他節（検証方法・リスク表）の記述も一緒に古くなる。今回は返信の同期待ちが1件外れ、検証方法の節が丸ごと組み替わった。
+- 2026-09-07: ドキュメントの妥当性検証では「〜しない」「何も返さない」という否定形の主張を優先して疑う。肯定形の主張はコードに対応する行があるので追いやすいが、否定形は「その処理が無いこと」を主張しており、実際には別の何かが起きている場合に気付きにくい。今回 interfaces.md の「お題の自動取得は何も返しません」が、実際には `null` を文字列連結した「お題は『null』です。」を返していた。
+- 2026-09-07: 応答文の検証は、定数の文字列だけでなく**文字列連結の被演算子が null になり得るか**まで見る。Javaは `null` を "null" として連結するため、失敗を表す `null` が黙って利用者向けの文面へ混ざる。例外にならないので、テストとログの両方をすり抜ける。
+- 2026-09-07: ログ方針を表で持つドキュメントは、`grep -rn 'log\.\(info\|warn\|error\|debug\)'` の出力と1件ずつ突き合わせる。今回 operations.md の WARN 行が3つのWARNのうち1つ（カタログの規約外要素の読み飛ばし）を落としていた。表の行数ではなく出力箇所の数で照合する。
 
 ## Mistakes to Avoid
 （失敗と再発防止策）
@@ -47,7 +50,7 @@
 - 2026-09-07: Bot本体のモジュールは `insider-game-bot`（旧 `sample-spring-boot-echo`）。起動クラスは `InsiderGameBotApplication`、jarは `insider-game-bot-2.7.0-SNAPSHOT.jar`。2026-09-07時点のベースラインは `check` が4モジュール計259テスト、`:insider-game-bot:test` が136テスト。
 - 2026-09-07: パッケージは `insidergame` をルートに、docs/architecture.md の層と対応させている。`adapter`（入力アダプタ）/ `game`（ゲーム操作と状態）/ `common`・`message`（補助データ）/ `testing`（テスト専用）。起動クラス `InsiderGameBotApplication` はルート直下。
 - 2026-09-07: `LineEventHandler.reply` は返信APIの完了を待たない。送信失敗はログにだけ残り、利用者からは「Botが黙った」ように見える。復帰手段は同じ入力を送り直すこと。この判断は `docs/architecture.md`「返信の完了を待たない」に記載。
-- 2026-09-07: `word.csv` の2列目から難易度境界を導出すると、途中で読み込みが途切れた辞書の境界が不整合になり `Random.nextInt` が負の上限で例外になる。読み込み後に全難易度の境界が揃っているか検証し、揃わなければ辞書を捨てる必要がある。これは `docs/interfaces.md` の「読み込みに失敗した場合、お題の自動取得は何も返しません」と一致する。
+- 2026-09-07: `word.csv` の2列目から難易度境界を導出すると、途中で読み込みが途切れた辞書の境界が不整合になり `Random.nextInt` が負の上限で例外になる。読み込み後に全難易度の境界が揃っているか検証し、揃わなければ辞書を捨てる必要がある。捨てた場合 `WordGetter.getWord` は `null` を返し、それが応答へそのまま出る（「お題は『null』です。」）。エラーにはならないため利用者は気付けない。
 - 2026-09-07: `@LineMessageHandler` は `@Component` のメタannotationを持つため、受け口クラスをコンポーネントスキャン範囲に置くだけでBean登録される。`@Bean` メソッドは不要。
 - 2026-09-07: `LineMessageHandlerSupport.eventConsumerList` はpackage-privateだが `ReflectionTestUtils.getField` で覗ける。`@SpringBootTest` でハンドラ登録数と、各イベントに選ばれるハンドラの所有Beanを検証できる。
 - 2026-09-07: オーナー確認済み: LINE と `/callapi` の処理は LINE を正として共通化する（数値境界 100、`@` コマンドの解釈を API にも適用）。経路差として残すのは「対象の村がないときの応答」だけで、API は `村が作成されていません` テキストを維持する。
@@ -65,6 +68,9 @@
 - 2026-09-07: `-Xms3g -XX:+AlwaysPreTouch` でアイドル回収のメモリ条件を外す対策は、**OCI 側に `MemoryUtilization` が報告されていなければ何も効かない**。VM 上の RSS が3GBあることは判定に使われない。切替前に OCI Monitoring で指標が現れることを確認する必要がある。
 - 2026-09-07: `IllustrationCatalogJob` は5分ごとに `script.google.com` へ外部HTTPSを出す。移行先の VM では egress 443 を開けたままにする必要がある。ただし通信量はごく小さく、アイドル回収のネットワーク条件（20%）には届かないので回収対策には数えられない。
 - 2026-09-07: `docs.oracle.com` と `www.infoq.com` はこのセッションの egress プロキシで直接フェッチできない。WebSearch は通るため、一次情報の文言は検索結果の抜粋から取る。
+- 2026-09-07: LEARNINGS に記録済みの不具合「Werewords の欠け表記 `WEREWORDS_ROLE_MAP[3]`」は修正済みで、現在は `村人` が入っている。
+- 2026-09-07: 署名検証の実体は `line-bot-servlet` の `LineBotCallbackRequestParser` にあり、`line-bot-spring-boot` はそれを `@Bean` として組むだけ。docs/architecture.md は「サーブレット」、insider-game-bot/README.md は「line-bot-spring-boot」と書いており、どちらも間違いではないが粒度が違う。
+- 2026-09-07: `ButtonsTemplateNonTitle` と `ButtonsTemplateNonURL` は上流SDKには無く、このリポジトリが `line-bot-model` へ追加した型。SDK同梱を「手が入っている」と書いている根拠のひとつ。
 
 ## Open Questions
 （未解決・要調査）
