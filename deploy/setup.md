@@ -215,4 +215,4 @@ OCI コンソール → Compute → Instances → 対象インスタンス → *
 
 ## 15. VM が失われたときの再作成
 
-§0 でインスタンスを作り直し (公開 IP が変わる)、§1〜§13 を上から実行する。`/etc/linebot.env` の値はパスワードマネージャから復元する。IP が変わるので §0 の A レコード、§10 の `DEPLOY_HOST` と `DEPLOY_HOST_KEY` を更新する。完了後に [cutover.md](cutover.md) の「切替後確認」をやり直す。
+§0 でインスタンスを作り直し (公開 IP が変わる)、§1〜§13 を上から実行する。`/etc/linebot.env` の値はパスワードマネージャから復元する。IP が変わるので §0 の A レコード、§10 の `DEPLOY_HOST` と `DEPLOY_HOST_KEY` を更新する。完了後に [cutover.md](cutover.md) の A (切替前の検証 14 項目) をやり直す。

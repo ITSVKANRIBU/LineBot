@@ -123,10 +123,12 @@ OCI コンソール → インスタンス → Metrics → `Memory Utilization`�
 ### 11. `systemctl restart` 後の自動復帰
 
 ```bash
-[VM] sudo systemctl restart linebot && sleep 20 && curl -s http://127.0.0.1:8081/actuator/health
+[VM] sudo systemctl restart linebot
+[VM] deadline=$((SECONDS + 60)); while [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/actuator/health)" != 200 ] && [ "$SECONDS" -lt "$deadline" ]; do sleep 2; done
+[VM] curl -s http://127.0.0.1:8081/actuator/health
 ```
 
-期待: `{"status":"UP"}`。
+期待: `{"status":"UP"}`。更新スクリプトと同じ「2 秒間隔で最長 60 秒」で待つ。`-Xms3g -XX:+AlwaysPreTouch` で 3 GB を先に確保するぶん起動が遅いため、固定の短い `sleep` だと起動途中を見て誤って失敗と判断しうる。
 
 ### 12. VM 再起動後の自動起動
 
