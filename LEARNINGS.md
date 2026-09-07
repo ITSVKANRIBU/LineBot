@@ -10,19 +10,46 @@
 
 ## Patterns That Work
 （効いたやり方・型）
+- 2026-09-07: 挙動不変を謳う大規模リファクタリングのレビューは、コードを追う前に「main配下の全Javaから日本語を含む文字列リテラルを抽出し、変更前後で集合差分を取る」と応答文の変化を機械的に洗える。100ファイル規模でも差分は数件に収まり、その全件が承認済み変更に対応するかだけ見れば済む。
+- 2026-09-07: ただし上の抽出で `//` コメントを雑に除去すると `https://` を巻き込んで行末まで消し、開き引用符が残って以降の文字列リテラルが壊れる。コメント除去なしで抽出するか、URLを含む行を除外する。差分が「明らかにあるはずの定数が片側だけ無い」形で出たらこれを疑う。
+- 2026-09-07: 改名の残骸探索は、ドット区切りとスラッシュ区切りの両方でgrepする。`com.example` は0件だったが `com/example` が README のテストヘルパのパスに残っていた。パッケージ名はimportだけでなくファイルパスとしても文書に埋まる。
+- 2026-09-07: 「定数をレジストリ側へ寄せた」ことの確認は、その定数を宣言クラス以外が参照しているかで取る。publicなのに自クラスからしか参照されていない定数は、寄せ切れていない印。今回は採番範囲の端（9999・10000）がレジストリとアダプタに二重で宣言されていた。
+- 2026-09-07: Spring Bootの起動クラスをルートパッケージへ置くと `scanBasePackages` の指定が要らなくなる。パッケージ構成を層に合わせて切り直すときに、この指定ごと消せる。
+- 2026-09-07: パッケージ名を変えるときは、名前が**文字列として**埋まっている場所を洗う。Spring Bootのログレベル環境変数 `LOGGING_LEVEL_<パッケージ>` がそれで、`docs/operations.md` と README の運用手順に出ている。コンパイルが通っても運用手順だけ古くなる。
+- 2026-09-07: Gradleのモジュール名を変えるときは、ディレクトリと `settings.gradle` だけでなく成果物名の消費者を必ず洗う。このリポジトリでは `Procfile` のjarワイルドカードと `.github/workflows/ci.yml` のタスク名が該当し、どちらもビルドは通るのに本番だけ壊れる種類の参照だった。
+- 2026-09-07: 「待たないこと」をテストで固定するには、完了させない `CompletableFuture` を返すmockと `@Test(timeout = ...)` を組み合わせる。待つ実装に戻すとハングではなくタイムアウト失敗になるため、CIでも回収できる。
+- 2026-09-07: 非同期化を実機で確かめるには、応答しないTCPリスナーを立てて外部APIのエンドポイントをそこへ向ける。外部へ一切出さずに「相手が固まっている」状況を作れる。LINE SDKは `line.bot.api-end-point` で差し替えられる。
+- 2026-09-07: 挙動不変のリファクタリングでは、先に「応答を丸ごと捕捉して固定するテスト」を1本入れてから構造を動かすと、以降の全コミットで挙動不変を機械的に確認できる。LINE経路は `LineMessagingClient` をmockして `ArgumentCaptor` で `ReplyMessage` を捕まえ、altText・ボタン構成・通数まで固定した。
+- 2026-09-07: 2つの経路が同じ結果を返すことは、代表的な入力の並びを両経路へ流して応答を突き合わせるテスト1本で守れる。経路ごとに変わる値（村番号）は正規表現で伏せ、意図的に残す経路差（村なし応答）は同じ印へ正規化すると、差分がそのまま「意図しない分岐」になる。
+- 2026-09-07: staticをやめてDI化するとき、テスト側に本番と同じ依存関係で組み立てるfixtureクラスを1つ置くと、各テストの `@Before` が1行で済む。`clear()` の共有をやめた証拠は、一時的に `maxParallelForks` を上げて全件通ることで取れる。
+- 2026-09-07: 定数を導入して式を書き換えるときは、展開後が元の式と文字通り同一になるかを確認する。村番号の抽選は `nextInt(8999)+1000` と `nextInt(89999)+10000` で、前者は `MAX-MIN`、後者は `MAX-MIN+1` と非対称だった。
 - 2026-09-07: 実装指示書は書いた後に Codex へ「コードと突き合わせてレビュー」させると、事実誤認や自己矛盾（Bean スキャン範囲、テスト無変更ルールとリファクタの両立不能、シャッフル前後の順序混同）を拾える。指摘反映後にもう 1 巡させると、反映で生じた新しい矛盾が見つかる。
 - 2026-09-06: この Mac は java が PATH にない。Gradle は `JAVA_HOME=/opt/homebrew/opt/openjdk@11` を付けて実行する（本番・CI は JDK 8）。`check` は 5 モジュール計 201 テスト、`:sample-spring-boot-echo:test` は 73 テストが 2026-09-06 時点のベースライン。
 - 2026-09-06: リポジトリに checkstyle/spotbugs は適用されていない（`config/checkstyle/` は未参照の残骸）。実質的な lint は `compileJava` の `-Xlint:all -Werror`。
 
 ## Mistakes to Avoid
 （失敗と再発防止策）
+- 2026-09-07: 範囲の検証を「上限」と「順序」だけで書くと下限が抜ける。お題辞書の難易度判定 `difficulty < previousDifficulty || difficulty > MAX` は previousDifficulty の初期値が0のため0を通していた。範囲は下限・上限を明示的に書く。
+- 2026-09-07: モジュールを `git rm -r` しても gitignore された `build/` はディスクに残る。テスト件数を `*/build/test-results/test/*.xml` から集計していたため、削除済みの line-bot-cli の5件を数え続けて237件と誤報した（正しくは232件）。`git rm -r` の後は `rm -rf` も打つ。`git mv` でモジュールを移動するときも、古い成果物が新しい名前の下へ付いてくるので先に消す。
+- 2026-09-07: 「同期待ちをやめるとテストの `verify` に `timeout()` が要る」と見積もったが不要だった。`client.replyMessage(...)` の呼び出し自体は呼び出しスレッド上で同期的に起きており、消したのは戻り値の待ち合わせだけ。mockの記録タイミングは変わらない。非同期化の影響範囲は「何がどのスレッドへ移るか」で判断する。
+- 2026-09-07: 一括置換で識別子を書き換えるときは、長い名前を先に処理する。`VillageList`→`villages` を先に当てたため `SpecialVillageList` が `Specialvillages` になった。接頭辞が共通する識別子は同じ正規表現に巻き込まれる。
+- 2026-09-07: `awk 'length > 100'` はUTF-8を**バイト数**で数えるため、日本語コメントが軒並み長すぎると誤検出される。行長を見るなら文字数で数えるか、コード行だけに絞る。
 - 2026-09-06: zsh で `grep -r ... --include=*.java` を引用符なしで書くと glob 展開で `no matches found` になり grep 自体が走らない。`--include='*.java'` と引用する。
 - 2026-09-06: Claude Code はスキルをセッション開始時に読み込むため、セッション中に新規作成した `.claude/skills/` 配下のスキルは同一セッションでは呼び出せない。作成直後の動作確認は次セッションで行う。
 
 ## Domain Knowledge
 （業務・仕様に関する事実）
+- 2026-09-07: Claude Code on the web の環境にはJDK 21しか入っておらず、Gradle 7.5 は動かない。`apt-get install openjdk-17-jdk-headless` でJDK 17を入れ、`JAVA_HOME` を向ける。加えて `gradle-git-properties` がJDK 17のGroovyで落ちるため `-x generateGitProperties` を、SDKモジュールの日本語コメントが US-ASCII で unmappable になるため `LANG=C.UTF-8` を付ける。この3点で `check` と `bootJar` が通る。
+- 2026-09-07: `.editorconfig` は上流SDK由来で `indent_size=4` だが、Javaの実際の字下げは2スペース。字下げ幅の根拠に `.editorconfig` を使わず、周囲のファイルに合わせる。有効な制約は `indent_style=space` の方。
+- 2026-09-07: ログレベルの環境変数は `LOGGING_LEVEL_INSIDERGAME`（旧 `LOGGING_LEVEL_COM_EXAMPLE_BOT`）。Herokuに旧名が残っていると引き上げが効かない。
+- 2026-09-07: Bot本体のモジュールは `insider-game-bot`（旧 `sample-spring-boot-echo`）。起動クラスは `InsiderGameBotApplication`、jarは `insider-game-bot-2.7.0-SNAPSHOT.jar`。2026-09-07時点のベースラインは `check` が4モジュール計259テスト、`:insider-game-bot:test` が136テスト。
+- 2026-09-07: パッケージは `insidergame` をルートに、docs/architecture.md の層と対応させている。`adapter`（入力アダプタ）/ `game`（ゲーム操作と状態）/ `common`・`message`（補助データ）/ `testing`（テスト専用）。起動クラス `InsiderGameBotApplication` はルート直下。
+- 2026-09-07: `LineEventHandler.reply` は返信APIの完了を待たない。送信失敗はログにだけ残り、利用者からは「Botが黙った」ように見える。復帰手段は同じ入力を送り直すこと。この判断は `docs/architecture.md`「返信の完了を待たない」に記載。
+- 2026-09-07: `word.csv` の2列目から難易度境界を導出すると、途中で読み込みが途切れた辞書の境界が不整合になり `Random.nextInt` が負の上限で例外になる。読み込み後に全難易度の境界が揃っているか検証し、揃わなければ辞書を捨てる必要がある。これは `docs/interfaces.md` の「読み込みに失敗した場合、お題の自動取得は何も返しません」と一致する。
+- 2026-09-07: `@LineMessageHandler` は `@Component` のメタannotationを持つため、受け口クラスをコンポーネントスキャン範囲に置くだけでBean登録される。`@Bean` メソッドは不要。
+- 2026-09-07: `LineMessageHandlerSupport.eventConsumerList` はpackage-privateだが `ReflectionTestUtils.getField` で覗ける。`@SpringBootTest` でハンドラ登録数と、各イベントに選ばれるハンドラの所有Beanを検証できる。
 - 2026-09-07: オーナー確認済み: LINE と `/callapi` の処理は LINE を正として共通化する（数値境界 100、`@` コマンドの解釈を API にも適用）。経路差として残すのは「対象の村がないときの応答」だけで、API は `村が作成されていません` テキストを維持する。
-- 2026-09-07: `EchoApplication` の `@SpringBootApplication` は `com.example.bot.spring.echo` 配下しかスキャンしない。`common`/`spring.game`/`staticdata` に Bean を置くなら `scanBasePackages = "com.example.bot"` が必要。
+- 2026-09-07: `@SpringBootApplication` は起動クラスのパッケージ配下しかスキャンしない。起動クラスをルートへ置いた現在は `scanBasePackages` の指定なしで全Beanが見つかるが、起動クラスをサブパッケージへ動かすと無言でBeanが検出されなくなる。
 - 2026-09-07: `SpecialVillageController` は村作成を含む全体を `catch (Exception)` で 400 に丸めるため、`docs/interfaces.md` の「内部エラー 500」は `/callapi` にしか当たらない。`CreatVillage` は登録時に全メッセージをシャッフルするので、`getMessages` の先頭役職は配布順を意味しない。
 - 2026-09-06: `word.csv` の 2 列目（難易度 1〜5）の切り替わり行は `WordGetter` の行番号定数（954/5084/7646/8436）と完全に一致する。難易度境界は 2 列目から導出できる。
 - 2026-09-06: `docs/` は外部仕様の一次資料で、既存テストは応答文を完全一致で検証している。応答文字列・数値境界・`Random` の呼び出し順は契約として扱う。

@@ -1,8 +1,3 @@
-include 'line-bot-api-client'
-include 'line-bot-model'
-include 'line-bot-servlet'
-include 'line-bot-spring-boot'
-
 /*
  * Copyright 2016 LINE Corporation
  *
@@ -19,5 +14,8 @@ include 'line-bot-spring-boot'
  * under the License.
  */
 
-// Bot本体
-include 'insider-game-bot'
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation project(':line-bot-spring-boot')
+}

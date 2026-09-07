@@ -15,7 +15,7 @@ Bot とのトークで `お題` と送ると 4 桁の村番号が返ります。
 Java 8 が必要です。
 
 ```bash
-./gradlew :sample-spring-boot-echo:bootRun
+./gradlew :insider-game-bot:bootRun
 ```
 
 環境変数 `LINE_BOT_CHANNEL_TOKEN` と `LINE_BOT_CHANNEL_SECRET` を設定してください。LINE Developers コンソールでは、Webhook URL を `https://<アプリのホスト>/callback` に設定します。
@@ -35,7 +35,7 @@ Java 8 が必要です。
 
 ## リポジトリの構成
 
-Gradle のマルチプロジェクトビルドです。`sample-spring-boot-echo` が Bot 本体、`line-bot-*` が LINE Messaging API SDK（line-bot-sdk-java 由来。同梱）、`line-bot-cli` はリッチメニューなどの運用ツールです。詳細は [architecture.md](docs/architecture.md) を参照してください。
+Gradle のマルチプロジェクトビルドです。`insider-game-bot` が Bot 本体、`line-bot-*` が LINE Messaging API SDK（line-bot-sdk-java 由来。同梱）です。詳細は [architecture.md](docs/architecture.md) を参照してください。
 
 ## ライセンス
 

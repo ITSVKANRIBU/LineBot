@@ -1,8 +1,3 @@
-include 'line-bot-api-client'
-include 'line-bot-model'
-include 'line-bot-servlet'
-include 'line-bot-spring-boot'
-
 /*
  * Copyright 2016 LINE Corporation
  *
@@ -19,5 +14,31 @@ include 'line-bot-spring-boot'
  * under the License.
  */
 
-// Bot本体
-include 'insider-game-bot'
+package insidergame.game;
+
+public class InsiderRole {
+
+  private String role;
+  private String userId;
+
+  public InsiderRole() {
+  }
+
+  public InsiderRole(String role, String userId) {
+    this.role = role;
+    this.userId = userId;
+  }
+
+  public String getRole() {
+    return role;
+  }
+
+  public void setRole(String role) {
+    this.role = role;
+  }
+
+  public String getUserId() {
+    return userId;
+  }
+
+}

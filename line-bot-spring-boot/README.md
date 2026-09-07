@@ -12,13 +12,8 @@ webhookのエンドポイント、署名検証、イベントのparse、handler�
 イベントhandlerとして扱われます。
 
 ```java
-@SpringBootApplication
 @LineMessageHandler
-public class EchoApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(EchoApplication.class, args);
-    }
-
+public class LineEventHandler {
     @EventMapping
     public TextMessage handleTextMessageEvent(MessageEvent<TextMessageContent> event) {
         return new TextMessage(event.getMessage().getText());
@@ -41,8 +36,8 @@ public class EchoApplication {
 検出されたhandlerは起動時にlogへ出力されます。
 
 ```text
-c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[MessageEvent<TextMessageContent>]" onto public com.linecorp.bot.model.message.TextMessage com.example.bot.spring.echo.EchoApplication.handleTextMessageEvent(...)
-c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void com.example.bot.spring.echo.EchoApplication.handleDefaultMessageEvent(...)
+c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[MessageEvent<TextMessageContent>]" onto public com.linecorp.bot.model.message.TextMessage insidergame.adapter.LineEventHandler.handleTextMessageEvent(...)
+c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void insidergame.adapter.LineEventHandler.handleDefaultMessageEvent(...)
 ```
 
 ## 設定
@@ -60,7 +55,7 @@ c.l.b.s.b.s.LineMessageHandlerSupport    : Mapped "[Event]" onto public void com
 | `line.bot.handler.enabled` | `@EventMapping`の仕組みを有効にする（既定: true） |
 | `line.bot.handler.path` | webhookを待ち受けるpath（既定: `/callback`） |
 
-このリポジトリのBot本体（`sample-spring-boot-echo`）では、
+このリポジトリのBot本体（`insider-game-bot`）では、
 `src/main/resources/application.yml`で次のように設定しています。
 秘密情報はソースへ書かず、環境変数から注入します。
 

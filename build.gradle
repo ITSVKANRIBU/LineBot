@@ -14,49 +14,26 @@
  * under the License.
  */
 
-//./gradlew clean && ./gradlew publish -Prelease
-
 buildscript {
-    ext.kotlin_version = '1.3.31'
-
     repositories {
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.21.0'
         classpath 'gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:2.2.4'
         classpath 'io.franzbecker:gradle-lombok:3.1.0'
         classpath 'io.spring.gradle:dependency-management-plugin:1.0.8.RELEASE'
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.1.5.RELEASE'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'org.ajoberstar.grgit:grgit-core:4.1.1'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'idea'
-apply plugin: 'jacoco'
-apply plugin: 'com.github.ben-manes.versions'
-apply plugin: 'maven-publish'
 
 group = 'com.linecorp.bot'
-version = '2.7.0'
-
-// Set build variables based on build type (release, continuous integration, development)
-def isDevBuild
-def isReleaseBuild
-def sonatypeRepositoryUrl
-if (hasProperty('release')) {
-    isReleaseBuild = true
-    sonatypeRepositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-} else if (hasProperty('ci')) {
-    version += '-SNAPSHOT'
-    sonatypeRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-} else {
-    isDevBuild = true
-    version += '-SNAPSHOT'
-}
+// Procfileはbuild/libs/insider-game-bot-*.jarをワイルドカードで拾う
+version = '2.7.0-SNAPSHOT'
 
 allprojects {
     repositories {
@@ -87,11 +64,9 @@ subprojects {
     ext['retrofit.version'] = '2.6.0'
 
     dependencyManagement {
-        if (project.name != 'test-boot1-compatibility') {
-            imports {
-                mavenBom 'io.spring.platform:platform-bom:Cairo-RELEASE'
-                mavenBom 'org.springframework.boot:spring-boot-dependencies:2.1.5.RELEASE'
-            }
+        imports {
+            mavenBom 'io.spring.platform:platform-bom:Cairo-RELEASE'
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:2.1.5.RELEASE'
         }
 
         dependencies {
@@ -141,78 +116,3 @@ subprojects {
     }
 }
 
-task codeCoverageReport(type: JacocoReport) {
-    onlyIf = { true }
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
-
-    [':line-bot-api-client', ':line-bot-model', ':line-bot-servlet', ':line-bot-spring-boot', ':line-bot-cli'].each {
-        sourceSets(project(it).sourceSets.main)
-    }
-
-    reports {
-	    xml {
-            required.set(true)
-            outputLocation.set(file('reports/jacoco/report.xml'))
-	    }
-	    html {
-	        required.set(true)
-	        // HTMLレポートのデフォルト出力先を使用する場合は、outputLocationの設定は不要です。
-	        // カスタム出力先を指定する場合は、以下のコメントを外して適宜パスを設定してください。
-	        // outputLocation.set(file('path/to/your/html/report'))
-	    }
-	    csv {
-	        required.set(false)
-	        // CSVレポートを無効化する場合、`required.set(false)`を設定します。
-	    }
-	}
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            groupId = 'com.linecorp.bot'
-            artifactId = 'line-bot-sdk-java'
-            version = rootProject.version
-
-            pom {
-                name = 'LineBot SDK'
-                description = 'LINE Bot SDK for Java'
-                url = 'https://github.com/line/line-bot-sdk-java'
-
-                scm {
-                    connection = 'scm:git@github.com:line/line-bot-sdk-java.git'
-                    developerConnection = 'scm:git@github.com:line/line-bot-sdk-java.git'
-                    url = 'https://github.com/line/line-bot-sdk-java'
-                }
-
-                licenses {
-                    license {
-                        name = 'Apache License, Version 2.0'
-                        url = 'https://opensource.org/licenses/Apache-2.0'
-                        distribution = 'repo'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = 'tokuhirom'
-                        name = 'Tokuhiro Matsuno'
-                        email = 'tokuhirom@gmail.com'
-                    }
-                    developer {
-                        id = 'kazuki-ma'
-                        name = 'Kazuki MATSUDA'
-                        email = 'matsuda.kazuki@gmail.com'
-                    }
-                }
-            }
-        }
-    }
-
-    repositories {
-        maven {
-            url = isReleaseBuild ? sonatypeRepositoryUrl : 'https://oss.sonatype.org/content/repositories/snapshots/'
-        }
-    }
-}
