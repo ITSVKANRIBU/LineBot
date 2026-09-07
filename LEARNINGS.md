@@ -10,6 +10,10 @@
 
 ## Patterns That Work
 （効いたやり方・型）
+- 2026-09-07: 挙動不変を謳う大規模リファクタリングのレビューは、コードを追う前に「main配下の全Javaから日本語を含む文字列リテラルを抽出し、変更前後で集合差分を取る」と応答文の変化を機械的に洗える。100ファイル規模でも差分は数件に収まり、その全件が承認済み変更に対応するかだけ見れば済む。
+- 2026-09-07: ただし上の抽出で `//` コメントを雑に除去すると `https://` を巻き込んで行末まで消し、開き引用符が残って以降の文字列リテラルが壊れる。コメント除去なしで抽出するか、URLを含む行を除外する。差分が「明らかにあるはずの定数が片側だけ無い」形で出たらこれを疑う。
+- 2026-09-07: 改名の残骸探索は、ドット区切りとスラッシュ区切りの両方でgrepする。`com.example` は0件だったが `com/example` が README のテストヘルパのパスに残っていた。パッケージ名はimportだけでなくファイルパスとしても文書に埋まる。
+- 2026-09-07: 「定数をレジストリ側へ寄せた」ことの確認は、その定数を宣言クラス以外が参照しているかで取る。publicなのに自クラスからしか参照されていない定数は、寄せ切れていない印。今回は採番範囲の端（9999・10000）がレジストリとアダプタに二重で宣言されていた。
 - 2026-09-07: Spring Bootの起動クラスをルートパッケージへ置くと `scanBasePackages` の指定が要らなくなる。パッケージ構成を層に合わせて切り直すときに、この指定ごと消せる。
 - 2026-09-07: パッケージ名を変えるときは、名前が**文字列として**埋まっている場所を洗う。Spring Bootのログレベル環境変数 `LOGGING_LEVEL_<パッケージ>` がそれで、`docs/operations.md` と README の運用手順に出ている。コンパイルが通っても運用手順だけ古くなる。
 - 2026-09-07: Gradleのモジュール名を変えるときは、ディレクトリと `settings.gradle` だけでなく成果物名の消費者を必ず洗う。このリポジトリでは `Procfile` のjarワイルドカードと `.github/workflows/ci.yml` のタスク名が該当し、どちらもビルドは通るのに本番だけ壊れる種類の参照だった。
@@ -25,6 +29,7 @@
 
 ## Mistakes to Avoid
 （失敗と再発防止策）
+- 2026-09-07: 範囲の検証を「上限」と「順序」だけで書くと下限が抜ける。お題辞書の難易度判定 `difficulty < previousDifficulty || difficulty > MAX` は previousDifficulty の初期値が0のため0を通していた。範囲は下限・上限を明示的に書く。
 - 2026-09-07: モジュールを `git rm -r` しても gitignore された `build/` はディスクに残る。テスト件数を `*/build/test-results/test/*.xml` から集計していたため、削除済みの line-bot-cli の5件を数え続けて237件と誤報した（正しくは232件）。`git rm -r` の後は `rm -rf` も打つ。`git mv` でモジュールを移動するときも、古い成果物が新しい名前の下へ付いてくるので先に消す。
 - 2026-09-07: 「同期待ちをやめるとテストの `verify` に `timeout()` が要る」と見積もったが不要だった。`client.replyMessage(...)` の呼び出し自体は呼び出しスレッド上で同期的に起きており、消したのは戻り値の待ち合わせだけ。mockの記録タイミングは変わらない。非同期化の影響範囲は「何がどのスレッドへ移るか」で判断する。
 - 2026-09-07: 一括置換で識別子を書き換えるときは、長い名前を先に処理する。`VillageList`→`villages` を先に当てたため `SpecialVillageList` が `Specialvillages` になった。接頭辞が共通する識別子は同じ正規表現に巻き込まれる。
@@ -34,6 +39,8 @@
 
 ## Domain Knowledge
 （業務・仕様に関する事実）
+- 2026-09-07: Claude Code on the web の環境にはJDK 21しか入っておらず、Gradle 7.5 は動かない。`apt-get install openjdk-17-jdk-headless` でJDK 17を入れ、`JAVA_HOME` を向ける。加えて `gradle-git-properties` がJDK 17のGroovyで落ちるため `-x generateGitProperties` を、SDKモジュールの日本語コメントが US-ASCII で unmappable になるため `LANG=C.UTF-8` を付ける。この3点で `check` と `bootJar` が通る。
+- 2026-09-07: `.editorconfig` は上流SDK由来で `indent_size=4` だが、Javaの実際の字下げは2スペース。字下げ幅の根拠に `.editorconfig` を使わず、周囲のファイルに合わせる。有効な制約は `indent_style=space` の方。
 - 2026-09-07: ログレベルの環境変数は `LOGGING_LEVEL_INSIDERGAME`（旧 `LOGGING_LEVEL_COM_EXAMPLE_BOT`）。Herokuに旧名が残っていると引き上げが効かない。
 - 2026-09-07: Bot本体のモジュールは `insider-game-bot`（旧 `sample-spring-boot-echo`）。起動クラスは `InsiderGameBotApplication`、jarは `insider-game-bot-2.7.0-SNAPSHOT.jar`。2026-09-07時点のベースラインは `check` が4モジュール計259テスト、`:insider-game-bot:test` が136テスト。
 - 2026-09-07: パッケージは `insidergame` をルートに、docs/architecture.md の層と対応させている。`adapter`（入力アダプタ）/ `game`（ゲーム操作と状態）/ `common`・`message`（補助データ）/ `testing`（テスト専用）。起動クラス `InsiderGameBotApplication` はルート直下。
@@ -51,7 +58,6 @@
 
 ## Open Questions
 （未解決・要調査）
-- 2026-09-07: `InsiderRole.setUserId` は参照ゼロだが、指示書のD6の削除リストに載っていなかったため残してある。次に `InsiderRole` を触るときに削除してよいか。
 
 ## Consolidated Principles
 （統合パス専用。通常の更新処理から直接追記しない）
