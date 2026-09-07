@@ -250,10 +250,6 @@ public class CommonModule {
       this.url = url;
       this.cumulativeWeight = cumulativeWeight;
     }
-
-    String getUrl() {
-      return url;
-    }
   }
 
   /** カタログ応答の本体. */
