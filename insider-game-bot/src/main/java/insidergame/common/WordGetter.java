@@ -46,6 +46,9 @@ public class WordGetter {
 
   static final String RESOURCE_NAME = "word.csv";
 
+  /** CSV難易度の最小値. */
+  private static final int MIN_CSV_DIFFICULTY = 1;
+
   /** CSV難易度の最大値. */
   private static final int MAX_CSV_DIFFICULTY = 5;
 
@@ -84,7 +87,7 @@ public class WordGetter {
   /**
    * 指定したCSV難易度の最終行番号を返す.
    *
-   * @param difficulty CSV難易度（1〜{@value #MAX_CSV_DIFFICULTY}）
+   * @param difficulty CSV難易度（{@value #MIN_CSV_DIFFICULTY}〜{@value #MAX_CSV_DIFFICULTY}）
    * @return 最終行番号（1始まり）。読み込めていない場合は0
    */
   static int lastLineOf(int difficulty) {
@@ -99,7 +102,7 @@ public class WordGetter {
   /**
    * CSVの各行の1列目を行順に読み込み、CSV難易度ごとの最終行番号を記録する.
    *
-   * <p>難易度が読めない行、昇順を破る行、区間が揃わない辞書は補完せずに捨てる。
+   * <p>難易度が読めない行、範囲外の行、昇順を破る行、区間が揃わない辞書は補完せずに捨てる。
    * 中途半端な辞書から引くと、難易度の違うお題を黙って配ることになるため。
    * その場合{@link #getWord(int)}はnullを返す。
    */
@@ -121,7 +124,8 @@ public class WordGetter {
         String[] columns = line.split(",");
         int difficulty = difficultyOf(columns);
 
-        if (difficulty < previousDifficulty || difficulty > MAX_CSV_DIFFICULTY) {
+        if (difficulty < MIN_CSV_DIFFICULTY || difficulty > MAX_CSV_DIFFICULTY
+            || difficulty < previousDifficulty) {
           log.error("Word CSV {} has an unusable difficulty at line {}",
               RESOURCE_NAME, words.size() + 1);
           return Dictionary.empty();
@@ -135,7 +139,7 @@ public class WordGetter {
       log.error("Failed to read the word CSV", e);
     }
 
-    for (int difficulty = 1; difficulty <= MAX_CSV_DIFFICULTY; difficulty++) {
+    for (int difficulty = MIN_CSV_DIFFICULTY; difficulty <= MAX_CSV_DIFFICULTY; difficulty++) {
       if (lastLines[difficulty] <= lastLines[difficulty - 1]) {
         log.error("Word CSV {} has no words for difficulty {}", RESOURCE_NAME, difficulty);
         return Dictionary.empty();
