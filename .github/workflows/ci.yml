@@ -37,6 +37,9 @@ jobs:
       - name: Build executable jar
         run: ./gradlew --no-daemon :insider-game-bot:bootJar
 
+      - name: Test the release script
+        run: bash deploy/test/release_test.sh
+
       # deploy job と VM 上の更新スクリプトはこのファイル名に依存する
       - name: Package release
         run: |
