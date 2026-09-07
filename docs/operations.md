@@ -33,7 +33,12 @@ LINE Developers コンソール側では、Webhook URL を `https://<アプリ�
 
 環境変数 `LINE_BOT_CHANNEL_TOKEN` と `LINE_BOT_CHANNEL_SECRET` が必要です。webhook を受けるには、ローカルのポートを外部へ公開する必要があります。
 
-`/callapi` は LINE の資格情報なしで叩けますが、**`@` で始まるコマンドを解釈せず、返信 API の呼び出しも含まないため、動作確認の代わりにはなりません**（[interfaces.md](interfaces.md) 参照）。
+`/callapi` は LINE の資格情報なしで叩けます。入力の解釈は LINE 経由と共通のため、**`@` で始まるコマンドを含めてゲームの規則を確認できます**。ただし次は確認できません（[interfaces.md](interfaces.md) 参照）。
+
+- 署名検証
+- ポストバックとスタンプ（この API に入口がありません）
+- 返信 API へ実際に送っていること（この API は返信 API を呼びません）
+- 対象の村がないときの応答（この API はテキスト、LINE は確認テンプレート）
 
 ## ビルドとデプロイ
 
