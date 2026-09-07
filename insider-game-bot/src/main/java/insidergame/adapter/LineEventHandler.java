@@ -19,6 +19,7 @@ package insidergame.adapter;
 import java.util.Collections;
 import java.util.List;
 
+import insidergame.game.SpecialVillageRegistry;
 import insidergame.game.TextCommandHandler;
 import insidergame.game.VillageService;
 import insidergame.message.MessageConst;
@@ -57,9 +58,6 @@ public class LineEventHandler {
 
   /** ポストバックdataがこの値未満なら、村番号ではなくお題候補の難易度. */
   private static final int ODAI_RANK_DATA_LIMIT = 10;
-
-  /** ポストバックdataがこの値以上なら特殊村の番号. */
-  private static final int MIN_SPECIAL_VILLAGE_NUMBER = 10000;
 
   private final LineMessagingClient lineMessagingClient;
   private final TextCommandHandler textCommandHandler;
@@ -106,8 +104,8 @@ public class LineEventHandler {
       } else if (userId == null) {
         replyUnidentifiedUser(event.getReplyToken());
 
-      } else if (dataInt < MIN_SPECIAL_VILLAGE_NUMBER) {
-        // 村番号の場合
+      } else if (dataInt < SpecialVillageRegistry.MIN_VILLAGE_NUMBER) {
+        // 村番号の場合。採番範囲はレジストリが持つ
         replyOrDefault(event.getReplyToken(), villageService.villageStatus(userId, dataInt));
       } else {
         // 特殊村番号の場合

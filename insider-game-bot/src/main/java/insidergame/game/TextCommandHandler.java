@@ -48,9 +48,6 @@ import com.linecorp.bot.model.message.template.ButtonsTemplateNonURL;
 @Component
 public class TextCommandHandler {
 
-  /** これを超える数値は特殊村の番号として扱う. */
-  private static final int MAX_VILLAGE_NUMBER = 9999;
-
   /** 設定できる参加人数の上限。これを超える数値は通常村の番号として扱う. */
   private static final int MAX_SIZE_INPUT = 100;
 
@@ -80,7 +77,8 @@ public class TextCommandHandler {
       return nonNumberCommand(userId, text, command);
     }
 
-    if (number > MAX_VILLAGE_NUMBER) {
+    // 通常村の番号を超える数値は特殊村の番号。採番範囲はレジストリが持つ
+    if (number > VillageRegistry.MAX_VILLAGE_NUMBER) {
       return villageService.joinSpecialVillage(userId, number);
     }
     if (number > MAX_SIZE_INPUT) {
