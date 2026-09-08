@@ -100,6 +100,7 @@
 - 2026-09-08: sudoers で `NOPASSWD: /usr/local/bin/foo.sh` と**スクリプト1本に絞っても、引数は一切制限されない**。スクリプトが第1引数をパスへ連結して破壊操作を行うなら、パストラバーサルで root の任意ディレクトリを操作できる。「鍵が漏れても被害を限定する」という sudoers の狙いは、スクリプト側の引数検証が無いと成立しない。commit SHA を受けるなら `[[ "$sha" =~ ^[0-9a-f]{40}$ ]]` で弾く。
 - 2026-09-08: Caddy の `request_body { max_size }` は 413 を返すとは限らない。Content-Length の事前判定を持たず、`http.MaxBytesReader` のエラーは**下流がボディを読んだ時**に出る。下流が `reverse_proxy` だと proxy エラーが一律 502 に丸められ 413 が潰れる。上流へ届かせない保護自体は効くので、期待値は「413 または 502」と書く。`expression` matcher で 413 を作っても chunked (Content-Length なし) は素通りする。
 - 2026-09-08: `actions/upload-artifact` と `actions/download-artifact` のメジャー番号は**もともと連動していない** (download が常に1つ先行。upload v5↔download v6、v6↔v7、v7↔v8)。したがって upload@v7 / download@v8 は「ずれている」のではなく現時点の最新同士の正しい組み合わせで、揃えようとして下げてはいけない。download v8 の release notes に upload v7 の direct uploads へ対応した旨が明記されており、実 run の `Download release` 成功でも裏付けた。存在確認は `gh api repos/actions/<action>/tags` で行う。
+- 2026-09-08: `MessageConst` の役職画像 URL 5 本 (`ILLUSTRATION_URL_PREFIX` / `GOD_URL` / `GM_URL` / `INSIDER_URL` / `VILLAGERS_URL`) は `https://raw.githubusercontent.com/ITSVKANRIBU/LineBot/3.0/Image/` とブランチ `3.0` を焼き込んでいる。役職画像カタログから動的に引く画像も同じ接頭辞を通る。**`3.0` を削除すると OCI 上でも役職画像が全部壊れる。** `master` の `Image/` に同じ 5 枚があるので、削除するなら先に参照先を移す。テストは URL 文字列を直書きせず定数を参照しているため、定数の差し替えだけで足りる。
 
 ## Open Questions
 （未解決・要調査）

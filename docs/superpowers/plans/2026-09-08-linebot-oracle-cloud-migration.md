@@ -2051,11 +2051,11 @@ Oracle Cloud Always Free への移行は実施済みで、現状は [operations.
 - [ ] **Step 8: Heroku への参照が残っていないことを確認する**
 
 ```bash
-grep -rn -i 'heroku' --include='*.md' --include='*.gradle' --include='*.yml' --include='*.json' . | grep -v 'refactor-instructions\|docs/superpowers\|LEARNINGS\|deploy/cutover.md'
+grep -rn -i 'heroku' --include='*.md' --include='*.gradle' --include='*.yml' --include='*.json' . | grep -v 'docs/superpowers\|LEARNINGS\|deploy/cutover.md\|deploy/human-steps.md\|deploy/setup.md\|docs/roadmap.md'
 grep -n '`PORT`' docs/operations.md insider-game-bot/README.md README.md
 ```
 
-Expected: どちらも 0 件。`docs/roadmap.md` の「経緯」リンクは Heroku という語を含まない。`deploy/cutover.md` は D 節 (歴史的手順) と F 節 (解約手順) が Heroku を含むので除外している。
+Expected: どちらも 0 件。除外した 4 文書は Heroku を参照するのが正しいので対象外にしている。`deploy/cutover.md` は D 節 (ロールバック) と F 節 (解約手順)、`deploy/human-steps.md` は Phase 8 (解約) と別枠 (ロールバック)、`deploy/setup.md` は「A1 が取れるまで Heroku のまま」という移行の前提、`docs/roadmap.md` は移行の経緯と移行前後の対比表。なお `refactor-instructions.md` は 2026-09-08 に削除済みなので除外指定から外した。
 
 - [ ] **Step 9: ビルドが通ることを確認する**
 
@@ -2080,6 +2080,8 @@ Expected: build と deploy が成功し、VM の Bot がこの commit の jar �
 - [ ] **Step 11: `3.0` ブランチの扱いを決める**
 
 `3.0` は Heroku の GitHub 連携先だった。Heroku が消えた後は `master` と乖離した履歴を持つだけなので、ユーザーの判断で削除する。
+
+**削除する前に `MessageConst.java` の画像 URL を移すこと。** `ILLUSTRATION_URL_PREFIX` / `GOD_URL` / `GM_URL` / `INSIDER_URL` / `VILLAGERS_URL` の 5 本が `https://raw.githubusercontent.com/ITSVKANRIBU/LineBot/3.0/Image/` を焼き込んでおり、`3.0` を削除すると役職画像が全部壊れる (役職画像カタログから動的に引く画像も同じ接頭辞を通る)。`master` の `Image/` に同じ 5 枚があるので参照先を `master` へ変え、配備して画像が出ることを確認してから削除する。テストは URL 文字列を直書きせず定数を参照しているので、定数の差し替えだけで足りる。
 
 ```bash
 git push origin --delete 3.0
