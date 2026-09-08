@@ -390,9 +390,9 @@ Heroku → 右上のアバター → **Account settings** → **Billing** → **
 gh repo edit --default-branch master
 ```
 
-`3.0` は Heroku の連携先だったブランチ。Heroku が消えた後は `master` と乖離した履歴を持つだけになる。
+`3.0` は Heroku の連携先だったブランチ。Heroku が消えた後は `master` と乖離した履歴を持つだけになるので、削除するかは自分の判断で決める。
 
-> **`3.0` を削除する前に必ず読む。** 役職画像の URL 5 本が `MessageConst.java` に **`3.0` を焼き込んでいる** (`https://raw.githubusercontent.com/ITSVKANRIBU/LineBot/3.0/Image/...`)。役職画像カタログから動的に引く画像も同じ接頭辞を使う。**`3.0` を削除すると OCI 上でも役職画像が全部壊れる。** 削除するなら先に `MessageConst.java` の 5 本を `master` へ向け (`master` 側の `Image/` に同じ 5 枚がある)、配備して画像が出ることを確かめてからにする。
+> 以前はこれを削除できなかった。役職画像の既定 URL が `MessageConst.java` に `3.0` を焼き込んでおり、消すと利用者に画像が出なくなるからで、2026-09-08 に参照先を `master` へ移して解消した。**画像の配信元は現在 `master` なので、`master` を消す・`Image/` を移動する・リポジトリを private にする、のいずれをやっても同じことが起きる** (`raw.githubusercontent.com` は private リポジトリを匿名では配信しない)。
 
 ## 8-4. 残りの後片付け
 

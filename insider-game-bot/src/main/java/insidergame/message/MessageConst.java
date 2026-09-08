@@ -36,17 +36,16 @@ public class MessageConst {
   public static final String VILLAGE_ROLE = "村人";
   public static final String GAMEMASTER_ROLE = "ＧＭ";
   public static final int DEFAULT_GMNUM = 999;
+  // 既定画像は raw.githubusercontent が配信するので、ブランチ名がそのまま公開URLに入る。
+  // 参照先のブランチを消すと利用者に画像が出なくなるため、ブランチ名はここ1箇所だけに書き、
+  // 個別のURLはこの接頭辞から組み立てる (4本だけ直して1本取り残す事故を構造で防ぐ)。
   public static final String ILLUSTRATION_URL_PREFIX = "https://raw.githubusercontent.com/"
-      + "ITSVKANRIBU/LineBot/3.0/Image/";
+      + "ITSVKANRIBU/LineBot/master/Image/";
 
   //URL
-  public static final String GOD_URL = "https://raw.githubusercontent.com/"
-      + "ITSVKANRIBU/LineBot/3.0/Image/GOD.png";
-  public static final String GM_URL = "https://raw.githubusercontent.com/"
-      + "ITSVKANRIBU/LineBot/3.0/Image/GM.png";
-  public static final String INSIDER_URL = "https://raw.githubusercontent.com/"
-      + "ITSVKANRIBU/LineBot/3.0/Image/INSIDER.png";
-  public static final String VILLAGERS_URL = "https://raw.githubusercontent.com/"
-      + "ITSVKANRIBU/LineBot/3.0/Image/VILLAGERS.png";
+  public static final String GOD_URL = ILLUSTRATION_URL_PREFIX + "GOD.png";
+  public static final String GM_URL = ILLUSTRATION_URL_PREFIX + "GM.png";
+  public static final String INSIDER_URL = ILLUSTRATION_URL_PREFIX + "INSIDER.png";
+  public static final String VILLAGERS_URL = ILLUSTRATION_URL_PREFIX + "VILLAGERS.png";
 
 }

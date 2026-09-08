@@ -2081,7 +2081,7 @@ Expected: build と deploy が成功し、VM の Bot がこの commit の jar �
 
 `3.0` は Heroku の GitHub 連携先だった。Heroku が消えた後は `master` と乖離した履歴を持つだけなので、ユーザーの判断で削除する。
 
-**削除する前に `MessageConst.java` の画像 URL を移すこと。** `ILLUSTRATION_URL_PREFIX` / `GOD_URL` / `GM_URL` / `INSIDER_URL` / `VILLAGERS_URL` の 5 本が `https://raw.githubusercontent.com/ITSVKANRIBU/LineBot/3.0/Image/` を焼き込んでおり、`3.0` を削除すると役職画像が全部壊れる (役職画像カタログから動的に引く画像も同じ接頭辞を通る)。`master` の `Image/` に同じ 5 枚があるので参照先を `master` へ変え、配備して画像が出ることを確認してから削除する。テストは URL 文字列を直書きせず定数を参照しているので、定数の差し替えだけで足りる。
+**この制約は 2026-09-08 に解消済み。** 以前は `MessageConst` の画像 URL が `3.0` を焼き込んでいたため `3.0` を削除できなかったが、参照先を `master` へ移し、ブランチ名は `ILLUSTRATION_URL_PREFIX` の 1 箇所だけに書く形へ直した。`3.0` の削除は画像に影響しない。
 
 ```bash
 git push origin --delete 3.0
