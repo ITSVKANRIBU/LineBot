@@ -7,6 +7,7 @@
 #   BROKEN  起動しない (curl が失敗する)
 #   HALFUP  本文は UP だが HTTP 503 (ステータスを見ていないと健康と誤判定する)
 #   NOSTART systemctl restart 自体が失敗する
+#   FLAKY   本文も HTTP 200 も正常だが curl 自体が失敗する (終了コードを見ていないと健康と誤判定する)
 set -euo pipefail
 
 script="$(cd "$(dirname "$0")/.." && pwd)/linebot-release.sh"
@@ -37,6 +38,7 @@ kind="$( [[ -n "$jar" ]] && cat "$jar" || true )"
 case "$kind" in
   GOOD)   printf '{"status":"UP"}' > "$out"; printf 200; exit 0 ;;
   HALFUP) printf '{"status":"UP"}' > "$out"; printf 503; exit 0 ;;
+  FLAKY)  printf '{"status":"UP"}' > "$out"; printf 200; exit 7 ;;
   *)      exit 7 ;;
 esac
 EOF
@@ -91,6 +93,9 @@ eee="$(rep40 e)"      # チェックサム不一致
 halfup="$(rep40 f)"   # 本文は UP だが HTTP 503
 nostart="$(rep40 1)"  # systemctl restart 自体が失敗する
 zzz="$(rep40 9)"      # 6 世代ある状態でのチェックサム不一致
+exc="$(rep40 2)"      # 保持数を超えても current / previous が残ることの検証
+brk="$(rep40 3)"      # current のリンク先が失われた後の配備
+flaky="$(rep40 4)"    # 本文も 200 も正常だが curl 自体が失敗する
 
 released() { echo "$LINEBOT_HOME/releases/$1/insider-game-bot.jar"; }
 current() { readlink "$LINEBOT_HOME/current.jar" 2>/dev/null || echo none; }
@@ -181,6 +186,8 @@ assert_eq "7 回目も成功" 0 "$status"
 assert_eq "残るのは 5 世代" 5 "$(ls -1 "$LINEBOT_HOME/releases" | wc -l | tr -d ' ')"
 assert_eq "current の r7 が残る" "$(released "$(seq_sha 7)")" "$(current)"
 assert_eq "previous の r6 が残る" "$(released "$(seq_sha 6)")" "$(previous)"
+assert_eq "current のリンク先が実在する" yes "$([[ -e "$LINEBOT_HOME/current.jar" ]] && echo yes || echo no)"
+assert_eq "previous のリンク先が実在する" yes "$([[ -e "$LINEBOT_HOME/previous.jar" ]] && echo yes || echo no)"
 if [[ -d "$LINEBOT_HOME/releases/$(seq_sha 1)" ]]; then r1=kept; else r1=gone; fi
 assert_eq "最古の r1 は消える" gone "$r1"
 
@@ -203,6 +210,63 @@ assert_eq "current は q6 のまま (失敗した zzz にならない)" "$(relea
 assert_eq "5 世代 + current/previous の例外まで刈られる" 5 "$(ls -1 "$LINEBOT_HOME/releases" | wc -l | tr -d ' ')"
 assert_eq "incoming の zzz は残留せず消える" 0 "$(incoming_count)"
 assert_eq "restart は呼ばれない (systemctl ログが変わらない)" "$before_log" "$(systemctl_log)"
+
+echo "# current / previous が指す世代は、保持数を超えても残る"
+# 上の「直近 5 世代」ケースでは current(r7) / previous(r6) がどちらも最新 5 世代に入るため、
+# 例外の分岐が一度も効かない。保持数を 1 に絞って、例外がなければ消える状況を作る。
+fresh_home
+for n in 1 2 3 4 5 6 7; do
+  add_release "$(seq_sha "$n")" GOOD
+  run_release "$(seq_sha "$n")"
+done
+export LINEBOT_KEEP_RELEASES=1
+add_release "$exc" GOOD
+printf '%064d  insider-game-bot.jar\n' 0 > "$LINEBOT_HOME/incoming/$exc/insider-game-bot.jar.sha256"
+run_release "$exc"
+unset LINEBOT_KEEP_RELEASES
+assert_eq "チェックサム不一致なので失敗する" 1 "$status"
+assert_eq "保持数 1 でも current の r7 と previous の r6 の 2 世代が残る" 2 "$(ls -1 "$LINEBOT_HOME/releases" | wc -l | tr -d ' ')"
+assert_eq "current のリンク先が実在する" yes "$([[ -e "$LINEBOT_HOME/current.jar" ]] && echo yes || echo no)"
+assert_eq "previous のリンク先が実在する" yes "$([[ -e "$LINEBOT_HOME/previous.jar" ]] && echo yes || echo no)"
+
+echo "# prune はこのスクリプトが作っていないエントリを消さない"
+# ls の出力を行で分けているため、40 桁 hex 以外を削除対象にすると releases を丸ごと消しうる。
+fresh_home
+mkdir -p "$LINEBOT_HOME/releases/not-a-sha"
+for n in 1 2 3 4 5 6 7; do
+  add_release "$(seq_sha "$n")" GOOD
+  run_release "$(seq_sha "$n")"
+done
+assert_eq "7 回目も成功" 0 "$status"
+assert_eq "40 桁 hex でないエントリは消さない" yes "$([[ -d "$LINEBOT_HOME/releases/not-a-sha" ]] && echo yes || echo no)"
+assert_eq "最古の r1 は消える" gone "$([[ -d "$LINEBOT_HOME/releases/$(seq_sha 1)" ]] && echo kept || echo gone)"
+
+echo "# current のリンク先が失われているときは previous を上書きしない"
+# 壊れた current を previous へ昇格させると、次に配備が失敗したときの戻し先が壊れた jar になり、
+# 戻せたはずの旧版を失う。
+fresh_home
+add_release "$aaa" GOOD
+run_release "$aaa"
+add_release "$bbb" GOOD
+run_release "$bbb"
+assert_eq "この時点の previous は aaa" "$(released "$aaa")" "$(previous)"
+rm -f "$(released "$bbb")"
+add_release "$brk" GOOD
+run_release "$brk"
+assert_eq "成功する" 0 "$status"
+assert_eq "previous は aaa のまま (リンク先を失った bbb を昇格させない)" "$(released "$aaa")" "$(previous)"
+assert_eq "previous のリンク先が実在する" yes "$([[ -e "$LINEBOT_HOME/previous.jar" ]] && echo yes || echo no)"
+
+echo "# 本文も HTTP 200 も正常でも curl 自体が失敗したら健康と見なさない"
+# 契約は「本文だけでなく HTTP ステータスと curl の成否も見る」。終了コードを捨てていると、
+# 転送エラーやタイムアウトで壊れた応答を配備成功として扱ってしまう。
+fresh_home
+add_release "$aaa" GOOD
+run_release "$aaa"
+add_release "$flaky" FLAKY
+run_release "$flaky"
+assert_eq "job は失敗する" 1 "$status"
+assert_eq "current が aaa に戻る" "$(released "$aaa")" "$(current)"
 
 if [[ "$failures" -ne 0 ]]; then
   echo "$failures failure(s)"

@@ -39,10 +39,10 @@ jar="$release_dir/insider-game-bot.jar"
 # 契約: HTTP 200 かつ本文が {"status":"UP"} (設計書「ヘルスチェックの契約」)。
 # 本文だけでなく HTTP ステータスと curl の成否も見る。
 check_health() {
-  local body_file status
+  local body_file status rc
   body_file="$(mktemp)"
-  status="$(curl -s --max-time 2 -o "$body_file" -w '%{http_code}' "$HEALTH_URL" || true)"
-  if [[ "$status" == 200 && "$(cat "$body_file")" == '{"status":"UP"}' ]]; then
+  status="$(curl -s --max-time 2 -o "$body_file" -w '%{http_code}' "$HEALTH_URL")" && rc=0 || rc=$?
+  if (( rc == 0 )) && [[ "$status" == 200 && "$(cat "$body_file")" == '{"status":"UP"}' ]]; then
     rm -f "$body_file"
     return 0
   fi
@@ -87,6 +87,10 @@ prune() {
   [[ -L "$CURRENT" ]] && keep+=("$(readlink "$CURRENT")")
   [[ -L "$PREVIOUS" ]] && keep+=("$(readlink "$PREVIOUS")")
   ls -1t "$RELEASES" | tail -n "+$((KEEP_RELEASES + 1))" | while read -r old; do
+    # ls の出力を行で分けているので、改行を含む名前は断片になり、空行は $dir が releases 自身を
+    # 指してしまう (root 実行の rm -rf が releases を丸ごと消す)。このスクリプトが作る世代は
+    # 必ず 40 桁 hex なので、それ以外は削除対象にせず記録だけ残す。
+    [[ "$old" =~ ^[0-9a-f]{40}$ ]] || { log "prune: skip unexpected entry in $RELEASES"; continue; }
     dir="$RELEASES/$old"
     for k in "${keep[@]}"; do
       [[ "$k" == "$dir/"* ]] && continue 2
@@ -114,8 +118,10 @@ mv -f "$incoming_dir/insider-game-bot.jar.sha256" "$release_dir/insider-game-bot
 mv -f "$incoming_dir/insider-game-bot.jar" "$jar"
 rm -rf "$incoming_dir"
 
-# 同じ jar を再配備するときは previous を動かさない (戻し先を失わない)
-if [[ -L "$CURRENT" && "$(readlink "$CURRENT")" != "$jar" ]]; then
+# 同じ jar を再配備するときは previous を動かさない (戻し先を失わない)。
+# current のリンク先が実在しないときも動かさない。壊れた current を previous へ昇格させると、
+# 次に配備が失敗したときの戻し先が壊れた jar になり、戻せたはずの旧版を失う。
+if [[ -L "$CURRENT" && -e "$CURRENT" && "$(readlink "$CURRENT")" != "$jar" ]]; then
   link "$(readlink "$CURRENT")" "$PREVIOUS"
 fi
 link "$jar" "$CURRENT"
