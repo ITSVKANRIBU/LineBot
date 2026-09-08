@@ -38,6 +38,8 @@
 - 2026-09-08: CI run が見ている commit と、確認したいブランチの現在の HEAD が同じかは `git rev-parse <branch>` と `gh run list --json headSha` (または `gh api .../artifacts` を叩く run の `headSha`) を突き合わせて確認する。run ID を手で拾うだけだと、古い run を見て「artifact が揃っている」と誤認する余地が残る。
 - 2026-09-08: 欠陥を1箇所直したら、同じ形がファイル内の他所に無いかを必ず grep で全件洗う。カットオーバー手順書の「固定 sleep のあと一度だけ health を叩く」を項目11で直したが、同じパターンが「後始末」に残っていた。しかも後始末のほうが安全上重要な手順だった。レビュアーの指摘は最初に見つけた1箇所しか挙げないことがある。
 - 2026-09-08: 実装用のサブエージェントには「LEARNINGS.md に触らない」「update-learnings / consolidate-learnings を実行しない」を毎回明記する。書かないと各実装者が勝手に実行し、生の観察が80件を超えて統合パスまで走り、既存項目が書き換わる。セッション運用のスキルはコントローラが1回だけ回すもの。
+- 2026-09-08: テストの見出しが主張する条件を、そのテストが実際に通っているとは限らない。「直近5世代を残す (current / previous は例外)」のケースは、current と previous がどちらも最新5世代に入る作り方だったため例外の分岐を一度も通っておらず、保護コードを丸ごと消しても通った。テストが歯を持つかは「守っているはずの実装を壊して落ちるか」で確かめる。
+- 2026-09-08: Codex は入力が大きすぎると turn 開始後にそのまま停滞することがある。ブランチ全体 (17ファイル + 2000行の計画) を投げたら 48 分ログ追記ゼロ・CPU ゼロで、対象を4ファイルに絞り直したら 76 秒で返った。停滞を疑う目安はログの最終更新時刻で、待つより範囲を狭めて回し直す方が速い。
 
 ## Mistakes to Avoid
 （失敗と再発防止策）
@@ -59,6 +61,8 @@
 - 2026-09-08: GitHub Actions の `run:` の既定シェルは `bash -e {0}` で、`pipefail` は付かない。`head="$(git ls-remote ... | cut -f1)"` は `git` が落ちても `cut` の 0 が返り、変数が空になったまま先へ進む。「失敗して赤くなる」ではなく「成功したように見えて何もしない」になるので気付けない。パイプを使うなら `set -o pipefail` と、取れた値の形式検証をセットで書く。
 - 2026-09-08: 失敗経路に後始末 (`rm -rf`) を足すときは、そのパスが外部入力から組み立てられていないかを同時に確認する。「チェックサム失敗時も incoming を消す」という正しい修正が、第1引数を未検証でパスへ連結していたことと噛み合って `rm -rf /etc` を root で成立させた。後始末の追加は到達可能な破壊操作を増やすので、入力検証とセットで入れる。
 - 2026-09-08: サブエージェントに `git stash` を使った「修正前なら落ちることの確認」をさせると、pop し忘れて**他の未コミット変更ごと**巻き戻る。今回 LEARNINGS.md の未コミット作業が消え、`git stash list` から復元した。stash を使う検証を指示するときは、対象ファイルだけを一時退避させる (`cp` して戻す) か、pop まで手順に含めさせる。
+- 2026-09-08: root で走るスクリプトで `ls` の出力を行で分けて `rm -rf` へ渡してはいけない。空行や改行を含む名前があると変数が親ディレクトリ自身を指し、`rm -rf "$RELEASES/"` のような形で配下を丸ごと消しうる。自分が作る名前の形 (今回は 40 桁 hex) で絞り、それ以外は削除対象にせずログに残す。
+- 2026-09-08: コメントが「〜も見る」と書いている判定は、実際に見ているかをコードで確かめる。ヘルスチェックの `check_health` は「HTTP ステータスと curl の成否も見る」とコメントしながら `curl ... || true` で終了コードを捨てており、本文と 200 が揃えば転送エラーでも健康と判定していた。コメントは意図であって実装ではない。
 
 ## Domain Knowledge
 （業務・仕様に関する事実）
@@ -100,7 +104,7 @@
 - 2026-09-08: sudoers で `NOPASSWD: /usr/local/bin/foo.sh` と**スクリプト1本に絞っても、引数は一切制限されない**。スクリプトが第1引数をパスへ連結して破壊操作を行うなら、パストラバーサルで root の任意ディレクトリを操作できる。「鍵が漏れても被害を限定する」という sudoers の狙いは、スクリプト側の引数検証が無いと成立しない。commit SHA を受けるなら `[[ "$sha" =~ ^[0-9a-f]{40}$ ]]` で弾く。
 - 2026-09-08: Caddy の `request_body { max_size }` は 413 を返すとは限らない。Content-Length の事前判定を持たず、`http.MaxBytesReader` のエラーは**下流がボディを読んだ時**に出る。下流が `reverse_proxy` だと proxy エラーが一律 502 に丸められ 413 が潰れる。上流へ届かせない保護自体は効くので、期待値は「413 または 502」と書く。`expression` matcher で 413 を作っても chunked (Content-Length なし) は素通りする。
 - 2026-09-08: `line-bot-servlet` の `LineBotCallbackRequestParser` は**署名検証より前に** `ByteStreams.toByteArray(req.getInputStream())` で本文全体を byte[] へ読む。公開・無認証の `/callback` にリバースプロキシ側の本文上限が無いと、無認証の1リクエストでヒープを落とせる。Tomcat の `max-http-post-size` は form-encoded にしか効かずこの経路は素通りする。上限はプロキシ側でサイト全体に掛ける。
-- 2026-09-08: `actions/upload-artifact` と `actions/download-artifact` のメジャー番号は**もともと連動していない** (download が常に1つ先行。upload v5↔download v6、v6↔v7、v7↔v8)。したがって upload@v7 / download@v8 は「ずれている」のではなく現時点の最新同士の正しい組み合わせで、揃えようとして下げてはいけない。download v8 の release notes に upload v7 の direct uploads へ対応した旨が明記されている。存在確認は `gh api repos/actions/<action>/tags` で行う。
+- 2026-09-08: `actions/upload-artifact` と `actions/download-artifact` のメジャー番号は**もともと連動していない** (download が常に1つ先行。upload v5↔download v6、v6↔v7、v7↔v8)。したがって upload@v7 / download@v8 は「ずれている」のではなく現時点の最新同士の正しい組み合わせで、揃えようとして下げてはいけない。download v8 の release notes に upload v7 の direct uploads へ対応した旨が明記されており、実 run の `Download release` 成功でも裏付けた。存在確認は `gh api repos/actions/<action>/tags` で行う。
 
 ## Open Questions
 （未解決・要調査）
