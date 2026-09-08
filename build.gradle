@@ -32,7 +32,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 
 group = 'com.linecorp.bot'
-// Procfileはbuild/libs/insider-game-bot-*.jarをワイルドカードで拾う
+// CI (.github/workflows/ci.yml) はbuild/libs/insider-game-bot-*.jarをワイルドカードで拾う
 version = '2.7.0-SNAPSHOT'
 
 allprojects {

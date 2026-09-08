@@ -29,9 +29,9 @@ export LINE_BOT_CHANNEL_SECRET='チャネルシークレット'
 ```
 
 トークンとシークレットはLINE Developersのチャネル設定画面から取得します。
-ソースコードには書かず、環境変数（Herokuの場合はConfig Vars）で渡します。
+ソースコードには書かず、環境変数で渡します（本番では `/etc/linebot.env` を systemd が読みます）。
 
-Herokuでは`Procfile`に従って`build/libs/insider-game-bot-*.jar`が起動します。
+本番では systemd の `linebot.service` が `/opt/linebot/current.jar` を起動します（[deploy/setup.md](../deploy/setup.md)）。
 デプロイ後、LINEチャネルのWebhook URLに`https://<アプリのホスト>/callback`を設定してください。
 
 ## エンドポイント

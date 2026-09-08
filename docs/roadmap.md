@@ -4,7 +4,7 @@
 
 ## Oracle Cloud Always Free への移行（検討中）
 
-**ステータス: 検討中。着手していない。実施するかどうかも決定していない。**
+**ステータス: `master` ブランチに実装済み。VM のプロビジョニングと切替は未実施。**
 
 ### 概要
 
@@ -55,7 +55,7 @@ Always Free の ARM インスタンスは在庫が逼迫しており、確保で
 | TLS | Heroku が終端 | VM 上のリバースプロキシが終端 |
 | デプロイ | Heroku の GitHub 連携 | CI から VM へ配置し、ヘルスチェックで検証 |
 | 費用 | $5/月（$60/年） | ドメイン維持費のみ（$10.44/年） |
-| Heroku 固有ファイル | `Procfile` / `app.json` / `system.properties` | 解約後に撤去 |
+| Heroku 固有ファイル | `Procfile` / `app.json` / `system.properties`（Heroku の連携先である `3.0` ブランチに残る） | `master` からは撤去済み |
 
 ## 課題として認識しているが、計画していないもの
 
