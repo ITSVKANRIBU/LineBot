@@ -2,6 +2,8 @@
 
 [setup.md](setup.md) が完了し、`master` の最新が VM で動いている状態から始める。以下は [設計書](../docs/superpowers/specs/2026-08-22-linebot-oracle-cloud-migration-design.md) の「検証方法」「カットオーバーとロールバック」を実行手順に落としたもの。
 
+人間が画面で操作する分 (公開フォーム、LINE Developers、外形監視、Heroku の解約) は [human-steps.md](human-steps.md) に画面ごとの手順としてまとめてある。
+
 ## A. 切替前の検証 (14 項目)
 
 ### 準備: 返信をスタブへ向ける

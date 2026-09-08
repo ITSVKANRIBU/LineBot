@@ -4,6 +4,8 @@ Oracle Cloud Always Free の A1 VM に LineBot を載せる手順。VM が停止
 
 記法: `[Mac]` は手元の Mac で、`[VM]` は VM に SSH した上で実行する。`<...>` は実行時に決まる値。
 
+ブラウザでの画面操作 (Oracle Cloud のインスタンス作成、DNS、GitHub Secrets、監視の設定) は [human-steps.md](human-steps.md) にまとめてある。この文書はターミナルで打つ分だけを扱う。
+
 ## 0. ユーザーが先に用意するもの
 
 | 項目 | 値 | 備考 |
